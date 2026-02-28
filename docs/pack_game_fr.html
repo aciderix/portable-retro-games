@@ -1,0 +1,1363 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Universal Retro Game Packer — Web GUI</title>
+<style>
+/* ============================================================
+   CSS Reset & Base
+   ============================================================ */
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  --bg: #0a0a0a;
+  --bg-card: #111118;
+  --bg-card-hover: #16161f;
+  --border: #1e1e2e;
+  --border-accent: #2a2a3e;
+  --text: #e0e0e0;
+  --text-dim: #888;
+  --text-dimmer: #555;
+  --accent: #FF4444;
+  --accent-orange: #ff8800;
+  --success: #44cc66;
+  --error: #ff4466;
+  --warning: #ffaa33;
+  --radius: 12px;
+  --radius-sm: 8px;
+}
+
+html { scroll-behavior: smooth; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', sans-serif;
+  min-height: 100vh;
+  line-height: 1.6;
+  overflow-x: hidden;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 8px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: #2a2a3e; border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: #3a3a4e; }
+
+/* ============================================================
+   Layout
+   ============================================================ */
+.container {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem 4rem;
+}
+
+/* Header */
+.header {
+  text-align: center;
+  margin-bottom: 2.5rem;
+  position: relative;
+}
+.header::after {
+  content: '';
+  display: block;
+  width: 80px;
+  height: 3px;
+  background: linear-gradient(90deg, var(--accent), var(--accent-orange));
+  margin: 1.2rem auto 0;
+  border-radius: 2px;
+}
+.logo {
+  font-size: 2.2rem;
+  font-weight: 800;
+  background: linear-gradient(135deg, var(--accent), var(--accent-orange));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  letter-spacing: -0.5px;
+}
+.subtitle {
+  color: var(--text-dim);
+  font-size: 0.95rem;
+  margin-top: 0.3rem;
+}
+
+/* Navigation Tabs */
+.tabs {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 2rem;
+  background: var(--bg-card);
+  border-radius: var(--radius);
+  padding: 4px;
+  border: 1px solid var(--border);
+}
+.tab-btn {
+  flex: 1;
+  padding: 0.7rem 1rem;
+  border: none;
+  background: transparent;
+  color: var(--text-dim);
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+  transition: all 0.25s ease;
+}
+.tab-btn:hover { color: var(--text); background: rgba(255,255,255,0.03); }
+.tab-btn.active {
+  background: linear-gradient(135deg, var(--accent), var(--accent-orange));
+  color: #fff;
+  box-shadow: 0 2px 12px rgba(255,68,68,0.25);
+}
+
+/* Tab Content */
+.tab-content { display: none; }
+.tab-content.active { display: block; animation: fadeIn 0.3s ease; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+/* ============================================================
+   Card / Section
+   ============================================================ */
+.card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1.5rem;
+  margin-bottom: 1.25rem;
+  transition: border-color 0.2s;
+}
+.card:hover { border-color: var(--border-accent); }
+.card-title {
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1.2px;
+  color: var(--text-dim);
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.card-title .icon { font-size: 1rem; }
+
+/* ============================================================
+   Drop Zone
+   ============================================================ */
+.dropzone {
+  border: 2px dashed #2a2a3e;
+  border-radius: var(--radius);
+  padding: 3rem 2rem;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+.dropzone::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at center, rgba(255,68,68,0.03) 0%, transparent 70%);
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+.dropzone:hover, .dropzone.dragover {
+  border-color: var(--accent);
+  background: rgba(255,68,68,0.03);
+}
+.dropzone:hover::before, .dropzone.dragover::before { opacity: 1; }
+.dropzone.has-file {
+  border-color: var(--success);
+  border-style: solid;
+  background: rgba(68,204,102,0.03);
+}
+.dropzone-icon {
+  font-size: 3rem;
+  margin-bottom: 0.8rem;
+  display: block;
+}
+.dropzone-text {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 0.3rem;
+}
+.dropzone-hint {
+  font-size: 0.82rem;
+  color: var(--text-dim);
+}
+.dropzone-btn {
+  display: inline-block;
+  margin-top: 1rem;
+  padding: 0.5rem 1.5rem;
+  border: 1px solid var(--border-accent);
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text);
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.dropzone-btn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+/* File Info */
+.file-info {
+  display: none;
+  margin-top: 1rem;
+  padding: 1rem;
+  background: rgba(255,255,255,0.02);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+}
+.file-info.visible { display: block; animation: fadeIn 0.3s ease; }
+.file-info-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.3rem 0;
+  font-size: 0.88rem;
+}
+.file-info-label { color: var(--text-dim); }
+.file-info-value { color: var(--text); font-weight: 500; }
+.badge {
+  display: inline-block;
+  padding: 0.15rem 0.6rem;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+.badge-success { background: rgba(68,204,102,0.15); color: var(--success); }
+.badge-warning { background: rgba(255,170,51,0.15); color: var(--warning); }
+.badge-error { background: rgba(255,68,102,0.15); color: var(--error); }
+
+/* ============================================================
+   Form Controls
+   ============================================================ */
+.form-group { margin-bottom: 1rem; }
+.form-group:last-child { margin-bottom: 0; }
+.form-label {
+  display: block;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text-dim);
+  margin-bottom: 0.4rem;
+}
+.form-input, .form-select {
+  width: 100%;
+  padding: 0.65rem 0.9rem;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text);
+  font-size: 0.9rem;
+  font-family: inherit;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  outline: none;
+}
+.form-input:focus, .form-select:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(255,68,68,0.1);
+}
+.form-select { cursor: pointer; appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath d='M6 8L1 3h10z' fill='%23888'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.9rem center;
+  padding-right: 2.5rem;
+}
+.form-select option { background: #1a1a2e; color: var(--text); }
+.form-select optgroup { color: var(--accent); font-weight: 700; }
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+@media (max-width: 520px) { .form-row { grid-template-columns: 1fr; } }
+
+/* Color picker row */
+.color-row {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+}
+.color-picker {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 40px;
+  height: 40px;
+  border: 2px solid var(--border);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  background: transparent;
+  padding: 0;
+}
+.color-picker::-webkit-color-swatch-wrapper { padding: 2px; }
+.color-picker::-webkit-color-swatch { border: none; border-radius: 4px; }
+.color-picker::-moz-color-swatch { border: none; border-radius: 4px; }
+.color-hex {
+  font-family: 'SF Mono', 'Fira Code', monospace;
+  font-size: 0.9rem;
+  color: var(--text);
+  font-weight: 600;
+}
+
+/* ============================================================
+   Generate Button
+   ============================================================ */
+.generate-btn {
+  width: 100%;
+  padding: 1rem;
+  border: none;
+  border-radius: var(--radius);
+  background: linear-gradient(135deg, var(--accent), var(--accent-orange));
+  color: #fff;
+  font-size: 1.05rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 20px rgba(255,68,68,0.25);
+  position: relative;
+  overflow: hidden;
+}
+.generate-btn::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(255,255,255,0.1), transparent);
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+.generate-btn:hover:not(:disabled)::before { opacity: 1; }
+.generate-btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 25px rgba(255,68,68,0.35);
+}
+.generate-btn:active:not(:disabled) { transform: translateY(0); }
+.generate-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+/* ============================================================
+   Progress Section
+   ============================================================ */
+.progress-section {
+  display: none;
+  margin-top: 1.25rem;
+}
+.progress-section.visible { display: block; animation: fadeIn 0.3s ease; }
+.progress-bar-track {
+  width: 100%;
+  height: 8px;
+  background: #1a1a2e;
+  border-radius: 4px;
+  overflow: hidden;
+  margin-bottom: 0.8rem;
+}
+.progress-bar-fill {
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, var(--accent), var(--accent-orange));
+  border-radius: 4px;
+  transition: width 0.4s ease;
+}
+.progress-steps { list-style: none; }
+.progress-step {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.4rem 0;
+  font-size: 0.85rem;
+  color: var(--text-dim);
+  transition: color 0.3s;
+}
+.progress-step.active { color: var(--text); }
+.progress-step.done { color: var(--success); }
+.progress-step.error { color: var(--error); }
+.step-icon { width: 1.2rem; text-align: center; font-size: 0.9rem; }
+
+/* ============================================================
+   Download Button
+   ============================================================ */
+.download-section {
+  display: none;
+  margin-top: 1.25rem;
+  text-align: center;
+}
+.download-section.visible { display: block; animation: fadeIn 0.4s ease; }
+.download-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 1rem 2.5rem;
+  border: none;
+  border-radius: var(--radius);
+  background: linear-gradient(135deg, var(--success), #33aa55);
+  color: #fff;
+  font-size: 1.1rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 20px rgba(68,204,102,0.25);
+}
+.download-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 25px rgba(68,204,102,0.35);
+}
+.download-info {
+  margin-top: 0.8rem;
+  font-size: 0.82rem;
+  color: var(--text-dim);
+}
+
+/* ============================================================
+   Error Banner
+   ============================================================ */
+.error-banner {
+  display: none;
+  margin-top: 1rem;
+  padding: 1rem;
+  background: rgba(255,68,102,0.08);
+  border: 1px solid rgba(255,68,102,0.2);
+  border-radius: var(--radius-sm);
+  color: var(--error);
+  font-size: 0.88rem;
+}
+.error-banner.visible { display: block; animation: fadeIn 0.3s ease; }
+
+/* ============================================================
+   Systems List Tab
+   ============================================================ */
+.systems-grid {
+  display: grid;
+  gap: 0.5rem;
+}
+.system-group-title {
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1.2px;
+  color: var(--accent);
+  margin-top: 1rem;
+  margin-bottom: 0.5rem;
+  padding-bottom: 0.3rem;
+  border-bottom: 1px solid var(--border);
+}
+.system-group-title:first-child { margin-top: 0; }
+.system-row {
+  display: grid;
+  grid-template-columns: 140px 1fr 1fr;
+  gap: 1rem;
+  padding: 0.6rem 0.8rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.85rem;
+  transition: background 0.15s;
+}
+.system-row:hover { background: rgba(255,255,255,0.02); }
+.system-name { font-weight: 600; color: var(--text); }
+.system-core { color: var(--text-dim); font-family: 'SF Mono', 'Fira Code', monospace; font-size: 0.8rem; }
+.system-exts { color: var(--text-dimmer); font-size: 0.8rem; }
+@media (max-width: 600px) {
+  .system-row { grid-template-columns: 1fr; gap: 0.15rem; }
+}
+
+/* ============================================================
+   Footer
+   ============================================================ */
+.footer {
+  text-align: center;
+  padding: 2rem 0 1rem;
+  font-size: 0.78rem;
+  color: var(--text-dimmer);
+}
+.footer a { color: var(--text-dim); text-decoration: none; }
+.footer a:hover { color: var(--accent); }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <!-- Header -->
+  <div class="header">
+    <div class="logo">🕹️ Retro Game Packer</div>
+    <div class="subtitle">Transformez vos ROMs en fichiers HTML autonomes jouables hors-ligne</div>
+  </div>
+
+  <!-- Tabs -->
+  <div class="tabs">
+    <button class="tab-btn active" data-tab="packer">⚡ Packer</button>
+    <button class="tab-btn" data-tab="systems">📋 Systèmes</button>
+  </div>
+
+  <!-- ============================================================
+       TAB: Packer
+       ============================================================ -->
+  <div id="tab-packer" class="tab-content active">
+
+    <!-- Step 1: ROM File -->
+    <div class="card">
+      <div class="card-title"><span class="icon">📀</span> Fichier ROM</div>
+      <div class="dropzone" id="dropzone">
+        <span class="dropzone-icon">📁</span>
+        <div class="dropzone-text">Glissez-déposez votre ROM ici</div>
+        <div class="dropzone-hint">ou cliquez pour parcourir vos fichiers</div>
+        <button class="dropzone-btn" type="button">Choisir un fichier</button>
+        <input type="file" id="rom-input" hidden>
+      </div>
+      <div class="file-info" id="file-info">
+        <div class="file-info-row">
+          <span class="file-info-label">Fichier</span>
+          <span class="file-info-value" id="info-name">—</span>
+        </div>
+        <div class="file-info-row">
+          <span class="file-info-label">Taille</span>
+          <span class="file-info-value" id="info-size">—</span>
+        </div>
+        <div class="file-info-row">
+          <span class="file-info-label">Système détecté</span>
+          <span class="file-info-value" id="info-system">—</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Step 2: Options -->
+    <div class="card">
+      <div class="card-title"><span class="icon">⚙️</span> Options</div>
+
+      <div class="form-group">
+        <label class="form-label" for="system-select">Système (auto-détecté ou forcer manuellement)</label>
+        <select class="form-select" id="system-select">
+          <option value="">— Auto-détection —</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="title-input">Titre du jeu</label>
+        <input type="text" class="form-input" id="title-input" placeholder="Rempli automatiquement depuis le nom du fichier">
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Couleur d'accentuation</label>
+          <div class="color-row">
+            <input type="color" class="color-picker" id="color-input" value="#FF4444">
+            <span class="color-hex" id="color-hex">#FF4444</span>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="output-input">Nom du fichier de sortie</label>
+          <input type="text" class="form-input" id="output-input" placeholder="jeu.html">
+        </div>
+      </div>
+    </div>
+
+    <!-- Generate -->
+    <button class="generate-btn" id="generate-btn" disabled>🚀 Générer le fichier HTML</button>
+
+    <!-- Progress -->
+    <div class="progress-section" id="progress-section">
+      <div class="progress-bar-track">
+        <div class="progress-bar-fill" id="progress-fill"></div>
+      </div>
+      <ul class="progress-steps" id="progress-steps">
+        <li class="progress-step" data-step="rom"><span class="step-icon">⏳</span> Lecture de la ROM...</li>
+        <li class="progress-step" data-step="css"><span class="step-icon">⏳</span> Récupération du CSS EmulatorJS...</li>
+        <li class="progress-step" data-step="js"><span class="step-icon">⏳</span> Récupération du moteur EmulatorJS...</li>
+        <li class="progress-step" data-step="core"><span class="step-icon">⏳</span> Téléchargement du cœur d'émulation...</li>
+        <li class="progress-step" data-step="build"><span class="step-icon">⏳</span> Assemblage du fichier HTML...</li>
+        <li class="progress-step" data-step="done"><span class="step-icon">⏳</span> Terminé !</li>
+      </ul>
+    </div>
+
+    <!-- Download -->
+    <div class="download-section" id="download-section">
+      <button class="download-btn" id="download-btn">💾 Télécharger</button>
+      <div class="download-info" id="download-info"></div>
+    </div>
+
+    <!-- Error -->
+    <div class="error-banner" id="error-banner"></div>
+  </div>
+
+  <!-- ============================================================
+       TAB: Systems List
+       ============================================================ -->
+  <div id="tab-systems" class="tab-content">
+    <div class="card">
+      <div class="card-title"><span class="icon">🕹️</span> 38 Systèmes Supportés</div>
+      <div id="systems-list"></div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <div class="footer">
+    Propulsé par <a href="https://emulatorjs.org" target="_blank">EmulatorJS</a> &amp;
+    <a href="https://github.com/aciderix/portable-retro-games" target="_blank">Portable Retro Games</a>
+  </div>
+</div>
+
+<script>
+// ============================================================
+//  System Definitions (identical to Python script)
+// ============================================================
+const SYSTEMS = {
+  'nes':       { core: 'fceumm',           label: 'NES / Famicom',              extensions: ['.nes'],                                              category: 'Console' },
+  'snes':      { core: 'snes9x',           label: 'Super Nintendo',             extensions: ['.smc', '.sfc', '.snes'],                             category: 'Console' },
+  'gb':        { core: 'gambatte',          label: 'Game Boy',                   extensions: ['.gb'],                                               category: 'Console' },
+  'gbc':       { core: 'gambatte',          label: 'Game Boy Color',             extensions: ['.gbc'],                                              category: 'Console' },
+  'genesis':   { core: 'genesis_plus_gx',   label: 'Sega Genesis / Mega Drive',  extensions: ['.md', '.bin', '.gen'],                                category: 'Console' },
+  'sms':       { core: 'smsplus',           label: 'Sega Master System',         extensions: ['.sms'],                                              category: 'Console' },
+  'gg':        { core: 'genesis_plus_gx',   label: 'Sega Game Gear',             extensions: ['.gg'],                                               category: 'Console' },
+  'atari2600': { core: 'stella2014',        label: 'Atari 2600',                 extensions: ['.a26', '.bin'],                                      category: 'Console' },
+  'atari7800': { core: 'prosystem',         label: 'Atari 7800',                 extensions: ['.a78'],                                              category: 'Console' },
+  'atari5200': { core: 'a5200',             label: 'Atari 5200',                 extensions: ['.a52'],                                              category: 'Console' },
+  'lynx':      { core: 'handy',             label: 'Atari Lynx',                 extensions: ['.lnx'],                                              category: 'Console' },
+  'coleco':    { core: 'gearcoleco',        label: 'ColecoVision',               extensions: ['.col'],                                              category: 'Console' },
+  'ngp':       { core: 'mednafen_ngp',      label: 'Neo Geo Pocket / Color',     extensions: ['.ngp', '.ngc'],                                      category: 'Console' },
+  'ws':        { core: 'mednafen_wswan',    label: 'WonderSwan / Color',         extensions: ['.ws', '.wsc'],                                       category: 'Console' },
+  'vb':        { core: 'beetle_vb',         label: 'Virtual Boy',                extensions: ['.vb'],                                               category: 'Console' },
+  'pce':       { core: 'mednafen_pce',      label: 'PC Engine / TurboGrafx-16',  extensions: ['.pce'],                                              category: 'Console' },
+  '32x':       { core: 'picodrive',         label: 'Sega 32X',                   extensions: ['.32x'],                                              category: 'Console' },
+  'gba':       { core: 'mgba',              label: 'Game Boy Advance',           extensions: ['.gba'],                                              category: 'Console' },
+  'n64':       { core: 'mupen64plus_next',  label: 'Nintendo 64',                extensions: ['.n64', '.z64', '.v64'],                              category: 'Console' },
+  'nds':       { core: 'melonds',           label: 'Nintendo DS',                extensions: ['.nds'],                                              category: 'Console' },
+  'psx':       { core: 'pcsx_rearmed',      label: 'PlayStation',                extensions: ['.bin', '.cue', '.iso', '.pbp'],                      category: 'Console' },
+  'segacd':    { core: 'genesis_plus_gx',   label: 'Sega CD / Mega CD',          extensions: ['.cue', '.bin', '.chd'],                              category: 'Console' },
+  'pcfx':      { core: 'mednafen_pcfx',     label: 'PC-FX',                      extensions: ['.cue', '.ccd', '.toc'],                              category: 'Console' },
+  'jaguar':    { core: 'virtualjaguar',     label: 'Atari Jaguar',               extensions: ['.j64', '.jag', '.rom', '.abs', '.cof', '.bin'],      category: 'Console' },
+  'c64':       { core: 'vice_x64sc',        label: 'Commodore 64',               extensions: ['.d64', '.t64', '.prg', '.crt'],                     category: 'Ordinateur' },
+  'c128':      { core: 'vice_x128',         label: 'Commodore 128',              extensions: ['.d64', '.d71', '.d81', '.prg', '.t64', '.tap'],     category: 'Ordinateur' },
+  'vic20':     { core: 'vice_xvic',         label: 'Commodore VIC-20',           extensions: ['.d64', '.prg', '.crt', '.t64', '.tap', '.20', '.60', '.a0'], category: 'Ordinateur' },
+  'pet':       { core: 'vice_xpet',         label: 'Commodore PET',              extensions: ['.d64', '.prg', '.t64', '.tap'],                     category: 'Ordinateur' },
+  'plus4':     { core: 'vice_xplus4',       label: 'Commodore Plus/4',           extensions: ['.d64', '.prg', '.t64', '.tap', '.bin', '.crt'],     category: 'Ordinateur' },
+  'amiga':     { core: 'puae',              label: 'Commodore Amiga',            extensions: ['.adf', '.adz', '.dms', '.ipf'],                     category: 'Ordinateur' },
+  'cpc':       { core: 'cap32',             label: 'Amstrad CPC',                extensions: ['.dsk', '.sna', '.cdt', '.voc'],                     category: 'Ordinateur' },
+  'zxspectrum':{ core: 'fuse',              label: 'ZX Spectrum',                extensions: ['.z80', '.tap', '.sna', '.tzx'],                     category: 'Ordinateur' },
+  'zx81':      { core: '81',                label: 'Sinclair ZX81',              extensions: ['.p', '.81', '.tzx'],                                category: 'Ordinateur' },
+  'cps1':      { core: 'fbalpha2012_cps1',  label: 'Arcade (CPS1)',              extensions: ['.zip'],                                              category: 'Arcade' },
+  'cps2':      { core: 'fbalpha2012_cps2',  label: 'Arcade (CPS2)',              extensions: ['.zip'],                                              category: 'Arcade' },
+  'fbneo':     { core: 'fbneo',             label: 'Arcade (FBNeo)',             extensions: ['.zip'],                                              category: 'Arcade' },
+  'mame':      { core: 'mame2003_plus',     label: 'Arcade (MAME 2003+)',        extensions: ['.zip'],                                              category: 'Arcade' },
+  'doom':      { core: 'prboom',            label: 'DOOM (PrBoom)',              extensions: ['.wad'],                                              category: 'Autre' },
+};
+
+// Build reverse lookup: extension → system (first match wins, same as Python)
+const EXT_TO_SYSTEM = {};
+for (const [sysId, info] of Object.entries(SYSTEMS)) {
+  for (const ext of info.extensions) {
+    if (!(ext in EXT_TO_SYSTEM)) {
+      EXT_TO_SYSTEM[ext] = sysId;
+    }
+  }
+}
+
+const EJS_CDN_BASE = 'https://cdn.emulatorjs.org/stable/data/';
+
+// ============================================================
+//  In-memory cache for CDN assets
+// ============================================================
+const assetCache = { css: null, js: null, cores: {} };
+
+// ============================================================
+//  HTML Template (EXACT copy from Python script)
+// ============================================================
+const HTML_TEMPLATE = `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>{{TITLE}} - {{SYSTEM_LABEL}} | Portable Retro Games</title>
+<meta name="description" content="Play {{TITLE}} ({{SYSTEM_LABEL}}) directly in your browser. No download, no install - standalone offline HTML game.">
+<meta name="keywords" content="{{TITLE}}, {{SYSTEM_LABEL}}, retro gaming, emulator, standalone, offline, browser game">
+<meta property="og:title" content="{{TITLE}} - {{SYSTEM_LABEL}}">
+<meta property="og:description" content="Play {{TITLE}} directly in your browser - standalone, offline, no install needed.">
+<style>
+{{EJS_CSS}}
+</style>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+    background: #0a0a0a;
+    color: #fff;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    height: 100vh;
+    height: 100dvh;
+    width: 100vw;
+    overflow: hidden;
+    position: fixed;
+    top: 0;
+    left: 0;
+    overscroll-behavior: none;
+    -webkit-overflow-scrolling: none;
+    touch-action: none;
+    -webkit-tap-highlight-color: transparent;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    user-select: none;
+}
+#game {
+    width: 100vw;
+    height: 100vh;
+    height: 100dvh;
+    max-width: 100%;
+    max-height: 100%;
+    overflow: hidden;
+    touch-action: manipulation;
+}
+#loading-overlay {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    height: 100dvh;
+    background: radial-gradient(ellipse at center, #1a1a2e 0%, #0a0a0a 100%);
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    z-index: 9999;
+    transition: opacity 0.5s ease;
+    padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+    overflow: hidden;
+}
+#loading-overlay.hidden {
+    opacity: 0;
+    pointer-events: none;
+}
+.ld-title {
+    font-size: clamp(1.5rem, 6vw, 2.5rem); font-weight: 700; margin-bottom: 0.25rem;
+    background: linear-gradient(135deg, #FF4444, #ff8800);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    background-clip: text;
+    text-align: center;
+    padding: 0 1rem;
+    word-break: break-word;
+    max-width: 90vw;
+}
+.ld-system {
+    font-size: clamp(0.75rem, 3vw, 1rem); color: #888; margin-bottom: 2rem;
+    text-align: center;
+}
+.ld-bar {
+    width: min(300px, 80vw); height: 6px; background: #222; border-radius: 3px; overflow: hidden;
+}
+.ld-fill {
+    height: 100%; width: 0%; border-radius: 3px;
+    background: linear-gradient(90deg, #FF4444, #ff8800);
+    transition: width 0.3s ease;
+}
+.ld-status {
+    margin-top: 1rem; font-size: clamp(0.7rem, 2.5vw, 0.85rem); color: #aaa;
+    text-align: center;
+    padding: 0 1rem;
+}
+.ld-credits {
+    position: absolute; bottom: max(1.5rem, env(safe-area-inset-bottom)); font-size: clamp(0.6rem, 2vw, 0.75rem); color: #555;
+    text-align: center;
+    padding: 0 1rem;
+}
+.ld-credits a { color: #777; text-decoration: none; }
+</style>
+</head>
+<body>
+<div id="loading-overlay">
+    <div class="ld-title">{{TITLE}}</div>
+    <div class="ld-system">{{SYSTEM_LABEL}}</div>
+    <div class="ld-bar"><div class="ld-fill" id="ld-fill" style="width: 5%;"></div></div>
+    <div class="ld-status" id="ld-status">Loading emulator engine...</div>
+    <div class="ld-credits">
+        Powered by <a href="https://emulatorjs.org">EmulatorJS</a> &amp;
+        <a href="https://github.com/aciderix/portable-retro-games">Portable Retro Games</a>
+    </div>
+</div>
+
+<div id="game"></div>
+
+<script>
+(function() {
+    // Embedded game data
+    var EMBEDDED_ROM_B64 = "{{ROM_B64}}";
+    var EMBEDDED_ROM_FILENAME = "{{ROM_FILENAME}}";
+    var EMBEDDED_CORE_B64 = "{{CORE_B64}}";
+    var EMBEDDED_CORE_NAME = "{{CORE_NAME}}";
+
+    // Helpers
+    function b64toUint8(b64) {
+        var bin = atob(b64);
+        var len = bin.length;
+        var arr = new Uint8Array(len);
+        for (var i = 0; i < len; i++) arr[i] = bin.charCodeAt(i);
+        return arr;
+    }
+    function b64toBlobUrl(b64, mime) {
+        return URL.createObjectURL(new Blob([b64toUint8(b64)], { type: mime || 'application/octet-stream' }));
+    }
+    function setProgress(pct, msg) {
+        var fill = document.getElementById('ld-fill');
+        var status = document.getElementById('ld-status');
+        if (fill) fill.style.width = pct + '%';
+        if (status) status.textContent = msg;
+    }
+
+    setProgress(10, 'Loading emulator engine...');
+
+    // ── Intercept fetch() ──
+    var _origFetch = window.fetch;
+    window.fetch = function(input, init) {
+        var url = (typeof input === 'string') ? input : (input && input.url ? input.url : '');
+
+        // Serve embedded core WASM
+        if (url.indexOf(EMBEDDED_CORE_NAME + '-wasm.data') !== -1) {
+            setProgress(60, 'Loading emulator core...');
+            var data = b64toUint8(EMBEDDED_CORE_B64);
+            return Promise.resolve(new Response(data.buffer, {
+                status: 200,
+                headers: { 'Content-Type': 'application/octet-stream', 'Content-Length': String(data.length) }
+            }));
+        }
+
+        // Serve embedded ROM (match by blob URL or filename)
+        if (url === window.EJS_gameUrl || url.indexOf(EMBEDDED_ROM_FILENAME) !== -1) {
+            setProgress(80, 'Loading game data...');
+            var data = b64toUint8(EMBEDDED_ROM_B64);
+            return Promise.resolve(new Response(data.buffer, {
+                status: 200,
+                headers: { 'Content-Type': 'application/octet-stream', 'Content-Length': String(data.length) }
+            }));
+        }
+
+        // Stub metadata
+        if (url.indexOf('version.json') !== -1 || url.indexOf('localization/') !== -1 ||
+            url.indexOf('cores/reports/') !== -1 || url.indexOf('compression/') !== -1) {
+            return Promise.resolve(new Response('{}', {
+                status: 200, headers: { 'Content-Type': 'application/json' }
+            }));
+        }
+
+        return _origFetch.apply(this, arguments);
+    };
+
+    // ── Intercept XMLHttpRequest ──
+    var XHRProto = XMLHttpRequest.prototype;
+    var _xhrOpen = XHRProto.open;
+    var _xhrSend = XHRProto.send;
+
+    XHRProto.open = function(method, url) {
+        this._prg_url = url;
+        return _xhrOpen.apply(this, arguments);
+    };
+
+    XHRProto.send = function(body) {
+        var url = this._prg_url || '';
+        var embeddedB64 = null;
+
+        if (url.indexOf(EMBEDDED_CORE_NAME + '-wasm.data') !== -1) {
+            embeddedB64 = EMBEDDED_CORE_B64;
+            setProgress(60, 'Loading emulator core...');
+        } else if (url.indexOf(EMBEDDED_ROM_FILENAME) !== -1) {
+            embeddedB64 = EMBEDDED_ROM_B64;
+            setProgress(80, 'Loading game data...');
+        }
+
+        if (embeddedB64) {
+            var data = b64toUint8(embeddedB64);
+            var self = this;
+            Object.defineProperty(self, 'readyState', { get: function() { return 4; }, configurable: true });
+            Object.defineProperty(self, 'status', { get: function() { return 200; }, configurable: true });
+            Object.defineProperty(self, 'statusText', { get: function() { return 'OK'; }, configurable: true });
+            Object.defineProperty(self, 'response', { get: function() { return data.buffer; }, configurable: true });
+            setTimeout(function() {
+                self.dispatchEvent(new ProgressEvent('progress', { loaded: data.length, total: data.length }));
+                self.dispatchEvent(new Event('load'));
+                if (self.onprogress) self.onprogress({ loaded: data.length, total: data.length });
+                if (self.onload) self.onload();
+                if (self.onreadystatechange) self.onreadystatechange();
+            }, 10);
+            return;
+        }
+
+        // Stub metadata
+        if (url.indexOf('version.json') !== -1 || url.indexOf('cores/reports/') !== -1 ||
+            url.indexOf('localization/') !== -1) {
+            var self = this;
+            Object.defineProperty(self, 'readyState', { get: function() { return 4; }, configurable: true });
+            Object.defineProperty(self, 'status', { get: function() { return 200; }, configurable: true });
+            Object.defineProperty(self, 'response', { get: function() { return '{}'; }, configurable: true });
+            Object.defineProperty(self, 'responseText', { get: function() { return '{}'; }, configurable: true });
+            setTimeout(function() {
+                self.dispatchEvent(new Event('load'));
+                if (self.onload) self.onload();
+                if (self.onreadystatechange) self.onreadystatechange();
+            }, 10);
+            return;
+        }
+
+        return _xhrSend.apply(this, arguments);
+    };
+
+    // ── EJS Configuration ──
+    var romBlobUrl = b64toBlobUrl(EMBEDDED_ROM_B64, 'application/octet-stream');
+
+    window.EJS_player = '#game';
+    window.EJS_gameUrl = romBlobUrl;
+    window.EJS_gameName = '{{TITLE}}';
+    window.EJS_color = '#FF4444';
+    window.EJS_startOnLoaded = false;
+    window.EJS_pathtodata = 'https://cdn.emulatorjs.org/stable/data/';
+    window.EJS_CacheLimit = 0;
+    window.EJS_startButtonName = 'Play {{TITLE}}';
+    window.EJS_disableLocalStorage = false;
+
+    window.EJS_ready = function() {
+        setProgress(100, 'Ready!');
+        setTimeout(function() {
+            document.getElementById('loading-overlay').classList.add('hidden');
+        }, 400);
+    };
+    window.EJS_onGameStart = function() {
+        document.getElementById('loading-overlay').classList.add('hidden');
+    };
+
+    setProgress(30, 'Loading emulator engine...');
+})();
+window.EJS_core = '{{CORE_NAME}}';
+<\/script>
+
+<!-- EmulatorJS Engine (emulator.min.js) -->
+<script>
+{{EJS_ENGINE_JS}}
+<\/script>
+
+<!-- Initialize EmulatorJS -->
+<script>
+(async function() {
+    var scriptPath = window.EJS_pathtodata;
+    var config = {};
+    config.gameUrl = window.EJS_gameUrl;
+    config.dataPath = scriptPath;
+    config.system = window.EJS_core;
+    config.biosUrl = window.EJS_biosUrl;
+    config.gameName = window.EJS_gameName;
+    config.color = window.EJS_color;
+    config.startOnLoad = window.EJS_startOnLoaded;
+    config.fullscreenOnLoad = window.EJS_fullscreenOnLoaded;
+    config.filePaths = window.EJS_paths;
+    config.cacheLimit = window.EJS_CacheLimit;
+    config.defaultOptions = window.EJS_defaultOptions;
+    config.startBtnName = window.EJS_startButtonName;
+    config.volume = window.EJS_volume;
+    config.defaultControllers = window.EJS_defaultControls;
+    config.disableDatabases = window.EJS_disableDatabases;
+    config.disableLocalStorage = window.EJS_disableLocalStorage;
+    config.threads = window.EJS_threads;
+    config.shaders = Object.assign({}, window.EJS_SHADERS, window.EJS_shaders ? window.EJS_shaders : {});
+
+    window.EJS_emulator = new EmulatorJS(EJS_player, config);
+
+    if (typeof window.EJS_ready === 'function') {
+        window.EJS_emulator.on('ready', window.EJS_ready);
+    }
+    if (typeof window.EJS_onGameStart === 'function') {
+        window.EJS_emulator.on('start', window.EJS_onGameStart);
+    }
+})();
+<\/script>
+
+</body>
+</html>`;
+
+
+// ============================================================
+//  Utility: ArrayBuffer to Base64 (chunked to avoid stack overflow)
+// ============================================================
+function arrayBufferToBase64(buffer) {
+  const bytes = new Uint8Array(buffer);
+  const CHUNK = 0x8000;
+  let result = '';
+  for (let i = 0; i < bytes.length; i += CHUNK) {
+    result += String.fromCharCode.apply(null, bytes.subarray(i, Math.min(i + CHUNK, bytes.length)));
+  }
+  return btoa(result);
+}
+
+// ============================================================
+//  Utility: Format file size
+// ============================================================
+function formatSize(bytes) {
+  if (bytes < 1024) return bytes + ' o';
+  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' Ko';
+  return (bytes / (1024 * 1024)).toFixed(1) + ' Mo';
+}
+
+// ============================================================
+//  Detect system from filename extension
+// ============================================================
+function detectSystem(filename) {
+  const dotIdx = filename.lastIndexOf('.');
+  if (dotIdx === -1) return null;
+  const ext = filename.substring(dotIdx).toLowerCase();
+  return EXT_TO_SYSTEM[ext] || null;
+}
+
+// ============================================================
+//  Clean title from filename (same logic as Python)
+// ============================================================
+function cleanTitle(filename) {
+  // Remove extension
+  const dotIdx = filename.lastIndexOf('.');
+  let name = dotIdx !== -1 ? filename.substring(0, dotIdx) : filename;
+  // Replace underscores and hyphens with spaces
+  name = name.replace(/[_-]/g, ' ');
+  // Title-case if all lowercase
+  if (name === name.toLowerCase()) {
+    name = name.replace(/\b\w/g, c => c.toUpperCase());
+  }
+  return name;
+}
+
+// ============================================================
+//  DOM References
+// ============================================================
+const $ = id => document.getElementById(id);
+const dropzone = $('dropzone');
+const romInput = $('rom-input');
+const fileInfoEl = $('file-info');
+const systemSelect = $('system-select');
+const titleInput = $('title-input');
+const colorInput = $('color-input');
+const colorHex = $('color-hex');
+const outputInput = $('output-input');
+const generateBtn = $('generate-btn');
+const progressSection = $('progress-section');
+const progressFill = $('progress-fill');
+const progressSteps = $('progress-steps');
+const downloadSection = $('download-section');
+const downloadBtn = $('download-btn');
+const downloadInfo = $('download-info');
+const errorBanner = $('error-banner');
+
+let selectedFile = null;
+let generatedBlobUrl = null;
+let generatedFilename = '';
+
+// ============================================================
+//  Populate System Dropdown (grouped by category)
+// ============================================================
+(function populateSystemSelect() {
+  const categories = { 'Console': [], 'Ordinateur': [], 'Arcade': [], 'Autre': [] };
+  for (const [sysId, info] of Object.entries(SYSTEMS)) {
+    const cat = info.category || 'Autre';
+    if (!categories[cat]) categories[cat] = [];
+    categories[cat].push({ id: sysId, ...info });
+  }
+  // Sort each category
+  for (const cat of Object.keys(categories)) {
+    categories[cat].sort((a, b) => a.label.localeCompare(b.label));
+  }
+  const order = ['Console', 'Ordinateur', 'Arcade', 'Autre'];
+  for (const cat of order) {
+    if (!categories[cat] || categories[cat].length === 0) continue;
+    const optgroup = document.createElement('optgroup');
+    optgroup.label = cat;
+    for (const sys of categories[cat]) {
+      const opt = document.createElement('option');
+      opt.value = sys.id;
+      opt.textContent = `${sys.label} (${sys.extensions.join(', ')})`;
+      optgroup.appendChild(opt);
+    }
+    systemSelect.appendChild(optgroup);
+  }
+})();
+
+// ============================================================
+//  Populate Systems List Tab
+// ============================================================
+(function populateSystemsList() {
+  const container = $('systems-list');
+  const categories = { 'Console': [], 'Ordinateur': [], 'Arcade': [], 'Autre': [] };
+  for (const [sysId, info] of Object.entries(SYSTEMS)) {
+    const cat = info.category || 'Autre';
+    if (!categories[cat]) categories[cat] = [];
+    categories[cat].push({ id: sysId, ...info });
+  }
+  for (const cat of Object.keys(categories)) {
+    categories[cat].sort((a, b) => a.label.localeCompare(b.label));
+  }
+  const order = ['Console', 'Ordinateur', 'Arcade', 'Autre'];
+  for (const cat of order) {
+    if (!categories[cat] || categories[cat].length === 0) continue;
+    const title = document.createElement('div');
+    title.className = 'system-group-title';
+    title.textContent = cat + ` (${categories[cat].length})`;
+    container.appendChild(title);
+    for (const sys of categories[cat]) {
+      const row = document.createElement('div');
+      row.className = 'system-row';
+      row.innerHTML = `
+        <span class="system-name">${sys.label}</span>
+        <span class="system-core">${sys.core}</span>
+        <span class="system-exts">${sys.extensions.join(', ')}</span>
+      `;
+      container.appendChild(row);
+    }
+  }
+})();
+
+// ============================================================
+//  Tab Navigation
+// ============================================================
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+    btn.classList.add('active');
+    $('tab-' + btn.dataset.tab).classList.add('active');
+  });
+});
+
+// ============================================================
+//  File Selection (Drag & Drop + Click)
+// ============================================================
+dropzone.addEventListener('click', () => romInput.click());
+dropzone.querySelector('.dropzone-btn').addEventListener('click', e => {
+  e.stopPropagation();
+  romInput.click();
+});
+
+dropzone.addEventListener('dragover', e => { e.preventDefault(); dropzone.classList.add('dragover'); });
+dropzone.addEventListener('dragleave', () => dropzone.classList.remove('dragover'));
+dropzone.addEventListener('drop', e => {
+  e.preventDefault();
+  dropzone.classList.remove('dragover');
+  if (e.dataTransfer.files.length > 0) handleFile(e.dataTransfer.files[0]);
+});
+romInput.addEventListener('change', () => {
+  if (romInput.files.length > 0) handleFile(romInput.files[0]);
+});
+
+function handleFile(file) {
+  selectedFile = file;
+
+  // Update drop zone appearance
+  dropzone.classList.add('has-file');
+  dropzone.querySelector('.dropzone-icon').textContent = '✅';
+  dropzone.querySelector('.dropzone-text').textContent = file.name;
+  dropzone.querySelector('.dropzone-hint').textContent = formatSize(file.size);
+  dropzone.querySelector('.dropzone-btn').textContent = 'Changer de fichier';
+
+  // Detect system
+  const detectedSysId = detectSystem(file.name);
+  const detectedInfo = detectedSysId ? SYSTEMS[detectedSysId] : null;
+
+  // Show file info
+  $('info-name').textContent = file.name;
+  $('info-size').textContent = formatSize(file.size);
+  if (detectedInfo) {
+    $('info-system').innerHTML = `<span class="badge badge-success">${detectedInfo.label}</span>`;
+  } else {
+    $('info-system').innerHTML = `<span class="badge badge-warning">Non détecté — choisissez manuellement</span>`;
+  }
+  fileInfoEl.classList.add('visible');
+
+  // Auto-fill system select (only if not manually overridden)
+  if (systemSelect.value === '' && detectedSysId) {
+    systemSelect.value = detectedSysId;
+  }
+
+  // Auto-fill title
+  titleInput.value = cleanTitle(file.name);
+
+  // Auto-fill output filename
+  const baseName = file.name.lastIndexOf('.') !== -1 ? file.name.substring(0, file.name.lastIndexOf('.')) : file.name;
+  outputInput.value = baseName + '.html';
+
+  // Enable generate button
+  generateBtn.disabled = false;
+
+  // Reset previous generation
+  hideDownload();
+  hideError();
+}
+
+// ============================================================
+//  Color Picker
+// ============================================================
+colorInput.addEventListener('input', () => {
+  colorHex.textContent = colorInput.value.toUpperCase();
+});
+
+// ============================================================
+//  Progress & Error Helpers
+// ============================================================
+function setStep(stepName, state) {
+  const step = progressSteps.querySelector(`[data-step="${stepName}"]`);
+  if (!step) return;
+  step.className = 'progress-step ' + state;
+  const icon = step.querySelector('.step-icon');
+  if (state === 'active') icon.textContent = '⏳';
+  else if (state === 'done') icon.textContent = '✅';
+  else if (state === 'error') icon.textContent = '❌';
+}
+function setProgress(pct) {
+  progressFill.style.width = pct + '%';
+}
+function showError(msg) {
+  errorBanner.textContent = msg;
+  errorBanner.classList.add('visible');
+}
+function hideError() { errorBanner.classList.remove('visible'); }
+function hideDownload() {
+  downloadSection.classList.remove('visible');
+  if (generatedBlobUrl) { URL.revokeObjectURL(generatedBlobUrl); generatedBlobUrl = null; }
+}
+function resetProgress() {
+  progressSteps.querySelectorAll('.progress-step').forEach(s => {
+    s.className = 'progress-step';
+    s.querySelector('.step-icon').textContent = '⏳';
+  });
+  setProgress(0);
+}
+
+// ============================================================
+//  Fetch text from CDN (with cache)
+// ============================================================
+async function fetchText(url) {
+  const resp = await fetch(url, { headers: { 'User-Agent': 'Mozilla/5.0 PortableRetroGames/1.0' } });
+  if (!resp.ok) throw new Error(`Échec du téléchargement de ${url} (HTTP ${resp.status})`);
+  return await resp.text();
+}
+
+// ============================================================
+//  Fetch binary from CDN (with cache) → ArrayBuffer
+// ============================================================
+async function fetchBinary(url) {
+  const resp = await fetch(url, { headers: { 'User-Agent': 'Mozilla/5.0 PortableRetroGames/1.0' } });
+  if (!resp.ok) throw new Error(`Échec du téléchargement de ${url} (HTTP ${resp.status})`);
+  return await resp.arrayBuffer();
+}
+
+// ============================================================
+//  GENERATE
+// ============================================================
+generateBtn.addEventListener('click', async () => {
+  if (!selectedFile) return;
+  hideError();
+  hideDownload();
+  resetProgress();
+  progressSection.classList.add('visible');
+  generateBtn.disabled = true;
+
+  try {
+    // Resolve system
+    const sysId = systemSelect.value || detectSystem(selectedFile.name);
+    if (!sysId || !SYSTEMS[sysId]) {
+      throw new Error("Impossible de déterminer le système. Veuillez le sélectionner manuellement.");
+    }
+    const sysInfo = SYSTEMS[sysId];
+    const coreName = sysInfo.core;
+    const title = titleInput.value.trim() || cleanTitle(selectedFile.name);
+    const accentColor = colorInput.value || '#FF4444';
+    const outputName = outputInput.value.trim() || (selectedFile.name.replace(/\.[^.]+$/, '') + '.html');
+
+    // Step 1: Read ROM → base64
+    setStep('rom', 'active');
+    setProgress(5);
+    const romBuffer = await selectedFile.arrayBuffer();
+    const romB64 = arrayBufferToBase64(romBuffer);
+    const romFilename = selectedFile.name.toLowerCase();
+    setStep('rom', 'done');
+    setProgress(15);
+
+    // Step 2: Fetch CSS
+    setStep('css', 'active');
+    if (!assetCache.css) {
+      assetCache.css = await fetchText(EJS_CDN_BASE + 'emulator.min.css');
+    }
+    const ejsCss = assetCache.css;
+    setStep('css', 'done');
+    setProgress(30);
+
+    // Step 3: Fetch JS engine
+    setStep('js', 'active');
+    if (!assetCache.js) {
+      assetCache.js = await fetchText(EJS_CDN_BASE + 'emulator.min.js');
+    }
+    const ejsJs = assetCache.js;
+    setStep('js', 'done');
+    setProgress(50);
+
+    // Step 4: Fetch core WASM → base64
+    setStep('core', 'active');
+    if (!assetCache.cores[coreName]) {
+      const coreBuffer = await fetchBinary(EJS_CDN_BASE + 'cores/' + coreName + '-wasm.data');
+      assetCache.cores[coreName] = arrayBufferToBase64(coreBuffer);
+    }
+    const coreB64 = assetCache.cores[coreName];
+    setStep('core', 'done');
+    setProgress(75);
+
+    // Step 5: Assemble HTML (same replacement logic as Python)
+    setStep('build', 'active');
+
+    let html = HTML_TEMPLATE;
+    // Replace all placeholders (replaceAll for each, matching Python's behavior)
+    html = html.split('{{TITLE}}').join(title);
+    html = html.split('{{SYSTEM_LABEL}}').join(sysInfo.label);
+    html = html.split('{{ROM_B64}}').join(romB64);
+    html = html.split('{{ROM_FILENAME}}').join(romFilename);
+    html = html.split('{{CORE_B64}}').join(coreB64);
+    html = html.split('{{CORE_NAME}}').join(coreName);
+    html = html.split('{{EJS_CSS}}').join(ejsCss);
+    html = html.split('{{EJS_ENGINE_JS}}').join(ejsJs);
+
+    // Apply accent color (replace the default #FF4444 with chosen color in the loading overlay styles)
+    if (accentColor.toUpperCase() !== '#FF4444') {
+      html = html.split('#FF4444').join(accentColor);
+    }
+
+    setStep('build', 'done');
+    setProgress(90);
+
+    // Step 6: Create download
+    setStep('done', 'done');
+    setProgress(100);
+
+    const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
+    if (generatedBlobUrl) URL.revokeObjectURL(generatedBlobUrl);
+    generatedBlobUrl = URL.createObjectURL(blob);
+    generatedFilename = outputName;
+
+    downloadBtn.textContent = `💾 Télécharger ${outputName}`;
+    downloadInfo.textContent = `${sysInfo.label} • ${title} • ${formatSize(blob.size)} • 100% hors-ligne`;
+    downloadSection.classList.add('visible');
+
+  } catch (err) {
+    console.error(err);
+    // Mark current active step as error
+    progressSteps.querySelectorAll('.progress-step.active').forEach(s => {
+      s.className = 'progress-step error';
+      s.querySelector('.step-icon').textContent = '❌';
+    });
+    showError('❌ Erreur : ' + err.message);
+  } finally {
+    generateBtn.disabled = false;
+  }
+});
+
+// ============================================================
+//  Download
+// ============================================================
+downloadBtn.addEventListener('click', () => {
+  if (!generatedBlobUrl) return;
+  const a = document.createElement('a');
+  a.href = generatedBlobUrl;
+  a.download = generatedFilename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+});
+</script>
+
+</body>
+</html>
