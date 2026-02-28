@@ -228,6 +228,7 @@ Share a game with anyone by sending a single file. No instructions needed — ju
 | [Amiga Packer](docs/amiga-packer.md) | Complete guide to the Amiga packer: WASM embedding, asset inlining, caching |
 | [Architecture](docs/architecture.md) | Technical deep-dive: embedding strategies, mobile patterns, emulator integration |
 | [Future Enhancements](docs/future-enhancements.md) | Roadmap: save states, PWA support, more platforms, compression, batch processing |
+| [Supported Platforms Roadmap](docs/supported-platforms-roadmap.md) | 🗺️ 40+ retro platforms feasibility analysis, priority ranking & universal packer vision |
 
 ---
 
@@ -420,6 +421,7 @@ python build_jimmy_willburne.py
 - [Documentation Amiga Packer](docs/amiga-packer.md)
 - [Architecture technique](docs/architecture.md)
 - [Améliorations futures](docs/future-enhancements.md)
+- [Roadmap des plateformes supportées](docs/supported-platforms-roadmap.md) — 🗺️ Analyse de 40+ plateformes rétro & vision du packer universel
 
 ---
 
