@@ -1,17 +1,22 @@
 #!/usr/bin/env python3
 """
 Universal Retro Game Packer — Creates self-contained offline HTML files from ROM images.
-Uses EmulatorJS (RetroArch cores compiled to WebAssembly) to support 30+ retro platforms.
+Uses EmulatorJS (RetroArch cores compiled to WebAssembly) to support 38 retro platforms.
 
 Usage:
     python3 pack_game.py game.nes
     python3 pack_game.py game.sfc --title "Chrono Trigger"
     python3 pack_game.py --system genesis "Sonic.md"
     python3 pack_game.py game.gb --output my_game.html
+    python3 pack_game.py streetfighter2.zip --system cps1
+    python3 pack_game.py --prefetch-all   # Download all cores for 100% offline use
 
-Supported systems: nes, snes, gb, gbc, gba, genesis, sms, gg, atari2600, atari7800,
-                   atari5200, lynx, n64, nds, psx, pce, ngp, ws, vb, coleco, 32x,
-                   segacd, c64, zxspectrum, msx
+Supported systems (38):
+  Console:  nes, snes, gb, gbc, gba, n64, nds, vb, genesis, sms, gg, 32x, segacd,
+            atari2600, atari5200, atari7800, lynx, jaguar, psx, pce, pcfx, ngp, ws, coleco
+  Computer: c64, c128, vic20, pet, plus4, amiga, cpc, zxspectrum, zx81
+  Arcade:   cps1, cps2, fbneo, mame
+  Other:    doom
 """
 
 import argparse
@@ -57,9 +62,9 @@ SYSTEMS = {
     'jaguar':    {'core': 'virtualjaguar',     'label': 'Atari Jaguar',               'extensions': ['.j64', '.jag', '.rom', '.abs', '.cof', '.bin']},
     # Commodore family
     'c128':      {'core': 'vice_x128',         'label': 'Commodore 128',              'extensions': ['.d64', '.d71', '.d81', '.prg', '.t64', '.tap']},
-    'vic20':     {'core': 'vice_xvic',         'label': 'Commodore VIC-20',           'extensions': ['.d64', '.prg', '.crt', '.t64', '.tap', '.20']},
+    'vic20':     {'core': 'vice_xvic',         'label': 'Commodore VIC-20',           'extensions': ['.d64', '.prg', '.crt', '.t64', '.tap', '.20', '.60', '.a0']},
     'pet':       {'core': 'vice_xpet',         'label': 'Commodore PET',              'extensions': ['.d64', '.prg', '.t64', '.tap']},
-    'plus4':     {'core': 'vice_xplus4',       'label': 'Commodore Plus/4',           'extensions': ['.d64', '.prg', '.t64', '.tap']},
+    'plus4':     {'core': 'vice_xplus4',       'label': 'Commodore Plus/4',           'extensions': ['.d64', '.prg', '.t64', '.tap', '.bin', '.crt']},
     'amiga':     {'core': 'puae',              'label': 'Commodore Amiga',            'extensions': ['.adf', '.adz', '.dms', '.ipf']},
     # Amstrad
     'cpc':       {'core': 'cap32',             'label': 'Amstrad CPC',                'extensions': ['.dsk', '.sna', '.cdt', '.voc']},
@@ -69,6 +74,10 @@ SYSTEMS = {
     'doom':      {'core': 'prboom',            'label': 'DOOM (PrBoom)',              'extensions': ['.wad']},
     # NEC
     'pcfx':      {'core': 'mednafen_pcfx',     'label': 'PC-FX',                     'extensions': ['.cue', '.ccd', '.toc']},
+    'cps1':      {'core': 'fbalpha2012_cps1', 'label': 'Arcade (CPS1)',              'extensions': ['.zip']},
+    'cps2':      {'core': 'fbalpha2012_cps2', 'label': 'Arcade (CPS2)',              'extensions': ['.zip']},
+    'fbneo':     {'core': 'fbneo',            'label': 'Arcade (FBNeo)',             'extensions': ['.zip']},
+    'mame':      {'core': 'mame2003_plus',    'label': 'Arcade (MAME 2003+)',        'extensions': ['.zip']},
 }
 
 # Build reverse lookup: extension → system
