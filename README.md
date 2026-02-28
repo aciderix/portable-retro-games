@@ -420,14 +420,17 @@ Everything is embedded. The generated HTML files contain:
 
 ## 🎮 Game Library
 
-### Console Games — 22 Systems Tested ✅
+### 🌐 Universal Packer — 38 Systems Supported
 
-The universal packer has been tested with real ROMs across 22 of its 38 supported systems (PSX and Sega CD excluded due to CD image sizes, arcade/DOOM and some new computer systems pending full validation):
+The universal packer supports **38 retro systems** with a single Python script. Most systems work out of the box; some may require specific ROM formats or BIOS files for optimal results.
 
-- **Nintendo**: Super Mario Bros 3 (NES), Super Mario World (SNES), Pokémon Red (GB), Pokémon Crystal (GBC), Pokémon FireRed (GBA), Super Mario 64 (N64), New Super Mario Bros (NDS)
-- **Sega**: Sonic the Hedgehog (Genesis), Sonic Chaos (SMS), Sonic Triple Trouble (GG), Knuckles' Chaotix (32X)
-- **Atari**: Pac-Man (2600), Centipede (5200), Asteroids (7800), Tetris (Lynx)
-- **Others**: Donkey Kong (ColecoVision), King of Fighters R-1 (NGP), Wario Land (Virtual Boy), WonderSwan, Commodore 64, ZX Spectrum, PC Engine
+| Status | Systems |
+|--------|---------|
+| ✅ **Fully tested** | NES, SNES, Game Boy, GBC, GBA, N64, NDS, Genesis, Master System, Game Gear, 32X, Atari 2600, 5200, 7800, Lynx, ColecoVision, Neo Geo Pocket, Virtual Boy, WonderSwan, PC Engine, C64, ZX Spectrum |
+| 🟡 **Supported — may need tuning** | PSX *(needs BIOS)*, Sega CD *(large CD images)*, Jaguar, C128, VIC-20, PET, Plus/4, Amiga, CPC, ZX81, PC-FX |
+| 🕹️ **Arcade / DOOM** | CPS1, CPS2, FBNeo, MAME 2003+, DOOM *(require `--system` flag + correct ROM sets)* |
+
+> 💡 Systems marked "may need tuning" boot correctly via EmulatorJS but may require specific ROM formats, firmware files, or configuration depending on the game. Contributions and testing feedback are welcome!
 
 ### Amstrad CPC — 132 French Games Ready 🇫🇷
 
@@ -498,7 +501,7 @@ Please open an issue first to discuss major changes.
 
 - **41 platforms** supported (38 universal + 3 platform-specific with advanced features)
 - **132+ games** tested and converted (CPC library)
-- **22 systems** validated with real ROM testing
+- **22 systems** fully validated with real ROM testing, 38 total supported
 - **0 pip dependencies** for the universal packer (Python stdlib only)
 - **0 runtime dependencies** in generated HTML files
 - **100% offline** — no server, no CDN, no internet
