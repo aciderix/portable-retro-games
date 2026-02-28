@@ -1,12 +1,12 @@
 # 🕹️ portable-retro-games
 
-### Play Apple II, Amstrad CPC & Amiga games instantly — each game is a single standalone HTML file, no install, no server, works offline in any browser forever
+### Play retro games instantly — each game is a single standalone HTML file, no install, no server, works offline in any browser forever
 
 [![Python 3.12](https://img.shields.io/badge/Python-3.12-blue?logo=python&logoColor=white)](https://www.python.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![Offline Ready](https://img.shields.io/badge/Offline-Ready-brightgreen?logo=wifi-off)](#)
 [![Mobile Friendly](https://img.shields.io/badge/Mobile-Friendly-orange?logo=smartphone)](#)
-[![Platforms](https://img.shields.io/badge/Platforms-Apple%20II%20%7C%20CPC%20%7C%20Amiga-purple)](#supported-platforms)
+[![Platforms](https://img.shields.io/badge/Platforms-24%2B%20Systems-purple)](#supported-platforms)
 [![Live Demo](https://img.shields.io/badge/Live%20Demo-Play%20Now!-ff6600?logo=netlify&logoColor=white)](https://jimmy-willburne.netlify.app/)
 
 ---
@@ -20,17 +20,17 @@
 
 ## 🤔 What is this?
 
-**portable-retro-games** is a collection of Python scripts that package retro computer game disk images into **self-contained, offline-playable HTML files**.
+**portable-retro-games** is a collection of Python scripts that package retro game ROMs and disk images into **self-contained, offline-playable HTML files**.
 
 Each generated HTML file embeds:
 - ✅ A full **browser-based emulator** (JavaScript / WebAssembly)
 - ✅ The **game ROM or disk image** (base64-encoded)
-- ✅ A **virtual mobile keyboard** with touch support
+- ✅ **Touch-friendly controls** with virtual keyboard/gamepad support
 - ✅ **Zero external dependencies** — works offline, forever
 
 > **One file. One game. Any browser. Any device. No internet needed.**
 
-This means you can take a 40-year-old Apple II floppy disk image, run a single command, and get an HTML file that plays the game in Chrome, Firefox, or Safari — on desktop or mobile — with no server, no installation, no plugins.
+This means you can take a retro game file — from NES to N64, from Game Boy to Amiga — run a single command, and get an HTML file that plays the game in Chrome, Firefox, or Safari — on desktop or mobile — with no server, no installation, no plugins.
 
 ### Why does this matter?
 
@@ -39,6 +39,28 @@ Retro games are disappearing. Hardware fails. Websites go offline. Flash died. J
 ---
 
 ## 🖥️ Supported Platforms
+
+### 🌐 Universal Packer — 24 Console & Computer Systems
+
+The **Universal Packer** (`packers/universal/pack_game.py`) supports **24 retro systems** with a single script, zero pip dependencies:
+
+| Category | Systems |
+|----------|---------|
+| 🎮 **Nintendo** | NES, SNES, Game Boy, Game Boy Color, GBA, N64, Nintendo DS, Virtual Boy |
+| 🎮 **Sega** | Genesis/Mega Drive, Master System, Game Gear, Sega 32X, Sega CD |
+| 🎮 **Atari** | 2600, 5200, 7800, Lynx |
+| 🎮 **Sony** | PlayStation |
+| 🎮 **NEC** | PC Engine / TurboGrafx-16 |
+| 🎮 **SNK** | Neo Geo Pocket / Color |
+| 🎮 **Bandai** | WonderSwan / Color |
+| 🎮 **Coleco** | ColecoVision |
+| 💻 **Computers** | Commodore 64, ZX Spectrum |
+
+> Powered by [EmulatorJS](https://emulatorjs.org/) — cores are auto-downloaded and cached locally.
+
+### 🔧 Platform-Specific Packers — Advanced Features
+
+For these platforms, dedicated packers provide enhanced features like keyboard auto-detection, firmware analysis, and custom virtual keyboards:
 
 | Platform | Packer Script | Emulator | Input Formats | Key Features |
 |---|---|---|---|---|
@@ -53,13 +75,43 @@ Retro games are disappearing. Hardware fails. Websites go offline. Flash died. J
 ### Prerequisites
 
 ```bash
-python --version   # Python 3.12+
-pip install beautifulsoup4 requests   # Common dependencies
+python --version   # Python 3.12+ (all packers)
 ```
+
+### 🌐 Universal Packer — Any Console Game (24 Systems)
+
+```bash
+cd packers/universal
+
+# Pack any ROM — system is auto-detected from file extension
+python3 pack_game.py SuperMario.nes
+python3 pack_game.py Sonic.gen
+python3 pack_game.py Pokemon.gba
+python3 pack_game.py Mario64.z64
+
+# Custom title & output
+python3 pack_game.py Zelda.sfc --title "Zelda - A Link to the Past" --output zelda.html
+
+# List all supported systems & file extensions
+python3 pack_game.py --list-systems
+
+# Check which cores are cached locally
+python3 pack_game.py --offline-status
+
+# Download ALL cores at once for full offline use (~40 MB)
+python3 pack_game.py --prefetch-all
+```
+
+**Output:** A single `.html` file — open it in any browser 🎮
+
+> 💡 The first time you pack a game for a given system, the WASM core is downloaded from the EmulatorJS CDN and cached locally (`~/.emulatorjs_cache/`). All subsequent games for that system work **100% offline**. You can also place cores in a `cores/` folder next to the script for fully portable offline use.
 
 ### 🍎 Apple II — Pack a Game
 
 ```bash
+cd packers/apple2
+pip install beautifulsoup4 requests
+
 # Pack a .dsk disk image into a playable HTML file
 python pack_apple2_game_html.py Karateka.dsk
 
@@ -75,6 +127,9 @@ python pack_apple2_game_html.py --model apple2e "Oregon Trail.dsk"
 ### 💾 Amstrad CPC — Pack a Game
 
 ```bash
+cd packers/cpc
+pip install beautifulsoup4 requests
+
 # Pack a CPC DSK file
 python pack_cpc_game_html.py Gryzor.dsk
 
@@ -91,6 +146,8 @@ python pack_cpc_game_html.py --warp Gryzor.dsk
 ### 🐱 Amiga — Build a Game
 
 ```bash
+cd packers/amiga
+
 # Build a standalone HTML from an ADF disk image
 python build_jimmy_willburne.py
 
@@ -122,10 +179,11 @@ python build_jimmy_willburne_cached.py
 
 ### 📱 Mobile Experience
 
-Each packed game includes a responsive virtual keyboard optimized for touch:
+Each packed game includes responsive controls optimized for touch:
 
-| Platform | Virtual Controls |
+| Packer | Virtual Controls |
 |---|---|
+| Universal (EmulatorJS) | Built-in virtual gamepad, D-pad, ABXY buttons, responsive viewport |
 | Apple II | Arrow keys, letter grid, digit row, special keys (ESC, RETURN, SPACE) |
 | Amstrad CPC | Context-detected keys, AZERTY layout, joystick option |
 | Amiga | Virtual joystick with fire button, touch-anywhere controls |
@@ -136,22 +194,22 @@ Each packed game includes a responsive virtual keyboard optimized for touch:
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│                     portable-retro-games                           │
+│                     portable-retro-games                        │
 ├─────────────────────────────────────────────────────────────────┤
 │                                                                 │
 │   ┌──────────┐    ┌──────────────┐    ┌───────────────────┐    │
-│   │ Game Disk │───▶│ Packer Script│───▶│ Self-Contained    │    │
-│   │  Image    │    │  (Python)    │    │  HTML File        │    │
-│   │           │    │              │    │                   │    │
-│   │ .dsk .adf │    │ • Parse disk │    │ ┌───────────────┐│    │
-│   │ .woz .nib │    │ • Detect keys│    │ │  Emulator JS  ││    │
-│   │ .do  .po  │    │ • Fetch emu  │    │ │  (or WASM)    ││    │
-│   └──────────┘    │ • Embed all  │    │ ├───────────────┤│    │
-│                    │ • Gen keyboard│    │ │  Game Data    ││    │
-│                    │ • Build HTML │    │ │  (base64)     ││    │
-│                    └──────────────┘    │ ├───────────────┤│    │
+│   │ Game ROM  │───▶│ Packer Script│───▶│ Self-Contained    │    │
+│   │ or Disk   │    │  (Python)    │    │  HTML File        │    │
+│   │  Image    │    │              │    │                   │    │
+│   │ .nes .sfc │    │ • Detect sys │    │ ┌───────────────┐│    │
+│   │ .gb .gba  │    │ • Fetch core │    │ │  Emulator JS  ││    │
+│   │ .gen .z64 │    │ • Embed all  │    │ │  + WASM Core  ││    │
+│   │ .dsk .adf │    │ • Optimize   │    │ ├───────────────┤│    │
+│   │ .woz .nib │    │ • Build HTML │    │ │  Game Data    ││    │
+│   └──────────┘    └──────────────┘    │ │  (base64)     ││    │
+│                                        │ ├───────────────┤│    │
 │                                        │ │  Virtual      ││    │
-│                                        │ │  Keyboard     ││    │
+│                                        │ │  Controls     ││    │
 │                                        │ │  (HTML/CSS/JS)││    │
 │                                        │ ├───────────────┤│    │
 │                                        │ │  Boot Logic   ││    │
@@ -159,19 +217,49 @@ Each packed game includes a responsive virtual keyboard optimized for touch:
 │                                        │ └───────────────┘│    │
 │                                        └───────────────────┘    │
 │                                                                 │
+│   Packers:                                                      │
+│   ────────                                                      │
+│   • Universal  → EmulatorJS + WASM cores (24 console systems)   │
+│   • Apple II   → apple2js (keyboard auto-detection)             │
+│   • CPC        → RVMPlayer (Z80 firmware analysis)              │
+│   • Amiga      → vAmigaWeb (full asset inlining)                │
+│                                                                 │
 │   Common Techniques:                                            │
 │   ─────────────────                                             │
 │   • Base64 encoding for binary data embedding                   │
 │   • Blob URLs & Data URIs for asset serving                     │
-│   • Fetch/Worker interceptors for virtual filesystem            │
+│   • Fetch/XHR interceptors for virtual filesystem               │
 │   • AudioContext resume on first gesture (Chrome mobile)        │
-│   • WebGL → 2D Canvas fallback                                  │
+│   • Dynamic viewport (100dvh) with safe area insets             │
 │   • Anti-zoom CSS for mobile viewport                           │
 │                                                                 │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
 ### How It Works (Step by Step)
+
+#### Universal Packer (Console Games)
+
+```
+   ROM File                  pack_game.py                     Browser
+  ┌──────────┐              ┌──────────────┐              ┌──────────────┐
+  │          │   1. Read    │              │   4. Output  │              │
+  │  .nes    │─────────────▶│  Auto-detect │─────────────▶│  Open HTML   │
+  │  .sfc    │              │  system from │              │  in browser  │
+  │  .gba    │              │  extension   │              │              │
+  │  .z64    │              │              │              │  5. EmulatorJS│
+  └──────────┘              │  2. Load or  │              │  intercepts  │
+                            │  download    │              │  fetch calls │
+  WASM Core                 │  WASM core   │              │  → serves    │
+  ┌──────────┐              │              │              │  embedded    │
+  │          │   3. Embed   │  3. Encode   │              │  data        │
+  │ cores/   │─────────────▶│  ROM + core  │              │              │
+  │ or cache │   (offline   │  as base64   │              │  6. Game     │
+  │ or CDN   │    first)    │  in HTML     │              │  boots! 🎮   │
+  └──────────┘              └──────────────┘              └──────────────┘
+```
+
+#### Platform-Specific Packers (Apple II, CPC, Amiga)
 
 ```
    Disk Image                 Python Packer                    Browser
@@ -206,7 +294,7 @@ Teachers can distribute retro computing experiences as simple HTML files. Studen
 Build your own curated retro game library. Each game is a single file you can organize in folders, back up to cloud storage, or carry on a USB drive.
 
 ### 📱 Mobile Retro Gaming
-Play Apple II, Amstrad CPC, and Amiga games on your phone or tablet. The virtual keyboards are designed for touch, with proper key sizes and responsive layouts.
+Play NES, SNES, Game Boy, Genesis, N64, Apple II, CPC, Amiga and more on your phone or tablet. Touch controls are built right in.
 
 ### 🏛️ Museums & Exhibitions
 Interactive exhibits that run on any tablet or kiosk. No internet connection required. No maintenance. Just open the HTML file.
@@ -223,6 +311,7 @@ Share a game with anyone by sending a single file. No instructions needed — ju
 
 | Document | Description |
 |---|---|
+| [Universal Packer](packers/universal/README.md) | Complete guide to the Universal Packer: 24 systems, offline mode, all options |
 | [Apple II Packer](docs/apple2-packer.md) | Complete guide to the Apple II packer: disk formats, key detection, virtual keyboard |
 | [CPC Packer](docs/cpc-packer.md) | Complete guide to the Amstrad CPC packer: DSK parsing, Z80 analysis, AZERTY mapping |
 | [Amiga Packer](docs/amiga-packer.md) | Complete guide to the Amiga packer: WASM embedding, asset inlining, caching |
@@ -234,9 +323,36 @@ Share a game with anyone by sending a single file. No instructions needed — ju
 
 ## 🔧 Technical Highlights
 
+### Universal System Detection 🔍
+
+The universal packer auto-detects the target system from file extensions:
+
+```
+.nes → NES (FCEUmm core)        .sfc/.smc → SNES (Snes9x core)
+.gb → Game Boy (Gambatte core)   .gbc → Game Boy Color (Gambatte core)
+.gba → GBA (mGBA core)          .gen/.md → Genesis (Genesis Plus GX core)
+.z64/.n64/.v64 → N64 (Mupen64)  .nds → Nintendo DS (melonDS core)
+...and 16 more systems
+```
+
+### Offline-First Architecture 📡
+
+The universal packer resolves assets in this order:
+1. **`cores/` directory** — portable offline bundle next to the script
+2. **`~/.emulatorjs_cache/`** — persistent local cache
+3. **EmulatorJS CDN** — only if not cached (first use per system)
+
+```bash
+# Pre-download everything for full offline use
+python3 pack_game.py --prefetch-all    # ~40 MB total for all 24 systems
+
+# Check what's cached
+python3 pack_game.py --offline-status
+```
+
 ### Keyboard Auto-Detection 🎹
 
-Each packer analyzes the game content to determine which keys the player will need:
+Platform-specific packers analyze the game content to determine which keys the player will need:
 
 - **Apple II**: Reads DOS 3.3 catalog entries — text adventures get a full letter grid; arcade games get arrow keys and a few action buttons
 - **CPC**: Parses BASIC source for `INKEY$`, `JOY()` patterns and scans Z80 binaries for firmware calls (`BB09h`, `BB1Bh`) to detect keyboard vs. joystick input
@@ -244,9 +360,10 @@ Each packer analyzes the game content to determine which keys the player will ne
 
 ### Emulator Asset Management 📦
 
-Packers automatically download and cache emulator files:
+Each packer manages its own cache:
 
 ```
+~/.emulatorjs_cache/        # Universal packer — WASM cores + EmulatorJS
 ~/.apple2js_cache/          # Apple II emulator JS + ROM files
 ~/.cpc_emulator_cache/      # RVMPlayer emulator resources
 ./vAmigaWeb/                # vAmiga WASM + support files
@@ -254,9 +371,10 @@ Packers automatically download and cache emulator files:
 
 ### Mobile-First Design 📱
 
+- **Dynamic viewport height** (`100dvh`) with safe area insets for notched devices
 - **Touch event handling** with proper `preventDefault()` to avoid scroll/zoom
 - **AudioContext resume** on first user gesture (required by Chrome/Safari)
-- **Viewport locking** with `user-scalable=no` and touch-action CSS
+- **Viewport locking** with `user-scalable=no` and `touch-action` CSS
 - **Responsive layouts** that adapt to screen orientation
 - **WebGL with 2D Canvas fallback** for older devices
 
@@ -268,15 +386,25 @@ Everything is embedded. The generated HTML files contain:
 |---|---|---|
 | Emulator engine (JS) | Inline `<script>` | 200KB – 2MB |
 | Emulator engine (WASM) | Base64 in `<script>` | 1MB – 5MB |
-| Game disk image | Base64 in `<script>` | 140KB – 1.8MB |
+| Game ROM / disk image | Base64 in `<script>` | 140KB – 50MB |
 | Kickstart ROM (Amiga) | Base64 in `<script>` | 512KB |
-| Virtual keyboard | Inline HTML/CSS/JS | 10KB – 30KB |
+| Virtual keyboard/controls | Inline HTML/CSS/JS | 10KB – 30KB |
+| Fetch/XHR interceptors | Inline `<script>` | 2KB – 5KB |
 | Help overlay | Inline HTML/CSS | 5KB |
 | Images/SVG/sounds | Base64 Data URIs | Variable |
 
 ---
 
 ## 🎮 Game Library
+
+### Console Games — 22 Systems Tested ✅
+
+The universal packer has been tested with real ROMs across 22 systems (PSX and Sega CD excluded due to CD image sizes):
+
+- **Nintendo**: Super Mario Bros 3 (NES), Super Mario World (SNES), Pokémon Red (GB), Pokémon Crystal (GBC), Pokémon FireRed (GBA), Super Mario 64 (N64), New Super Mario Bros (NDS)
+- **Sega**: Sonic the Hedgehog (Genesis), Sonic Chaos (SMS), Sonic Triple Trouble (GG), Knuckles' Chaotix (32X)
+- **Atari**: Pac-Man (2600), Frogger (5200), Asteroids (7800), Tetris (Lynx)
+- **Others**: Donkey Kong (ColecoVision), King of Fighters R-1 (NGP), Wario Land (Virtual Boy), and more
 
 ### Amstrad CPC — 132 French Games Ready 🇫🇷
 
@@ -306,6 +434,7 @@ This project stands on the shoulders of incredible open-source emulator projects
 
 | Emulator | Author | Platform | Technology |
 |---|---|---|---|
+| [EmulatorJS](https://emulatorjs.org/) | EmulatorJS contributors | 24+ console systems | WebAssembly (RetroArch cores) |
 | [apple2js](https://github.com/whscullin/apple2js) | Will Scullin | Apple II | JavaScript |
 | [RVMPlayer](https://github.com/nicl83/RVMPlayer) | — | Amstrad CPC | JavaScript |
 | [vAmigaWeb](https://github.com/nicl83/vAmigaWeb) | Dirk W. Hoffmann & contributors | Commodore Amiga | WebAssembly (Emscripten) |
@@ -315,6 +444,7 @@ Special thanks to all the retro computing communities keeping these platforms al
 - [CPCWiki](https://www.cpcwiki.eu/) for Amstrad CPC documentation
 - [Apple II Documentation Project](https://mirrors.apple2.org.za/)
 - [English Amiga Board](https://eab.abime.net/) for Amiga preservation efforts
+- [EmulatorJS](https://emulatorjs.org/) for making RetroArch cores accessible in the browser
 
 ---
 
@@ -322,7 +452,7 @@ Special thanks to all the retro computing communities keeping these platforms al
 
 This project is licensed under the **MIT License** — see the [LICENSE](LICENSE) file for details.
 
-Game disk images are NOT included in this repository. You must own or have legal access to the games you package. This tool is intended for personal archival and preservation purposes.
+Game disk images and ROMs are NOT included in this repository. You must own or have legal access to the games you package. This tool is intended for personal archival and preservation purposes.
 
 ---
 
@@ -330,11 +460,12 @@ Game disk images are NOT included in this repository. You must own or have legal
 
 Contributions are welcome! Here are some ways you can help:
 
-1. **Add support for new platforms** (C64, ZX Spectrum, DOS, NES…)
-2. **Improve key detection** algorithms
+1. **Add support for new platforms** (DOS, MSX, more computers…)
+2. **Improve key detection** algorithms for platform-specific packers
 3. **Optimize file sizes** (compression, lazy loading)
 4. **Test on more devices** and browsers
 5. **Translate** the virtual keyboard overlays
+6. **Add save state support** to the universal packer
 
 Please open an issue first to discuss major changes.
 
@@ -342,17 +473,19 @@ Please open an issue first to discuss major changes.
 
 ## 📊 Project Stats
 
-- **3 platforms** supported (Apple II, Amstrad CPC, Amiga)
+- **27 platforms** supported (24 universal + 3 platform-specific with advanced features)
 - **132+ games** tested and converted (CPC library)
+- **22 systems** validated with real ROM testing
+- **0 pip dependencies** for the universal packer (Python stdlib only)
 - **0 runtime dependencies** in generated HTML files
 - **100% offline** — no server, no CDN, no internet
-- **Mobile-ready** with touch-optimized virtual keyboards
+- **Mobile-ready** with touch-optimized virtual controls
 
 ---
 
 ## 🏷️ Keywords
 
-`retro gaming` · `emulator` · `offline` · `HTML5` · `Apple II` · `Amstrad CPC` · `Commodore Amiga` · `game preservation` · `browser emulator` · `single-file` · `self-contained` · `mobile virtual keyboard` · `retro computing` · `WASM` · `WebAssembly` · `JavaScript emulator` · `disk image` · `DSK` · `ADF` · `WOZ` · `apple2js` · `vAmiga` · `RVMPlayer` · `offline gaming` · `preservation tools`
+`retro gaming` · `emulator` · `offline` · `HTML5` · `NES` · `SNES` · `Game Boy` · `GBA` · `N64` · `Nintendo DS` · `Sega Genesis` · `Master System` · `PlayStation` · `Atari` · `Apple II` · `Amstrad CPC` · `Commodore Amiga` · `Commodore 64` · `ZX Spectrum` · `game preservation` · `browser emulator` · `single-file` · `self-contained` · `EmulatorJS` · `RetroArch` · `WASM` · `WebAssembly` · `JavaScript emulator` · `ROM packer` · `offline gaming` · `preservation tools` · `mobile gaming`
 
 ---
 
@@ -362,15 +495,33 @@ Please open an issue first to discuss major changes.
 
 ### portable-retro-games — Transformez vos jeux rétro en fichiers HTML jouables hors-ligne
 
-**portable-retro-games** est un ensemble de scripts Python qui transforment des images disque de jeux rétro en **fichiers HTML autonomes et jouables hors-ligne**.
+**portable-retro-games** est un ensemble de scripts Python qui transforment des ROMs et images disque de jeux rétro en **fichiers HTML autonomes et jouables hors-ligne**.
 
 Chaque fichier HTML généré embarque :
 - ✅ Un **émulateur complet** en JavaScript ou WebAssembly
-- ✅ L'**image disque du jeu** encodée en base64
-- ✅ Un **clavier virtuel tactile** optimisé pour mobile
+- ✅ La **ROM ou image disque du jeu** encodée en base64
+- ✅ Des **contrôles tactiles** optimisés pour mobile
 - ✅ **Zéro dépendance externe** — fonctionne hors-ligne, pour toujours
 
 ### Plateformes supportées
+
+#### 🌐 Packer Universel — 24 systèmes consoles & ordinateurs
+
+Un seul script Python, zéro dépendance pip, auto-détection du système :
+
+| Catégorie | Systèmes |
+|-----------|----------|
+| 🎮 Nintendo | NES, SNES, Game Boy, GBC, GBA, N64, DS, Virtual Boy |
+| 🎮 Sega | Genesis, Master System, Game Gear, 32X, Sega CD |
+| 🎮 Atari | 2600, 5200, 7800, Lynx |
+| 🎮 Sony | PlayStation |
+| 🎮 NEC | PC Engine / TurboGrafx-16 |
+| 🎮 SNK | Neo Geo Pocket / Color |
+| 🎮 Bandai | WonderSwan / Color |
+| 🎮 Coleco | ColecoVision |
+| 💻 Ordinateurs | Commodore 64, ZX Spectrum |
+
+#### 🔧 Packers spécialisés — Fonctions avancées
 
 | Plateforme | Script | Émulateur | Formats |
 |---|---|---|---|
@@ -380,15 +531,31 @@ Chaque fichier HTML généré embarque :
 
 ### Fonctionnalités clés
 
-- 🎹 **Détection automatique des touches** : le packer analyse le contenu du disque pour déterminer quelles touches le joueur aura besoin
-- 📱 **Clavier virtuel tactile** : conçu pour le mobile avec des tailles de touches adaptées
+- 🔍 **Détection automatique du système** par extension de fichier (packer universel)
+- 🎹 **Détection automatique des touches** par analyse du contenu (packers spécialisés)
+- 📱 **Contrôles tactiles** : gamepad virtuel (universel) ou clavier adapté (spécialisé)
+- 📡 **Offline-first** : cores locaux → cache → CDN (téléchargement unique par système)
 - 🚀 **Chargement turbo** (CPC) : option warp-speed pour accélérer le chargement
 - 🔌 **100% hors-ligne** : aucun serveur, aucun CDN, aucune connexion internet
 - 🇫🇷 **132 jeux CPC français** déjà convertis et testés
 
-### Pourquoi c'est important ?
+### Utilisation rapide
 
-Les jeux rétro disparaissent. Le matériel tombe en panne. Les sites web ferment. Flash est mort. Les applets Java ont disparu. **portable-retro-games** crée des archives de jeux permanentes, portables et autonomes qui fonctionneront aussi longtemps que les navigateurs web existeront.
+```bash
+# Packer universel (24 systèmes)
+python3 packers/universal/pack_game.py SuperMario.nes
+python3 packers/universal/pack_game.py Sonic.gen
+python3 packers/universal/pack_game.py --prefetch-all   # Mode 100% offline
+
+# Apple II
+python packers/apple2/pack_apple2_game_html.py Karateka.dsk
+
+# Amstrad CPC
+python packers/cpc/pack_cpc_game_html.py Gryzor.dsk
+
+# Amiga
+python packers/amiga/build_jimmy_willburne.py
+```
 
 ### 🎮 Démos jouables en ligne
 
@@ -401,27 +568,15 @@ Les jeux rétro disparaissent. Le matériel tombe en panne. Les sites web fermen
 | 🍎 **Mystery House VF** | Apple II | [▶️ Jouer](https://mystery-house-vf.netlify.app/) |
 | 💾 **1815** | Amstrad CPC | [▶️ Jouer](https://1815-cpc.netlify.app/) |
 
-### Utilisation rapide
-
-```bash
-# Apple II
-python pack_apple2_game_html.py Karateka.dsk
-
-# Amstrad CPC
-python pack_cpc_game_html.py Gryzor.dsk
-
-# Amiga
-python build_jimmy_willburne.py
-```
-
 ### Documentation
 
+- [Documentation Packer Universel](packers/universal/README.md) — 24 systèmes, mode offline, toutes les options
 - [Documentation Apple II Packer](docs/apple2-packer.md)
 - [Documentation CPC Packer](docs/cpc-packer.md)
 - [Documentation Amiga Packer](docs/amiga-packer.md)
 - [Architecture technique](docs/architecture.md)
 - [Améliorations futures](docs/future-enhancements.md)
-- [Roadmap des plateformes supportées](docs/supported-platforms-roadmap.md) — 🗺️ Analyse de 40+ plateformes rétro & vision du packer universel
+- [Roadmap des plateformes supportées](docs/supported-platforms-roadmap.md) — 🗺️ Analyse de 40+ plateformes rétro
 
 ---
 
