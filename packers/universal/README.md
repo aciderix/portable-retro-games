@@ -183,6 +183,16 @@ python3 pack_game.py mario.nes   # ✅ Utilise cores/ en local
 2. **`.emulatorjs_cache/`** (cache auto) — rempli après le 1er téléchargement
 3. **CDN EmulatorJS** (internet) — fallback si rien en local
 
+### Installation rapide (cores.zip)
+
+Le repo inclut un fichier `cores.zip` (~21 MB) contenant tous les cores pré-téléchargés. Pour installer :
+
+```bash
+cd packers/universal/
+unzip cores.zip -d cores/
+# ✅ Prêt ! Plus besoin d'internet pour packer quoi que ce soit
+```
+
 ### Distribuer le bundle offline
 
 Pour partager le packer en mode 100% offline, il suffit de copier le dossier `universal/` complet :
