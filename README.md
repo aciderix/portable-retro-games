@@ -6,7 +6,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![Offline Ready](https://img.shields.io/badge/Offline-Ready-brightgreen?logo=wifi-off)](#)
 [![Mobile Friendly](https://img.shields.io/badge/Mobile-Friendly-orange?logo=smartphone)](#)
-[![Platforms](https://img.shields.io/badge/Platforms-24%2B%20Systems-purple)](#supported-platforms)
+[![Platforms](https://img.shields.io/badge/Platforms-38%20Systems-purple)](#supported-platforms)
 [![Live Demo](https://img.shields.io/badge/Live%20Demo-Play%20Now!-ff6600?logo=netlify&logoColor=white)](https://jimmy-willburne.netlify.app/)
 
 ---
@@ -30,7 +30,7 @@ Each generated HTML file embeds:
 
 > **One file. One game. Any browser. Any device. No internet needed.**
 
-This means you can take a retro game file — from NES to N64, from Game Boy to Amiga — run a single command, and get an HTML file that plays the game in Chrome, Firefox, or Safari — on desktop or mobile — with no server, no installation, no plugins.
+This means you can take a retro game file — from NES to N64, from Game Boy to Amiga, from Arcade to DOOM — run a single command, and get an HTML file that plays the game in Chrome, Firefox, or Safari — on desktop or mobile — with no server, no installation, no plugins.
 
 ### Why does this matter?
 
@@ -40,23 +40,27 @@ Retro games are disappearing. Hardware fails. Websites go offline. Flash died. J
 
 ## 🖥️ Supported Platforms
 
-### 🌐 Universal Packer — 24 Console & Computer Systems
+### 🌐 Universal Packer — 38 Console, Computer & Arcade Systems
 
-The **Universal Packer** (`packers/universal/pack_game.py`) supports **24 retro systems** with a single script, zero pip dependencies:
+The **Universal Packer** (`packers/universal/pack_game.py`) supports **38 retro systems** with a single script, zero pip dependencies:
 
 | Category | Systems |
 |----------|---------|
 | 🎮 **Nintendo** | NES, SNES, Game Boy, Game Boy Color, GBA, N64, Nintendo DS, Virtual Boy |
 | 🎮 **Sega** | Genesis/Mega Drive, Master System, Game Gear, Sega 32X, Sega CD |
-| 🎮 **Atari** | 2600, 5200, 7800, Lynx |
+| 🎮 **Atari** | 2600, 5200, 7800, Lynx, Jaguar |
 | 🎮 **Sony** | PlayStation |
-| 🎮 **NEC** | PC Engine / TurboGrafx-16 |
+| 🎮 **NEC** | PC Engine / TurboGrafx-16, PC-FX |
 | 🎮 **SNK** | Neo Geo Pocket / Color |
 | 🎮 **Bandai** | WonderSwan / Color |
 | 🎮 **Coleco** | ColecoVision |
-| 💻 **Computers** | Commodore 64, ZX Spectrum |
+| 💻 **Commodore** | C64, C128, VIC-20, PET, Plus/4, Amiga |
+| 💻 **Sinclair** | ZX Spectrum, ZX81 |
+| 💻 **Amstrad** | CPC |
+| 🕹️ **Arcade** | CPS1, CPS2, FBNeo, MAME 2003+ |
+| 🔫 **id Software** | DOOM (PrBoom) |
 
-> Powered by [EmulatorJS](https://emulatorjs.org/) — cores are auto-downloaded and cached locally.
+> Powered by [EmulatorJS](https://emulatorjs.org/) — cores are auto-downloaded and cached locally. A `cores.zip` bundle is included for full offline use.
 
 ### 🔧 Platform-Specific Packers — Advanced Features
 
@@ -68,6 +72,8 @@ For these platforms, dedicated packers provide enhanced features like keyboard a
 | 💾 **Amstrad CPC** | `pack_cpc_game_html.py` | [RVMPlayer](https://github.com/nicl83/RVMPlayer) | `.dsk` (DSK/EDSK) | Z80 firmware call analysis, AZERTY→QWERTY mapping, warp-speed loading |
 | 🐱 **Commodore Amiga** | `build_jimmy_willburne.py` | [vAmigaWeb](https://github.com/nicl83/vAmigaWeb) | `.adf` | WASM emulation, IndexedDB caching, full asset inlining, virtual joystick |
 
+> 💡 **Note:** Amstrad CPC and Commodore Amiga are available in *both* the universal packer (convenience, one script) and as dedicated packers (superior emulation quality, custom keyboards, firmware analysis). Use the dedicated packers for the best experience.
+
 ---
 
 ## ⚡ Quick Start
@@ -78,7 +84,7 @@ For these platforms, dedicated packers provide enhanced features like keyboard a
 python --version   # Python 3.12+ (all packers)
 ```
 
-### 🌐 Universal Packer — Any Console Game (24 Systems)
+### 🌐 Universal Packer — Any Console Game (38 Systems)
 
 ```bash
 cd packers/universal
@@ -88,6 +94,10 @@ python3 pack_game.py SuperMario.nes
 python3 pack_game.py Sonic.gen
 python3 pack_game.py Pokemon.gba
 python3 pack_game.py Mario64.z64
+python3 pack_game.py DOOM.wad
+
+# Pack arcade ROM (system must be specified)
+python3 pack_game.py streetfighter2.zip --system cps1
 
 # Custom title & output
 python3 pack_game.py Zelda.sfc --title "Zelda - A Link to the Past" --output zelda.html
@@ -98,13 +108,13 @@ python3 pack_game.py --list-systems
 # Check which cores are cached locally
 python3 pack_game.py --offline-status
 
-# Download ALL cores at once for full offline use (~40 MB)
+# Download ALL cores at once for full offline use
 python3 pack_game.py --prefetch-all
 ```
 
 **Output:** A single `.html` file — open it in any browser 🎮
 
-> 💡 The first time you pack a game for a given system, the WASM core is downloaded from the EmulatorJS CDN and cached locally (`~/.emulatorjs_cache/`). All subsequent games for that system work **100% offline**. You can also place cores in a `cores/` folder next to the script for fully portable offline use.
+> 💡 The first time you pack a game for a given system, the WASM core is downloaded from the EmulatorJS CDN and cached locally (`~/.emulatorjs_cache/`). All subsequent games for that system work **100% offline**. You can also place cores in a `cores/` folder next to the script or unzip the included `cores.zip` for fully portable offline use.
 
 ### 🍎 Apple II — Pack a Game
 
@@ -206,8 +216,8 @@ Each packed game includes responsive controls optimized for touch:
 │   │ .gen .z64 │    │ • Embed all  │    │ │  + WASM Core  ││    │
 │   │ .dsk .adf │    │ • Optimize   │    │ ├───────────────┤│    │
 │   │ .woz .nib │    │ • Build HTML │    │ │  Game Data    ││    │
-│   └──────────┘    └──────────────┘    │ │  (base64)     ││    │
-│                                        │ ├───────────────┤│    │
+│   │ .wad .zip │    │              │    │ │  (base64)     ││    │
+│   └──────────┘    └──────────────┘    │ ├───────────────┤│    │
 │                                        │ │  Virtual      ││    │
 │                                        │ │  Controls     ││    │
 │                                        │ │  (HTML/CSS/JS)││    │
@@ -219,7 +229,7 @@ Each packed game includes responsive controls optimized for touch:
 │                                                                 │
 │   Packers:                                                      │
 │   ────────                                                      │
-│   • Universal  → EmulatorJS + WASM cores (24 console systems)   │
+│   • Universal  → EmulatorJS + WASM cores (38 systems)           │
 │   • Apple II   → apple2js (keyboard auto-detection)             │
 │   • CPC        → RVMPlayer (Z80 firmware analysis)              │
 │   • Amiga      → vAmigaWeb (full asset inlining)                │
@@ -248,14 +258,15 @@ Each packed game includes responsive controls optimized for touch:
   │  .sfc    │              │  system from │              │  in browser  │
   │  .gba    │              │  extension   │              │              │
   │  .z64    │              │              │              │  5. EmulatorJS│
-  └──────────┘              │  2. Load or  │              │  intercepts  │
-                            │  download    │              │  fetch calls │
-  WASM Core                 │  WASM core   │              │  → serves    │
-  ┌──────────┐              │              │              │  embedded    │
-  │          │   3. Embed   │  3. Encode   │              │  data        │
-  │ cores/   │─────────────▶│  ROM + core  │              │              │
-  │ or cache │   (offline   │  as base64   │              │  6. Game     │
-  │ or CDN   │    first)    │  in HTML     │              │  boots! 🎮   │
+  │  .wad    │              │  2. Load or  │              │  intercepts  │
+  └──────────┘              │  download    │              │  fetch calls │
+                            │  WASM core   │              │  → serves    │
+  WASM Core                 │              │              │  embedded    │
+  ┌──────────┐              │  3. Encode   │              │  data        │
+  │          │   3. Embed   │  ROM + core  │              │              │
+  │ cores/   │─────────────▶│  as base64   │              │  6. Game     │
+  │ or cache │   (offline   │  in HTML     │              │  boots! 🎮   │
+  │ or CDN   │    first)    │              │              │              │
   └──────────┘              └──────────────┘              └──────────────┘
 ```
 
@@ -294,7 +305,7 @@ Teachers can distribute retro computing experiences as simple HTML files. Studen
 Build your own curated retro game library. Each game is a single file you can organize in folders, back up to cloud storage, or carry on a USB drive.
 
 ### 📱 Mobile Retro Gaming
-Play NES, SNES, Game Boy, Genesis, N64, Apple II, CPC, Amiga and more on your phone or tablet. Touch controls are built right in.
+Play NES, SNES, Game Boy, Genesis, N64, Arcade, Apple II, CPC, Amiga and more on your phone or tablet. Touch controls are built right in.
 
 ### 🏛️ Museums & Exhibitions
 Interactive exhibits that run on any tablet or kiosk. No internet connection required. No maintenance. Just open the HTML file.
@@ -311,7 +322,7 @@ Share a game with anyone by sending a single file. No instructions needed — ju
 
 | Document | Description |
 |---|---|
-| [Universal Packer](packers/universal/README.md) | Complete guide to the Universal Packer: 24 systems, offline mode, all options |
+| [Universal Packer](packers/universal/README.md) | Complete guide to the Universal Packer: 38 systems, offline mode, all options |
 | [Apple II Packer](docs/apple2-packer.md) | Complete guide to the Apple II packer: disk formats, key detection, virtual keyboard |
 | [CPC Packer](docs/cpc-packer.md) | Complete guide to the Amstrad CPC packer: DSK parsing, Z80 analysis, AZERTY mapping |
 | [Amiga Packer](docs/amiga-packer.md) | Complete guide to the Amiga packer: WASM embedding, asset inlining, caching |
@@ -328,11 +339,20 @@ Share a game with anyone by sending a single file. No instructions needed — ju
 The universal packer auto-detects the target system from file extensions:
 
 ```
-.nes → NES (FCEUmm core)        .sfc/.smc → SNES (Snes9x core)
-.gb → Game Boy (Gambatte core)   .gbc → Game Boy Color (Gambatte core)
-.gba → GBA (mGBA core)          .gen/.md → Genesis (Genesis Plus GX core)
-.z64/.n64/.v64 → N64 (Mupen64)  .nds → Nintendo DS (melonDS core)
-...and 16 more systems
+.nes → NES (FCEUmm)             .sfc/.smc → SNES (Snes9x)
+.gb → Game Boy (Gambatte)        .gbc → Game Boy Color (Gambatte)
+.gba → GBA (mGBA)               .gen/.md → Genesis (Genesis Plus GX)
+.z64/.n64/.v64 → N64 (Mupen64)  .nds → Nintendo DS (melonDS)
+.a26 → Atari 2600 (Stella)      .a52 → Atari 5200 (a5200)
+.a78 → Atari 7800 (ProSystem)   .lnx → Atari Lynx (Handy)
+.j64/.jag → Atari Jaguar        .gg → Game Gear (Genesis Plus GX)
+.sms → Master System (SMSPlus)  .32x → Sega 32X (PicoDrive)
+.pce → PC Engine (Mednafen)     .col → ColecoVision (GearColeco)
+.ngp → Neo Geo Pocket (Mednafen) .ws/.wsc → WonderSwan (Mednafen)
+.vb → Virtual Boy (Beetle VB)   .d64/.prg → C64 (VICE x64sc)
+.adf → Amiga (PUAE)             .dsk → Amstrad CPC (cap32)
+.wad → DOOM (PrBoom)            .zip → Arcade (CPS1/CPS2/FBNeo/MAME)
+...and more — run --list-systems for the full list
 ```
 
 ### Offline-First Architecture 📡
@@ -344,7 +364,10 @@ The universal packer resolves assets in this order:
 
 ```bash
 # Pre-download everything for full offline use
-python3 pack_game.py --prefetch-all    # ~40 MB total for all 24 systems
+python3 pack_game.py --prefetch-all    # All 38 systems
+
+# Or unzip the included cores bundle
+unzip cores.zip                        # Included in the repo
 
 # Check what's cached
 python3 pack_game.py --offline-status
@@ -399,12 +422,12 @@ Everything is embedded. The generated HTML files contain:
 
 ### Console Games — 22 Systems Tested ✅
 
-The universal packer has been tested with real ROMs across 22 systems (PSX and Sega CD excluded due to CD image sizes):
+The universal packer has been tested with real ROMs across 22 of its 38 supported systems (PSX and Sega CD excluded due to CD image sizes, arcade/DOOM and some new computer systems pending full validation):
 
 - **Nintendo**: Super Mario Bros 3 (NES), Super Mario World (SNES), Pokémon Red (GB), Pokémon Crystal (GBC), Pokémon FireRed (GBA), Super Mario 64 (N64), New Super Mario Bros (NDS)
 - **Sega**: Sonic the Hedgehog (Genesis), Sonic Chaos (SMS), Sonic Triple Trouble (GG), Knuckles' Chaotix (32X)
-- **Atari**: Pac-Man (2600), Frogger (5200), Asteroids (7800), Tetris (Lynx)
-- **Others**: Donkey Kong (ColecoVision), King of Fighters R-1 (NGP), Wario Land (Virtual Boy), and more
+- **Atari**: Pac-Man (2600), Centipede (5200), Asteroids (7800), Tetris (Lynx)
+- **Others**: Donkey Kong (ColecoVision), King of Fighters R-1 (NGP), Wario Land (Virtual Boy), WonderSwan, Commodore 64, ZX Spectrum, PC Engine
 
 ### Amstrad CPC — 132 French Games Ready 🇫🇷
 
@@ -434,7 +457,7 @@ This project stands on the shoulders of incredible open-source emulator projects
 
 | Emulator | Author | Platform | Technology |
 |---|---|---|---|
-| [EmulatorJS](https://emulatorjs.org/) | EmulatorJS contributors | 24+ console systems | WebAssembly (RetroArch cores) |
+| [EmulatorJS](https://emulatorjs.org/) | EmulatorJS contributors | 38 console/computer/arcade systems | WebAssembly (RetroArch cores) |
 | [apple2js](https://github.com/whscullin/apple2js) | Will Scullin | Apple II | JavaScript |
 | [RVMPlayer](https://github.com/nicl83/RVMPlayer) | — | Amstrad CPC | JavaScript |
 | [vAmigaWeb](https://github.com/nicl83/vAmigaWeb) | Dirk W. Hoffmann & contributors | Commodore Amiga | WebAssembly (Emscripten) |
@@ -473,7 +496,7 @@ Please open an issue first to discuss major changes.
 
 ## 📊 Project Stats
 
-- **27 platforms** supported (24 universal + 3 platform-specific with advanced features)
+- **41 platforms** supported (38 universal + 3 platform-specific with advanced features)
 - **132+ games** tested and converted (CPC library)
 - **22 systems** validated with real ROM testing
 - **0 pip dependencies** for the universal packer (Python stdlib only)
@@ -485,7 +508,7 @@ Please open an issue first to discuss major changes.
 
 ## 🏷️ Keywords
 
-`retro gaming` · `emulator` · `offline` · `HTML5` · `NES` · `SNES` · `Game Boy` · `GBA` · `N64` · `Nintendo DS` · `Sega Genesis` · `Master System` · `PlayStation` · `Atari` · `Apple II` · `Amstrad CPC` · `Commodore Amiga` · `Commodore 64` · `ZX Spectrum` · `game preservation` · `browser emulator` · `single-file` · `self-contained` · `EmulatorJS` · `RetroArch` · `WASM` · `WebAssembly` · `JavaScript emulator` · `ROM packer` · `offline gaming` · `preservation tools` · `mobile gaming`
+`retro gaming` · `emulator` · `offline` · `HTML5` · `NES` · `SNES` · `Game Boy` · `GBA` · `N64` · `Nintendo DS` · `Sega Genesis` · `Master System` · `PlayStation` · `Atari` · `Atari Jaguar` · `Apple II` · `Amstrad CPC` · `Commodore Amiga` · `Commodore 64` · `Commodore 128` · `VIC-20` · `ZX Spectrum` · `ZX81` · `Arcade` · `CPS1` · `CPS2` · `MAME` · `FBNeo` · `DOOM` · `game preservation` · `browser emulator` · `single-file` · `self-contained` · `EmulatorJS` · `RetroArch` · `WASM` · `WebAssembly` · `JavaScript emulator` · `ROM packer` · `offline gaming` · `preservation tools` · `mobile gaming`
 
 ---
 
@@ -505,7 +528,7 @@ Chaque fichier HTML généré embarque :
 
 ### Plateformes supportées
 
-#### 🌐 Packer Universel — 24 systèmes consoles & ordinateurs
+#### 🌐 Packer Universel — 38 systèmes consoles, ordinateurs & arcade
 
 Un seul script Python, zéro dépendance pip, auto-détection du système :
 
@@ -513,13 +536,17 @@ Un seul script Python, zéro dépendance pip, auto-détection du système :
 |-----------|----------|
 | 🎮 Nintendo | NES, SNES, Game Boy, GBC, GBA, N64, DS, Virtual Boy |
 | 🎮 Sega | Genesis, Master System, Game Gear, 32X, Sega CD |
-| 🎮 Atari | 2600, 5200, 7800, Lynx |
+| 🎮 Atari | 2600, 5200, 7800, Lynx, Jaguar |
 | 🎮 Sony | PlayStation |
-| 🎮 NEC | PC Engine / TurboGrafx-16 |
+| 🎮 NEC | PC Engine / TurboGrafx-16, PC-FX |
 | 🎮 SNK | Neo Geo Pocket / Color |
 | 🎮 Bandai | WonderSwan / Color |
 | 🎮 Coleco | ColecoVision |
-| 💻 Ordinateurs | Commodore 64, ZX Spectrum |
+| 💻 Commodore | C64, C128, VIC-20, PET, Plus/4, Amiga |
+| 💻 Sinclair | ZX Spectrum, ZX81 |
+| 💻 Amstrad | CPC |
+| 🕹️ Arcade | CPS1, CPS2, FBNeo, MAME 2003+ |
+| 🔫 id Software | DOOM (PrBoom) |
 
 #### 🔧 Packers spécialisés — Fonctions avancées
 
@@ -528,6 +555,8 @@ Un seul script Python, zéro dépendance pip, auto-détection du système :
 | 🍎 Apple II | `pack_apple2_game_html.py` | apple2js | `.dsk`, `.do`, `.po`, `.nib`, `.woz` |
 | 💾 Amstrad CPC | `pack_cpc_game_html.py` | RVMPlayer | `.dsk` |
 | 🐱 Amiga | `build_jimmy_willburne.py` | vAmigaWeb | `.adf` |
+
+> 💡 **Note :** Amstrad CPC et Commodore Amiga sont disponibles à la fois dans le packer universel (pratique, un seul script) et en packers dédiés (qualité d'émulation supérieure, clavier personnalisé, analyse firmware).
 
 ### Fonctionnalités clés
 
@@ -538,13 +567,16 @@ Un seul script Python, zéro dépendance pip, auto-détection du système :
 - 🚀 **Chargement turbo** (CPC) : option warp-speed pour accélérer le chargement
 - 🔌 **100% hors-ligne** : aucun serveur, aucun CDN, aucune connexion internet
 - 🇫🇷 **132 jeux CPC français** déjà convertis et testés
+- 🕹️ **Arcade** : CPS1, CPS2, FBNeo et MAME 2003+ supportés
 
 ### Utilisation rapide
 
 ```bash
-# Packer universel (24 systèmes)
+# Packer universel (38 systèmes)
 python3 packers/universal/pack_game.py SuperMario.nes
 python3 packers/universal/pack_game.py Sonic.gen
+python3 packers/universal/pack_game.py DOOM.wad
+python3 packers/universal/pack_game.py streetfighter2.zip --system cps1
 python3 packers/universal/pack_game.py --prefetch-all   # Mode 100% offline
 
 # Apple II
@@ -570,7 +602,7 @@ python packers/amiga/build_jimmy_willburne.py
 
 ### Documentation
 
-- [Documentation Packer Universel](packers/universal/README.md) — 24 systèmes, mode offline, toutes les options
+- [Documentation Packer Universel](packers/universal/README.md) — 38 systèmes, mode offline, toutes les options
 - [Documentation Apple II Packer](docs/apple2-packer.md)
 - [Documentation CPC Packer](docs/cpc-packer.md)
 - [Documentation Amiga Packer](docs/amiga-packer.md)
