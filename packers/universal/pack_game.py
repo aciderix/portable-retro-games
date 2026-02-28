@@ -52,6 +52,23 @@ SYSTEMS = {
     # Tier 3 — Retro computers
     'c64':       {'core': 'vice_x64sc',        'label': 'Commodore 64',               'extensions': ['.d64', '.t64', '.prg', '.crt']},
     'zxspectrum':{'core': 'fuse',              'label': 'ZX Spectrum',                'extensions': ['.z80', '.tap', '.sna', '.tzx']},
+    # --- NEW SYSTEMS (added Feb 2026) ---
+    # Atari
+    'jaguar':    {'core': 'virtualjaguar',     'label': 'Atari Jaguar',               'extensions': ['.j64', '.jag', '.rom', '.abs', '.cof', '.bin']},
+    # Commodore family
+    'c128':      {'core': 'vice_x128',         'label': 'Commodore 128',              'extensions': ['.d64', '.d71', '.d81', '.prg', '.t64', '.tap']},
+    'vic20':     {'core': 'vice_xvic',         'label': 'Commodore VIC-20',           'extensions': ['.d64', '.prg', '.crt', '.t64', '.tap', '.20']},
+    'pet':       {'core': 'vice_xpet',         'label': 'Commodore PET',              'extensions': ['.d64', '.prg', '.t64', '.tap']},
+    'plus4':     {'core': 'vice_xplus4',       'label': 'Commodore Plus/4',           'extensions': ['.d64', '.prg', '.t64', '.tap']},
+    'amiga':     {'core': 'puae',              'label': 'Commodore Amiga',            'extensions': ['.adf', '.adz', '.dms', '.ipf']},
+    # Amstrad
+    'cpc':       {'core': 'cap32',             'label': 'Amstrad CPC',                'extensions': ['.dsk', '.sna', '.cdt', '.voc']},
+    # Sinclair
+    'zx81':      {'core': '81',                'label': 'Sinclair ZX81',              'extensions': ['.p', '.81', '.tzx']},
+    # id Software
+    'doom':      {'core': 'prboom',            'label': 'DOOM (PrBoom)',              'extensions': ['.wad']},
+    # NEC
+    'pcfx':      {'core': 'mednafen_pcfx',     'label': 'PC-FX',                     'extensions': ['.cue', '.ccd', '.toc']},
 }
 
 # Build reverse lookup: extension → system

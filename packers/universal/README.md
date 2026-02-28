@@ -1,6 +1,6 @@
 # 🎮 Universal Retro Game Packer
 
-> Pack any ROM into a **single, self-contained, offline-playable HTML file** — supports 25+ retro systems via EmulatorJS.
+> Pack any ROM into a **single, self-contained, offline-playable HTML file** — supports 34 retro systems via EmulatorJS.
 
 ## Overview
 
@@ -152,7 +152,7 @@ Le packer peut fonctionner **100% hors connexion** grâce au dossier `cores/` qu
 ```
 universal/
 ├── pack_game.py          # Script principal (29 KB)
-├── cores/                # 21 cores + EmulatorJS (~21 MB)
+├── cores/                # 31 cores + EmulatorJS (~35 MB)
 │   ├── emulator.min.js
 │   ├── emulator.min.css
 │   ├── fceumm-wasm.data     # NES
@@ -183,11 +183,21 @@ python3 pack_game.py mario.nes   # ✅ Utilise cores/ en local
 2. **`.emulatorjs_cache/`** (cache auto) — rempli après le 1er téléchargement
 3. **CDN EmulatorJS** (internet) — fallback si rien en local
 
+### Installation rapide (cores.zip)
+
+Le repo inclut un fichier `cores.zip` (~35 MB) contenant tous les cores pré-téléchargés. Pour installer :
+
+```bash
+cd packers/universal/
+unzip cores.zip -d cores/
+# ✅ Prêt ! Plus besoin d'internet pour packer quoi que ce soit
+```
+
 ### Distribuer le bundle offline
 
 Pour partager le packer en mode 100% offline, il suffit de copier le dossier `universal/` complet :
 
 ```bash
 zip -r packer_offline.zip universal/
-# → ~21 MB, contient tout pour générer des HTML pour 24 systèmes
+# → ~35 MB, contient tout pour générer des HTML pour 34 systèmes
 ```
