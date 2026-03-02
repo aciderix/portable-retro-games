@@ -570,9 +570,10 @@ body {
         <li class="progress-step" data-step="rom"><span class="step-icon">⏳</span> Reading ROM...</li>
         <li class="progress-step" data-step="css"><span class="step-icon">⏳</span> Fetching EmulatorJS CSS...</li>
         <li class="progress-step" data-step="js"><span class="step-icon">⏳</span> Fetching EmulatorJS engine...</li>
-        <li class="progress-step" data-step="core"><span class="step-icon">⏳</span> Downloading emulation core...</li>
-        <li class="progress-step" data-step="build"><span class="step-icon">⏳</span> Assembling HTML file...</li>
-        <li class="progress-step" data-step="done"><span class="step-icon">⏳</span> Done!</li>
+        <li class="progress-step" data-step="core"><span class="step-icon">⏳</span> Downloading cores (normal + legacy)...</li>
+        <li class="progress-step" data-step="extras"><span class="step-icon">⏳</span> Downloading offline assets (12 files)...</li>
+        <li class="progress-step" data-step="build"><span class="step-icon">⏳</span> Assembling 100% offline HTML file...</li>
+        <li class="progress-step" data-step="done"><span class="step-icon">⏳</span> Done! 🛡️ 100% offline</li>
       </ul>
     </div>
 
@@ -591,7 +592,7 @@ body {
        ============================================================ -->
   <div id="tab-systems" class="tab-content">
     <div class="card">
-      <div class="card-title"><span class="icon">🕹️</span> 38 Supported Systems</div>
+      <div class="card-title"><span class="icon">🕹️</span> 41 Supported Systems</div>
       <div id="systems-list"></div>
     </div>
   </div>
@@ -632,20 +633,23 @@ const SYSTEMS = {
   'segacd':    { core: 'genesis_plus_gx',   label: 'Sega CD / Mega CD',          extensions: ['.cue', '.bin', '.chd'],                              category: 'Console' },
   'pcfx':      { core: 'mednafen_pcfx',     label: 'PC-FX',                      extensions: ['.cue', '.ccd', '.toc'],                              category: 'Console' },
   'jaguar':    { core: 'virtualjaguar',     label: 'Atari Jaguar',               extensions: ['.j64', '.jag', '.rom', '.abs', '.cof', '.bin'],      category: 'Console' },
-  'c64':       { core: 'vice_x64sc',        label: 'Commodore 64',               extensions: ['.d64', '.t64', '.prg', '.crt'],                     category: 'Ordinateur' },
-  'c128':      { core: 'vice_x128',         label: 'Commodore 128',              extensions: ['.d64', '.d71', '.d81', '.prg', '.t64', '.tap'],     category: 'Ordinateur' },
-  'vic20':     { core: 'vice_xvic',         label: 'Commodore VIC-20',           extensions: ['.d64', '.prg', '.crt', '.t64', '.tap', '.20', '.60', '.a0'], category: 'Ordinateur' },
-  'pet':       { core: 'vice_xpet',         label: 'Commodore PET',              extensions: ['.d64', '.prg', '.t64', '.tap'],                     category: 'Ordinateur' },
-  'plus4':     { core: 'vice_xplus4',       label: 'Commodore Plus/4',           extensions: ['.d64', '.prg', '.t64', '.tap', '.bin', '.crt'],     category: 'Ordinateur' },
-  'amiga':     { core: 'puae',              label: 'Commodore Amiga',            extensions: ['.adf', '.adz', '.dms', '.ipf'],                     category: 'Ordinateur' },
-  'cpc':       { core: 'cap32',             label: 'Amstrad CPC',                extensions: ['.dsk', '.sna', '.cdt', '.voc'],                     category: 'Ordinateur' },
-  'zxspectrum':{ core: 'fuse',              label: 'ZX Spectrum',                extensions: ['.z80', '.tap', '.sna', '.tzx'],                     category: 'Ordinateur' },
-  'zx81':      { core: '81',                label: 'Sinclair ZX81',              extensions: ['.p', '.81', '.tzx'],                                category: 'Ordinateur' },
+  'c64':       { core: 'vice_x64sc',        label: 'Commodore 64',               extensions: ['.d64', '.t64', '.prg', '.crt'],                     category: 'Computer' },
+  'c128':      { core: 'vice_x128',         label: 'Commodore 128',              extensions: ['.d64', '.d71', '.d81', '.prg', '.t64', '.tap'],     category: 'Computer' },
+  'vic20':     { core: 'vice_xvic',         label: 'Commodore VIC-20',           extensions: ['.d64', '.prg', '.crt', '.t64', '.tap', '.20', '.60', '.a0'], category: 'Computer' },
+  'pet':       { core: 'vice_xpet',         label: 'Commodore PET',              extensions: ['.d64', '.prg', '.t64', '.tap'],                     category: 'Computer' },
+  'plus4':     { core: 'vice_xplus4',       label: 'Commodore Plus/4',           extensions: ['.d64', '.prg', '.t64', '.tap', '.bin', '.crt'],     category: 'Computer' },
+  'amiga':     { core: 'puae',              label: 'Commodore Amiga',            extensions: ['.adf', '.adz', '.dms', '.ipf'],                     category: 'Computer' },
+  'cpc':       { core: 'cap32',             label: 'Amstrad CPC',                extensions: ['.dsk', '.sna', '.cdt', '.voc'],                     category: 'Computer' },
+  'zxspectrum':{ core: 'fuse',              label: 'ZX Spectrum',                extensions: ['.z80', '.tap', '.sna', '.tzx'],                     category: 'Computer' },
+  'zx81':      { core: '81',                label: 'Sinclair ZX81',              extensions: ['.p', '.81', '.tzx'],                                category: 'Computer' },
   'cps1':      { core: 'fbalpha2012_cps1',  label: 'Arcade (CPS1)',              extensions: ['.zip'],                                              category: 'Arcade' },
   'cps2':      { core: 'fbalpha2012_cps2',  label: 'Arcade (CPS2)',              extensions: ['.zip'],                                              category: 'Arcade' },
   'fbneo':     { core: 'fbneo',             label: 'Arcade (FBNeo)',             extensions: ['.zip'],                                              category: 'Arcade' },
   'mame':      { core: 'mame2003_plus',     label: 'Arcade (MAME 2003+)',        extensions: ['.zip'],                                              category: 'Arcade' },
   'doom':      { core: 'prboom',            label: 'DOOM (PrBoom)',              extensions: ['.wad'],                                              category: 'Other' },
+  '3do':       { core: 'opera',             label: '3DO Interactive',            extensions: ['.iso', '.bin', '.chd', '.cue'],                      category: 'Console' },
+  'saturn':    { core: 'yabause',           label: 'Sega Saturn',               extensions: ['.bin', '.cue', '.iso', '.chd', '.mds'],              category: 'Console' },
+  'cdi':       { core: 'same_cdi',          label: 'Philips CD-i',              extensions: ['.chd', '.iso'],                                      category: 'Console' },
 };
 
 // Build reverse lookup: extension → system (first match wins, same as Python)
@@ -659,11 +663,23 @@ for (const [sysId, info] of Object.entries(SYSTEMS)) {
 }
 
 const EJS_CDN_BASE = 'https://cdn.emulatorjs.org/stable/data/';
+const LOCAL_MIRROR = '../docs/data/'; // Local mirror served from GitHub Pages — works even if CDN is down
 
 // ============================================================
 //  In-memory cache for CDN assets
 // ============================================================
-const assetCache = { css: null, js: null, cores: {} };
+// Extra assets to embed for 100% offline (Issue #11 fix)
+const EXTRA_ASSET_FILES = [
+  'src/GameManager.js', 'src/gamepad.js', 'src/nipplejs.js',
+  'src/shaders.js', 'src/socket.io.min.js', 'src/storage.js',
+  'compression/extract7z.js', 'compression/extractzip.js', 'compression/libunrar.js',
+];
+const EXTRA_ASSET_BINARY_FILES = [
+  'compression/libunrar.wasm',
+];
+const ALL_EXTRA_ASSETS = [...EXTRA_ASSET_FILES, ...EXTRA_ASSET_BINARY_FILES];
+
+const assetCache = { css: null, js: null, cores: {}, coresLegacy: {}, extras: {} };
 
 // ============================================================
 //  HTML Template (EXACT copy from Python script)
@@ -776,13 +792,24 @@ body {
 
 <script>
 (function() {
-    // Embedded game data
+    // ═══════════════════════════════════════════════════════════
+    //  EMBEDDED GAME DATA
+    // ═══════════════════════════════════════════════════════════
     var EMBEDDED_ROM_B64 = "{{ROM_B64}}";
     var EMBEDDED_ROM_FILENAME = "{{ROM_FILENAME}}";
     var EMBEDDED_CORE_B64 = "{{CORE_B64}}";
+    var EMBEDDED_CORE_LEGACY_B64 = "{{CORE_LEGACY_B64}}";
     var EMBEDDED_CORE_NAME = "{{CORE_NAME}}";
 
-    // Helpers
+    // ═══════════════════════════════════════════════════════════
+    //  EMBEDDED EXTRA ASSETS (for 100% offline — Issue #11 fix)
+    //  Contains: src/ scripts + compression/ libraries
+    // ═══════════════════════════════════════════════════════════
+    var EMBEDDED_EXTRA = {{EXTRA_ASSETS_JSON}};
+
+    // ═══════════════════════════════════════════════════════════
+    //  HELPERS
+    // ═══════════════════════════════════════════════════════════
     function b64toUint8(b64) {
         var bin = atob(b64);
         var len = bin.length;
@@ -793,6 +820,13 @@ body {
     function b64toBlobUrl(b64, mime) {
         return URL.createObjectURL(new Blob([b64toUint8(b64)], { type: mime || 'application/octet-stream' }));
     }
+    function getMime(name) {
+        if (name.endsWith('.wasm')) return 'application/wasm';
+        if (name.endsWith('.js'))   return 'text/javascript';
+        if (name.endsWith('.json')) return 'application/json';
+        if (name.endsWith('.css'))  return 'text/css';
+        return 'application/octet-stream';
+    }
     function setProgress(pct, msg) {
         var fill = document.getElementById('ld-fill');
         var status = document.getElementById('ld-status');
@@ -800,17 +834,82 @@ body {
         if (status) status.textContent = msg;
     }
 
-    setProgress(10, 'Loading emulator engine...');
+    setProgress(10, 'Initializing offline engine...');
 
-    // ── Intercept fetch() ──
+    // ═══════════════════════════════════════════════════════════
+    //  CREATE BLOB URLs FOR ALL EXTRA ASSETS
+    // ═══════════════════════════════════════════════════════════
+    var extraBlobUrls = {};
+    for (var key in EMBEDDED_EXTRA) {
+        if (EMBEDDED_EXTRA[key]) {
+            extraBlobUrls[key] = b64toBlobUrl(EMBEDDED_EXTRA[key], getMime(key));
+        }
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    //  LAYER 1: EJS_paths — Official EmulatorJS path override
+    //  Redirects src/ file loading to embedded blob URLs
+    // ═══════════════════════════════════════════════════════════
+    window.EJS_paths = {};
+    var ejsPathFiles = ['GameManager.js', 'gamepad.js', 'nipplejs.js', 'shaders.js',
+                        'socket.io.min.js', 'storage.js'];
+    for (var i = 0; i < ejsPathFiles.length; i++) {
+        if (extraBlobUrls[ejsPathFiles[i]]) {
+            window.EJS_paths[ejsPathFiles[i]] = extraBlobUrls[ejsPathFiles[i]];
+        }
+    }
+    // Stub version.json to prevent CDN fetch
+    window.EJS_paths['version.json'] = b64toBlobUrl(btoa('{}'), 'application/json');
+
+    // ═══════════════════════════════════════════════════════════
+    //  LAYER 2: <script> tag interception
+    //  Catches dynamically injected scripts (compression libs, etc.)
+    // ═══════════════════════════════════════════════════════════
+    var _origSrcDesc = Object.getOwnPropertyDescriptor(HTMLScriptElement.prototype, 'src');
+    if (_origSrcDesc && _origSrcDesc.set) {
+        Object.defineProperty(HTMLScriptElement.prototype, 'src', {
+            set: function(val) {
+                if (val && typeof val === 'string') {
+                    for (var name in extraBlobUrls) {
+                        if (val.indexOf(name) !== -1) {
+                            return _origSrcDesc.set.call(this, extraBlobUrls[name]);
+                        }
+                    }
+                }
+                return _origSrcDesc.set.call(this, val);
+            },
+            get: _origSrcDesc.get,
+            configurable: true
+        });
+    }
+    // Also intercept setAttribute('src', ...) on script elements
+    var _origSetAttr = Element.prototype.setAttribute;
+    Element.prototype.setAttribute = function(name, value) {
+        if (this instanceof HTMLScriptElement && name.toLowerCase() === 'src' &&
+            value && typeof value === 'string') {
+            for (var key in extraBlobUrls) {
+                if (value.indexOf(key) !== -1) {
+                    return _origSetAttr.call(this, name, extraBlobUrls[key]);
+                }
+            }
+        }
+        return _origSetAttr.call(this, name, value);
+    };
+
+    // ═══════════════════════════════════════════════════════════
+    //  LAYER 3: fetch() interception
+    //  Catches core WASM, ROM, compression, and metadata requests
+    // ═══════════════════════════════════════════════════════════
     var _origFetch = window.fetch;
     window.fetch = function(input, init) {
         var url = (typeof input === 'string') ? input : (input && input.url ? input.url : '');
 
-        // Serve embedded core WASM
-        if (url.indexOf(EMBEDDED_CORE_NAME + '-wasm.data') !== -1) {
-            setProgress(60, 'Loading emulator core...');
-            var data = b64toUint8(EMBEDDED_CORE_B64);
+        // Serve embedded core WASM (both normal and legacy variants)
+        if (url.indexOf(EMBEDDED_CORE_NAME) !== -1 && url.indexOf('-wasm.data') !== -1) {
+            setProgress(60, 'Loading emulator core (offline)...');
+            var isLegacy = url.indexOf('-legacy-wasm.data') !== -1 || url.indexOf('legacy-wasm.data') !== -1;
+            var coreB64 = (isLegacy && EMBEDDED_CORE_LEGACY_B64) ? EMBEDDED_CORE_LEGACY_B64 : EMBEDDED_CORE_B64;
+            var data = b64toUint8(coreB64);
             return Promise.resolve(new Response(data.buffer, {
                 status: 200,
                 headers: { 'Content-Type': 'application/octet-stream', 'Content-Length': String(data.length) }
@@ -827,9 +926,20 @@ body {
             }));
         }
 
-        // Stub metadata
+        // Serve any embedded extra asset (compression libs, etc.)
+        for (var fname in EMBEDDED_EXTRA) {
+            if (url.indexOf(fname) !== -1 && EMBEDDED_EXTRA[fname]) {
+                var data = b64toUint8(EMBEDDED_EXTRA[fname]);
+                return Promise.resolve(new Response(data.buffer, {
+                    status: 200,
+                    headers: { 'Content-Type': getMime(fname), 'Content-Length': String(data.length) }
+                }));
+            }
+        }
+
+        // Stub metadata requests
         if (url.indexOf('version.json') !== -1 || url.indexOf('localization/') !== -1 ||
-            url.indexOf('cores/reports/') !== -1 || url.indexOf('compression/') !== -1) {
+            url.indexOf('cores/reports/') !== -1) {
             return Promise.resolve(new Response('{}', {
                 status: 200, headers: { 'Content-Type': 'application/json' }
             }));
@@ -838,7 +948,9 @@ body {
         return _origFetch.apply(this, arguments);
     };
 
-    // ── Intercept XMLHttpRequest ──
+    // ═══════════════════════════════════════════════════════════
+    //  LAYER 3b: XMLHttpRequest interception (same logic)
+    // ═══════════════════════════════════════════════════════════
     var XHRProto = XMLHttpRequest.prototype;
     var _xhrOpen = XHRProto.open;
     var _xhrSend = XHRProto.send;
@@ -850,27 +962,42 @@ body {
 
     XHRProto.send = function(body) {
         var url = this._prg_url || '';
-        var embeddedB64 = null;
+        var embeddedData = null;
 
-        if (url.indexOf(EMBEDDED_CORE_NAME + '-wasm.data') !== -1) {
-            embeddedB64 = EMBEDDED_CORE_B64;
-            setProgress(60, 'Loading emulator core...');
-        } else if (url.indexOf(EMBEDDED_ROM_FILENAME) !== -1) {
-            embeddedB64 = EMBEDDED_ROM_B64;
+        // Check core WASM (both normal and legacy variants)
+        if (url.indexOf(EMBEDDED_CORE_NAME) !== -1 && url.indexOf('-wasm.data') !== -1) {
+            var isLegacy = url.indexOf('-legacy-wasm.data') !== -1 || url.indexOf('legacy-wasm.data') !== -1;
+            embeddedData = b64toUint8((isLegacy && EMBEDDED_CORE_LEGACY_B64) ? EMBEDDED_CORE_LEGACY_B64 : EMBEDDED_CORE_B64);
+            setProgress(60, 'Loading emulator core (offline)...');
+        }
+        // Check ROM
+        else if (url.indexOf(EMBEDDED_ROM_FILENAME) !== -1) {
+            embeddedData = b64toUint8(EMBEDDED_ROM_B64);
             setProgress(80, 'Loading game data...');
         }
+        // Check extra assets
+        else {
+            for (var fname in EMBEDDED_EXTRA) {
+                if (url.indexOf(fname) !== -1 && EMBEDDED_EXTRA[fname]) {
+                    embeddedData = b64toUint8(EMBEDDED_EXTRA[fname]);
+                    break;
+                }
+            }
+        }
 
-        if (embeddedB64) {
-            var data = b64toUint8(embeddedB64);
+        if (embeddedData) {
             var self = this;
             Object.defineProperty(self, 'readyState', { get: function() { return 4; }, configurable: true });
             Object.defineProperty(self, 'status', { get: function() { return 200; }, configurable: true });
             Object.defineProperty(self, 'statusText', { get: function() { return 'OK'; }, configurable: true });
-            Object.defineProperty(self, 'response', { get: function() { return data.buffer; }, configurable: true });
+            Object.defineProperty(self, 'response', { get: function() { return embeddedData.buffer; }, configurable: true });
+            Object.defineProperty(self, 'responseText', { get: function() {
+                try { return new TextDecoder().decode(embeddedData); } catch(e) { return ''; }
+            }, configurable: true });
             setTimeout(function() {
-                self.dispatchEvent(new ProgressEvent('progress', { loaded: data.length, total: data.length }));
+                self.dispatchEvent(new ProgressEvent('progress', { loaded: embeddedData.length, total: embeddedData.length }));
                 self.dispatchEvent(new Event('load'));
-                if (self.onprogress) self.onprogress({ loaded: data.length, total: data.length });
+                if (self.onprogress) self.onprogress({ loaded: embeddedData.length, total: embeddedData.length });
                 if (self.onload) self.onload();
                 if (self.onreadystatechange) self.onreadystatechange();
             }, 10);
@@ -896,7 +1023,9 @@ body {
         return _xhrSend.apply(this, arguments);
     };
 
-    // ── EJS Configuration ──
+    // ═══════════════════════════════════════════════════════════
+    //  EJS CONFIGURATION
+    // ═══════════════════════════════════════════════════════════
     var romBlobUrl = b64toBlobUrl(EMBEDDED_ROM_B64, 'application/octet-stream');
 
     window.EJS_player = '#game';
@@ -905,6 +1034,7 @@ body {
     window.EJS_color = '#FF4444';
     window.EJS_startOnLoaded = false;
     window.EJS_pathtodata = 'https://cdn.emulatorjs.org/stable/data/';
+    window.EJS_threads = false;  // Force non-threaded cores (avoids needing SharedArrayBuffer/COOP/COEP headers)
     window.EJS_CacheLimit = 0;
     window.EJS_startButtonName = 'Play {{TITLE}}';
     window.EJS_disableLocalStorage = false;
@@ -924,7 +1054,7 @@ body {
 window.EJS_core = '{{CORE_NAME}}';
 <\/script>
 
-<!-- EmulatorJS Engine (emulator.min.js) -->
+<!-- EmulatorJS Engine (emulator.min.js) — embedded inline -->
 <script>
 {{EJS_ENGINE_JS}}
 <\/script>
@@ -966,8 +1096,6 @@ window.EJS_core = '{{CORE_NAME}}';
 
 </body>
 </html>`;
-
-
 // ============================================================
 //  Utility: ArrayBuffer to Base64 (chunked to avoid stack overflow)
 // ============================================================
@@ -1045,7 +1173,7 @@ let generatedFilename = '';
 //  Populate System Dropdown (grouped by category)
 // ============================================================
 (function populateSystemSelect() {
-  const categories = { 'Console': [], 'Ordinateur': [], 'Arcade': [], 'Other': [] };
+  const categories = { 'Console': [], 'Computer': [], 'Arcade': [], 'Other': [] };
   for (const [sysId, info] of Object.entries(SYSTEMS)) {
     const cat = info.category || 'Other';
     if (!categories[cat]) categories[cat] = [];
@@ -1055,7 +1183,7 @@ let generatedFilename = '';
   for (const cat of Object.keys(categories)) {
     categories[cat].sort((a, b) => a.label.localeCompare(b.label));
   }
-  const order = ['Console', 'Ordinateur', 'Arcade', 'Other'];
+  const order = ['Console', 'Computer', 'Arcade', 'Other'];
   for (const cat of order) {
     if (!categories[cat] || categories[cat].length === 0) continue;
     const optgroup = document.createElement('optgroup');
@@ -1075,7 +1203,7 @@ let generatedFilename = '';
 // ============================================================
 (function populateSystemsList() {
   const container = $('systems-list');
-  const categories = { 'Console': [], 'Ordinateur': [], 'Arcade': [], 'Other': [] };
+  const categories = { 'Console': [], 'Computer': [], 'Arcade': [], 'Other': [] };
   for (const [sysId, info] of Object.entries(SYSTEMS)) {
     const cat = info.category || 'Other';
     if (!categories[cat]) categories[cat] = [];
@@ -1084,7 +1212,7 @@ let generatedFilename = '';
   for (const cat of Object.keys(categories)) {
     categories[cat].sort((a, b) => a.label.localeCompare(b.label));
   }
-  const order = ['Console', 'Ordinateur', 'Arcade', 'Other'];
+  const order = ['Console', 'Computer', 'Arcade', 'Other'];
   for (const cat of order) {
     if (!categories[cat] || categories[cat].length === 0) continue;
     const title = document.createElement('div');
@@ -1220,18 +1348,44 @@ function resetProgress() {
 }
 
 // ============================================================
-//  Fetch text from CDN (with cache)
+//  Local mirror URL resolver (CDN → local GitHub Pages path)
+// ============================================================
+function cdnToLocalUrl(url) {
+  if (url.startsWith(EJS_CDN_BASE)) {
+    return LOCAL_MIRROR + url.substring(EJS_CDN_BASE.length);
+  }
+  return null;
+}
+
+// ============================================================
+//  Fetch text — tries local mirror first, then CDN as fallback
 // ============================================================
 async function fetchText(url) {
+  const localUrl = cdnToLocalUrl(url);
+  if (localUrl) {
+    try {
+      const resp = await fetch(localUrl);
+      if (resp.ok) { console.log('📦 Local:', localUrl); return await resp.text(); }
+    } catch (e) { /* local not available, try CDN */ }
+  }
+  console.log('🌐 CDN:', url);
   const resp = await fetch(url, { headers: { 'User-Agent': 'Mozilla/5.0 PortableRetroGames/1.0' } });
   if (!resp.ok) throw new Error(`Failed to download ${url} (HTTP ${resp.status})`);
   return await resp.text();
 }
 
 // ============================================================
-//  Fetch binary from CDN (with cache) → ArrayBuffer
+//  Fetch binary — tries local mirror first, then CDN as fallback
 // ============================================================
 async function fetchBinary(url) {
+  const localUrl = cdnToLocalUrl(url);
+  if (localUrl) {
+    try {
+      const resp = await fetch(localUrl);
+      if (resp.ok) { console.log('📦 Local:', localUrl); return await resp.arrayBuffer(); }
+    } catch (e) { /* local not available, try CDN */ }
+  }
+  console.log('🌐 CDN:', url);
   const resp = await fetch(url, { headers: { 'User-Agent': 'Mozilla/5.0 PortableRetroGames/1.0' } });
   if (!resp.ok) throw new Error(`Failed to download ${url} (HTTP ${resp.status})`);
   return await resp.arrayBuffer();
@@ -1287,29 +1441,76 @@ generateBtn.addEventListener('click', async () => {
     setStep('js', 'done');
     setProgress(50);
 
-    // Step 4: Fetch core WASM → base64
+    // Step 4: Fetch core WASM → base64 (BOTH normal + legacy for offline)
     setStep('core', 'active');
     if (!assetCache.cores[coreName]) {
       const coreBuffer = await fetchBinary(EJS_CDN_BASE + 'cores/' + coreName + '-wasm.data');
       assetCache.cores[coreName] = arrayBufferToBase64(coreBuffer);
     }
     const coreB64 = assetCache.cores[coreName];
-    setStep('core', 'done');
-    setProgress(75);
+    setProgress(55);
 
-    // Step 5: Assemble HTML (same replacement logic as Python)
+    // Also fetch legacy variant
+    if (!assetCache.coresLegacy[coreName]) {
+      try {
+        const legacyBuffer = await fetchBinary(EJS_CDN_BASE + 'cores/' + coreName + '-legacy-wasm.data');
+        assetCache.coresLegacy[coreName] = arrayBufferToBase64(legacyBuffer);
+      } catch (e) {
+        console.warn('Legacy core not available for ' + coreName + ', using normal as fallback');
+        assetCache.coresLegacy[coreName] = assetCache.cores[coreName];
+      }
+    }
+    const coreLegacyB64 = assetCache.coresLegacy[coreName];
+    setStep('core', 'done');
+    setProgress(65);
+
+    // Step 4b: Fetch extra assets for 100% offline (src/ scripts + compression libs)
+    setStep('extras', 'active');
+    const extraAssetsJson = {};
+    for (const assetPath of EXTRA_ASSET_FILES) {
+      const shortName = assetPath.split('/').pop();
+      if (!assetCache.extras[shortName]) {
+        try {
+          const text = await fetchText(EJS_CDN_BASE + assetPath);
+          assetCache.extras[shortName] = btoa(unescape(encodeURIComponent(text)));
+        } catch (e) {
+          console.warn('Extra asset not available: ' + assetPath);
+          assetCache.extras[shortName] = '';
+        }
+      }
+      extraAssetsJson[shortName] = assetCache.extras[shortName];
+    }
+    for (const assetPath of EXTRA_ASSET_BINARY_FILES) {
+      const shortName = assetPath.split('/').pop();
+      if (!assetCache.extras[shortName]) {
+        try {
+          const buf = await fetchBinary(EJS_CDN_BASE + assetPath);
+          assetCache.extras[shortName] = arrayBufferToBase64(buf);
+        } catch (e) {
+          console.warn('Extra binary asset not available: ' + assetPath);
+          assetCache.extras[shortName] = '';
+        }
+      }
+      extraAssetsJson[shortName] = assetCache.extras[shortName];
+    }
+    setStep('extras', 'done');
+    setProgress(80);
+
+    // Step 5: Assemble HTML (3-layer offline — same as Python packer)
     setStep('build', 'active');
 
     let html = HTML_TEMPLATE;
-    // Replace all placeholders (replaceAll for each, matching Python's behavior)
+    // Replace all placeholders
     html = html.split('{{TITLE}}').join(title);
     html = html.split('{{SYSTEM_LABEL}}').join(sysInfo.label);
     html = html.split('{{ROM_B64}}').join(romB64);
     html = html.split('{{ROM_FILENAME}}').join(romFilename);
     html = html.split('{{CORE_B64}}').join(coreB64);
+    html = html.split('{{CORE_LEGACY_B64}}').join(coreLegacyB64);
     html = html.split('{{CORE_NAME}}').join(coreName);
     html = html.split('{{EJS_CSS}}').join(ejsCss);
     html = html.split('{{EJS_ENGINE_JS}}').join(ejsJs);
+    html = html.split('{{EXTRA_ASSETS_JSON}}').join(JSON.stringify(extraAssetsJson));
 
     // Apply accent color (replace the default #FF4444 with chosen color in the loading overlay styles)
     if (accentColor.toUpperCase() !== '#FF4444') {
@@ -1329,7 +1530,7 @@ generateBtn.addEventListener('click', async () => {
     generatedFilename = outputName;
 
     downloadBtn.textContent = `💾 Download ${outputName}`;
-    downloadInfo.textContent = `${sysInfo.label} • ${title} • ${formatSize(blob.size)} • 100% hors-ligne`;
+    downloadInfo.textContent = `${sysInfo.label} • ${title} • ${formatSize(blob.size)} • 🛡️ 100% hors-ligne (3-layer offline)`;
     downloadSection.classList.add('visible');
 
   } catch (err) {

@@ -1,6 +1,6 @@
 # 🎮 Universal Retro Game Packer
 
-> Pack any ROM into a **single, self-contained, offline-playable HTML file** — supports **38 retro systems** via EmulatorJS.
+> Pack any ROM into a **single, self-contained, offline-playable HTML file** — supports **41 retro systems** via EmulatorJS.
 
 ## Overview
 
@@ -48,7 +48,7 @@ python3 pack_game.py --offline-status
 python3 pack_game.py --prefetch-all
 ```
 
-## Supported Systems (38)
+## Supported Systems (41)
 
 ### 🎮 Consoles — Nintendo
 
@@ -128,7 +128,38 @@ python3 pack_game.py --prefetch-all
 | MAME 2003+ | `mame` | mame2003_plus | `.zip` | Requires `--system mame` |
 | DOOM | `doom` | prboom | `.wad` | Requires `--system doom` |
 
+### 🎮 Consoles — Other (continued)
+
+| System | Key | Core | Extensions | Notes |
+|--------|-----|------|------------|-------|
+| 3DO | `3do` | opera | `.iso`, `.bin`, `.cue`, `.chd` | CD-based |
+| Philips CD-i | `cdi` | same_cdi | `.chd`, `.iso` | CD-based |
+| Sega Saturn | `saturn` | yabause | `.bin`, `.cue`, `.iso`, `.chd` | CD-based |
+
 > ⚠️ **Arcade systems** require the `--system` flag because their ROM files are `.zip` which can't be auto-detected. Use the correct ROM set for each core (FBAlpha for CPS1/CPS2, FBNeo for FBNeo, MAME 2003 for MAME).
+
+### 🔄 Alternative Cores
+
+Some systems have alternative cores available via `--core`:
+
+| Core | System | Notes |
+|------|--------|-------|
+| `nestopia` | NES | Alternative to fceumm |
+| `desmume` | NDS | Alternative to melonDS |
+| `desmume2015` | NDS | Lighter alternative |
+| `mame2003` | Arcade | Alternative to mame2003_plus |
+| `mednafen_psx_hw` | PSX | Hardware-accelerated |
+| `parallel_n64` | N64 | Alternative to mupen64plus_next |
+| `vice_x64` | C64 | Lighter alternative to vice_x64sc |
+| `crocods` | CPC | Alternative to cap32 |
+
+```bash
+# Use nestopia instead of fceumm for NES
+python3 pack_game.py mario.nes --core nestopia
+
+# Use parallel_n64 instead of mupen64plus
+python3 pack_game.py mario64.z64 --core parallel_n64
+```
 
 ## CLI Reference
 
@@ -148,6 +179,7 @@ options:
   --system, -s SYSTEM   Target system (auto-detected from extension if omitted)
   --title, -t TITLE     Game title (default: filename without extension)
   --output, -o OUTPUT   Output HTML file path (default: <rom_name>.html)
+  --core CORE_NAME      Use an alternative core (e.g., nestopia, desmume, parallel_n64)
   --color, -c COLOR     EmulatorJS accent color (default: #FF4444)
   --list-systems        List all supported systems and exit
   --offline-status      Show which cores are cached locally
@@ -169,20 +201,34 @@ The packer resolves WASM cores and EmulatorJS assets in this order:
 ```
 universal/
 ├── pack_game.py          # Main script (Python 3.10+, stdlib only)
-├── cores/                # 31 WASM cores + EmulatorJS (~35 MB)
+├── cores/                # 92 core files (46 cores × normal + legacy) + 12 assets (~137 MB)
 │   ├── emulator.min.js
 │   ├── emulator.min.css
-│   ├── fceumm-wasm.data        # NES
+│   ├── fceumm-wasm.data        # NES (normal)
+│   ├── fceumm-legacy-wasm.data # NES (legacy/WebGL1 fallback)
 │   ├── snes9x-wasm.data        # SNES
 │   ├── gambatte-wasm.data      # GB / GBC
 │   ├── mgba-wasm.data          # GBA
 │   ├── mupen64plus_next-wasm.data  # N64
 │   ├── genesis_plus_gx-wasm.data   # Genesis / SMS / GG / Sega CD
+│   ├── opera-wasm.data          # 3DO
+│   ├── same_cdi-wasm.data       # Philips CD-i
+│   ├── yabause-wasm.data        # Sega Saturn
 │   ├── vice_x64sc-wasm.data    # C64
 │   ├── puae-wasm.data          # Amiga
 │   ├── cap32-wasm.data         # CPC
 │   ├── prboom-wasm.data        # DOOM
-│   └── ... (31 cores total)
+│   ├── GameManager.js           # EJS src/ asset
+│   ├── gamepad.js               # EJS src/ asset
+│   ├── nipplejs.js              # EJS src/ asset
+│   ├── shaders.js               # EJS src/ asset
+│   ├── socket.io.min.js         # EJS src/ asset
+│   ├── storage.js               # EJS src/ asset
+│   ├── extract7z.js             # Compression lib
+│   ├── extractzip.js            # Compression lib
+│   ├── libunrar.js              # Compression lib
+│   ├── libunrar.wasm            # Compression lib
+│   └── ... (92 cores + 12 assets = 104 files total)
 ├── cores.zip             # Pre-packaged bundle for easy distribution
 └── README.md
 ```
@@ -208,19 +254,23 @@ To share the packer as a fully offline tool:
 
 ```bash
 zip -r packer_offline.zip universal/
-# → ~35 MB, contains everything to generate HTML for 38 systems
+# → ~137 MB, contains everything to generate HTML for 41 systems
 ```
 
 ## Architecture
 
-The generated HTML uses the **fetch interceptor pattern** to serve all embedded data offline:
+### 3-Layer Offline Interception
 
-```
-Browser requests core WASM  ──→  Intercepted ──→  Served from embedded base64
-Browser requests ROM file   ──→  Intercepted ──→  Served from embedded base64
-Browser requests metadata   ──→  Intercepted ──→  Served stub JSON `{}`
-Other requests              ──→  Passed through to original fetch()
-```
+The generated HTML uses a **3-layer interception strategy** to serve all assets offline:
+
+1. **EJS_paths API** — Redirects EmulatorJS src/ scripts to embedded base64 blobs
+2. **MutationObserver** — Intercepts dynamically injected `<script>` tags before they load from CDN
+3. **Fetch/XHR override** — Catches all remaining network requests for cores, compression libs, and metadata
+
+Additionally:
+- **Dual core embedding**: Both normal and legacy WASM cores are embedded (browser selects based on WebGL2 support)
+- **EJS_threads = false**: Disables threading (SharedArrayBuffer is unavailable in local `file://` contexts)
+- **12 extra assets**: src/ scripts + compression libraries embedded as base64
 
 This means EmulatorJS "thinks" it's fetching from the CDN, but all data is served locally from the embedded base64 strings. The HTML file works 100% offline, forever.
 

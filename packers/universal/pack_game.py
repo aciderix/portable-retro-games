@@ -21,6 +21,7 @@ Supported systems (38):
 
 import argparse
 import base64
+import json
 import os
 import re
 import sys
@@ -78,6 +79,25 @@ SYSTEMS = {
     'cps2':      {'core': 'fbalpha2012_cps2', 'label': 'Arcade (CPS2)',              'extensions': ['.zip']},
     'fbneo':     {'core': 'fbneo',            'label': 'Arcade (FBNeo)',             'extensions': ['.zip']},
     'mame':      {'core': 'mame2003_plus',    'label': 'Arcade (MAME 2003+)',        'extensions': ['.zip']},
+    # --- NEW SYSTEMS (CDN cores not previously included) ---
+    '3do':       {'core': 'opera',            'label': '3DO Interactive',            'extensions': ['.iso', '.bin', '.cue', '.chd']},
+    'cdi':       {'core': 'same_cdi',         'label': 'Philips CD-i',              'extensions': ['.chd', '.cue']},
+    'saturn':    {'core': 'yabause',          'label': 'Sega Saturn',               'extensions': ['.bin', '.cue', '.iso', '.chd']},
+    # NOTE: dosbox_pure (DOS) and ppsspp (PSP) are listed in EmulatorJS docs
+    # but their cores do NOT exist on any CDN version as of March 2026.
+}
+
+# Alternative cores: same system, different emulator backend.
+# Use with: --core <core_name> to override the default.
+ALT_CORES = {
+    'nestopia':         {'for_system': 'nes',   'label': 'NES (Nestopia)'},
+    'desmume':          {'for_system': 'nds',   'label': 'Nintendo DS (DeSmuME)'},
+    'desmume2015':      {'for_system': 'nds',   'label': 'Nintendo DS (DeSmuME 2015)'},
+    'mame2003':         {'for_system': 'mame',  'label': 'Arcade (MAME 2003)'},
+    'mednafen_psx_hw':  {'for_system': 'psx',   'label': 'PlayStation (Mednafen HW)'},
+    'parallel_n64':     {'for_system': 'n64',   'label': 'Nintendo 64 (Parallel)'},
+    'vice_x64':         {'for_system': 'c64',   'label': 'Commodore 64 (VICE x64)'},
+    'crocods':          {'for_system': 'cpc',   'label': 'Amstrad CPC (CrocoDS)'},
 }
 
 # Build reverse lookup: extension → system
@@ -92,6 +112,36 @@ EJS_CDN_BASE = "https://cdn.emulatorjs.org/stable/data/"
 
 # Offline cores directory (next to script). If present, no internet needed.
 OFFLINE_DIR_NAME = "cores"
+
+# ============================================================
+#  Additional EmulatorJS assets to embed for 100% offline
+# ============================================================
+# These files are dynamically loaded by EmulatorJS at runtime.
+# Without embedding them, games CANNOT work offline (Issue #11).
+
+# Files loaded via <script> injection (EJS_paths can redirect these)
+SRC_ASSETS = [
+    'src/GameManager.js',
+    'src/gamepad.js',
+    'src/nipplejs.js',
+    'src/shaders.js',
+    'src/socket.io.min.js',
+    'src/storage.js',
+]
+
+# Compression libraries (loaded for core WASM decompression)
+COMPRESSION_ASSETS_TEXT = [
+    'compression/extract7z.js',
+    'compression/extractzip.js',
+    'compression/libunrar.js',
+]
+
+COMPRESSION_ASSETS_BINARY = [
+    'compression/libunrar.wasm',
+]
+
+ALL_EXTRA_ASSETS = SRC_ASSETS + COMPRESSION_ASSETS_TEXT + COMPRESSION_ASSETS_BINARY
+
 
 def get_offline_dir():
     """Return the offline cores directory if it exists, else None."""
@@ -293,13 +343,24 @@ body {
 
 <script>
 (function() {
-    // Embedded game data
+    // ═══════════════════════════════════════════════════════════
+    //  EMBEDDED GAME DATA
+    // ═══════════════════════════════════════════════════════════
     var EMBEDDED_ROM_B64 = "{{ROM_B64}}";
     var EMBEDDED_ROM_FILENAME = "{{ROM_FILENAME}}";
     var EMBEDDED_CORE_B64 = "{{CORE_B64}}";
+    var EMBEDDED_CORE_LEGACY_B64 = "{{CORE_LEGACY_B64}}";
     var EMBEDDED_CORE_NAME = "{{CORE_NAME}}";
 
-    // Helpers
+    // ═══════════════════════════════════════════════════════════
+    //  EMBEDDED EXTRA ASSETS (for 100% offline — Issue #11 fix)
+    //  Contains: src/ scripts + compression/ libraries
+    // ═══════════════════════════════════════════════════════════
+    var EMBEDDED_EXTRA = {{EXTRA_ASSETS_JSON}};
+
+    // ═══════════════════════════════════════════════════════════
+    //  HELPERS
+    // ═══════════════════════════════════════════════════════════
     function b64toUint8(b64) {
         var bin = atob(b64);
         var len = bin.length;
@@ -310,6 +371,13 @@ body {
     function b64toBlobUrl(b64, mime) {
         return URL.createObjectURL(new Blob([b64toUint8(b64)], { type: mime || 'application/octet-stream' }));
     }
+    function getMime(name) {
+        if (name.endsWith('.wasm')) return 'application/wasm';
+        if (name.endsWith('.js'))   return 'text/javascript';
+        if (name.endsWith('.json')) return 'application/json';
+        if (name.endsWith('.css'))  return 'text/css';
+        return 'application/octet-stream';
+    }
     function setProgress(pct, msg) {
         var fill = document.getElementById('ld-fill');
         var status = document.getElementById('ld-status');
@@ -317,17 +385,82 @@ body {
         if (status) status.textContent = msg;
     }
 
-    setProgress(10, 'Loading emulator engine...');
+    setProgress(10, 'Initializing offline engine...');
 
-    // ── Intercept fetch() ──
+    // ═══════════════════════════════════════════════════════════
+    //  CREATE BLOB URLs FOR ALL EXTRA ASSETS
+    // ═══════════════════════════════════════════════════════════
+    var extraBlobUrls = {};
+    for (var key in EMBEDDED_EXTRA) {
+        if (EMBEDDED_EXTRA[key]) {
+            extraBlobUrls[key] = b64toBlobUrl(EMBEDDED_EXTRA[key], getMime(key));
+        }
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    //  LAYER 1: EJS_paths — Official EmulatorJS path override
+    //  Redirects src/ file loading to embedded blob URLs
+    // ═══════════════════════════════════════════════════════════
+    window.EJS_paths = {};
+    var ejsPathFiles = ['GameManager.js', 'gamepad.js', 'nipplejs.js', 'shaders.js',
+                        'socket.io.min.js', 'storage.js'];
+    for (var i = 0; i < ejsPathFiles.length; i++) {
+        if (extraBlobUrls[ejsPathFiles[i]]) {
+            window.EJS_paths[ejsPathFiles[i]] = extraBlobUrls[ejsPathFiles[i]];
+        }
+    }
+    // Stub version.json to prevent CDN fetch
+    window.EJS_paths['version.json'] = b64toBlobUrl(btoa('{}'), 'application/json');
+
+    // ═══════════════════════════════════════════════════════════
+    //  LAYER 2: <script> tag interception
+    //  Catches dynamically injected scripts (compression libs, etc.)
+    // ═══════════════════════════════════════════════════════════
+    var _origSrcDesc = Object.getOwnPropertyDescriptor(HTMLScriptElement.prototype, 'src');
+    if (_origSrcDesc && _origSrcDesc.set) {
+        Object.defineProperty(HTMLScriptElement.prototype, 'src', {
+            set: function(val) {
+                if (val && typeof val === 'string') {
+                    for (var name in extraBlobUrls) {
+                        if (val.indexOf(name) !== -1) {
+                            return _origSrcDesc.set.call(this, extraBlobUrls[name]);
+                        }
+                    }
+                }
+                return _origSrcDesc.set.call(this, val);
+            },
+            get: _origSrcDesc.get,
+            configurable: true
+        });
+    }
+    // Also intercept setAttribute('src', ...) on script elements
+    var _origSetAttr = Element.prototype.setAttribute;
+    Element.prototype.setAttribute = function(name, value) {
+        if (this instanceof HTMLScriptElement && name.toLowerCase() === 'src' &&
+            value && typeof value === 'string') {
+            for (var key in extraBlobUrls) {
+                if (value.indexOf(key) !== -1) {
+                    return _origSetAttr.call(this, name, extraBlobUrls[key]);
+                }
+            }
+        }
+        return _origSetAttr.call(this, name, value);
+    };
+
+    // ═══════════════════════════════════════════════════════════
+    //  LAYER 3: fetch() interception
+    //  Catches core WASM, ROM, compression, and metadata requests
+    // ═══════════════════════════════════════════════════════════
     var _origFetch = window.fetch;
     window.fetch = function(input, init) {
         var url = (typeof input === 'string') ? input : (input && input.url ? input.url : '');
 
-        // Serve embedded core WASM
-        if (url.indexOf(EMBEDDED_CORE_NAME + '-wasm.data') !== -1) {
-            setProgress(60, 'Loading emulator core...');
-            var data = b64toUint8(EMBEDDED_CORE_B64);
+        // Serve embedded core WASM (both normal and legacy variants)
+        if (url.indexOf(EMBEDDED_CORE_NAME) !== -1 && url.indexOf('-wasm.data') !== -1) {
+            setProgress(60, 'Loading emulator core (offline)...');
+            var isLegacy = url.indexOf('-legacy-wasm.data') !== -1 || url.indexOf('legacy-wasm.data') !== -1;
+            var coreB64 = (isLegacy && EMBEDDED_CORE_LEGACY_B64) ? EMBEDDED_CORE_LEGACY_B64 : EMBEDDED_CORE_B64;
+            var data = b64toUint8(coreB64);
             return Promise.resolve(new Response(data.buffer, {
                 status: 200,
                 headers: { 'Content-Type': 'application/octet-stream', 'Content-Length': String(data.length) }
@@ -344,9 +477,20 @@ body {
             }));
         }
 
-        // Stub metadata
+        // Serve any embedded extra asset (compression libs, etc.)
+        for (var fname in EMBEDDED_EXTRA) {
+            if (url.indexOf(fname) !== -1 && EMBEDDED_EXTRA[fname]) {
+                var data = b64toUint8(EMBEDDED_EXTRA[fname]);
+                return Promise.resolve(new Response(data.buffer, {
+                    status: 200,
+                    headers: { 'Content-Type': getMime(fname), 'Content-Length': String(data.length) }
+                }));
+            }
+        }
+
+        // Stub metadata requests
         if (url.indexOf('version.json') !== -1 || url.indexOf('localization/') !== -1 ||
-            url.indexOf('cores/reports/') !== -1 || url.indexOf('compression/') !== -1) {
+            url.indexOf('cores/reports/') !== -1) {
             return Promise.resolve(new Response('{}', {
                 status: 200, headers: { 'Content-Type': 'application/json' }
             }));
@@ -355,7 +499,9 @@ body {
         return _origFetch.apply(this, arguments);
     };
 
-    // ── Intercept XMLHttpRequest ──
+    // ═══════════════════════════════════════════════════════════
+    //  LAYER 3b: XMLHttpRequest interception (same logic)
+    // ═══════════════════════════════════════════════════════════
     var XHRProto = XMLHttpRequest.prototype;
     var _xhrOpen = XHRProto.open;
     var _xhrSend = XHRProto.send;
@@ -367,27 +513,42 @@ body {
 
     XHRProto.send = function(body) {
         var url = this._prg_url || '';
-        var embeddedB64 = null;
+        var embeddedData = null;
 
-        if (url.indexOf(EMBEDDED_CORE_NAME + '-wasm.data') !== -1) {
-            embeddedB64 = EMBEDDED_CORE_B64;
-            setProgress(60, 'Loading emulator core...');
-        } else if (url.indexOf(EMBEDDED_ROM_FILENAME) !== -1) {
-            embeddedB64 = EMBEDDED_ROM_B64;
+        // Check core WASM (both normal and legacy variants)
+        if (url.indexOf(EMBEDDED_CORE_NAME) !== -1 && url.indexOf('-wasm.data') !== -1) {
+            var isLegacy = url.indexOf('-legacy-wasm.data') !== -1 || url.indexOf('legacy-wasm.data') !== -1;
+            embeddedData = b64toUint8((isLegacy && EMBEDDED_CORE_LEGACY_B64) ? EMBEDDED_CORE_LEGACY_B64 : EMBEDDED_CORE_B64);
+            setProgress(60, 'Loading emulator core (offline)...');
+        }
+        // Check ROM
+        else if (url.indexOf(EMBEDDED_ROM_FILENAME) !== -1) {
+            embeddedData = b64toUint8(EMBEDDED_ROM_B64);
             setProgress(80, 'Loading game data...');
         }
+        // Check extra assets
+        else {
+            for (var fname in EMBEDDED_EXTRA) {
+                if (url.indexOf(fname) !== -1 && EMBEDDED_EXTRA[fname]) {
+                    embeddedData = b64toUint8(EMBEDDED_EXTRA[fname]);
+                    break;
+                }
+            }
+        }
 
-        if (embeddedB64) {
-            var data = b64toUint8(embeddedB64);
+        if (embeddedData) {
             var self = this;
             Object.defineProperty(self, 'readyState', { get: function() { return 4; }, configurable: true });
             Object.defineProperty(self, 'status', { get: function() { return 200; }, configurable: true });
             Object.defineProperty(self, 'statusText', { get: function() { return 'OK'; }, configurable: true });
-            Object.defineProperty(self, 'response', { get: function() { return data.buffer; }, configurable: true });
+            Object.defineProperty(self, 'response', { get: function() { return embeddedData.buffer; }, configurable: true });
+            Object.defineProperty(self, 'responseText', { get: function() {
+                try { return new TextDecoder().decode(embeddedData); } catch(e) { return ''; }
+            }, configurable: true });
             setTimeout(function() {
-                self.dispatchEvent(new ProgressEvent('progress', { loaded: data.length, total: data.length }));
+                self.dispatchEvent(new ProgressEvent('progress', { loaded: embeddedData.length, total: embeddedData.length }));
                 self.dispatchEvent(new Event('load'));
-                if (self.onprogress) self.onprogress({ loaded: data.length, total: data.length });
+                if (self.onprogress) self.onprogress({ loaded: embeddedData.length, total: embeddedData.length });
                 if (self.onload) self.onload();
                 if (self.onreadystatechange) self.onreadystatechange();
             }, 10);
@@ -413,7 +574,9 @@ body {
         return _xhrSend.apply(this, arguments);
     };
 
-    // ── EJS Configuration ──
+    // ═══════════════════════════════════════════════════════════
+    //  EJS CONFIGURATION
+    // ═══════════════════════════════════════════════════════════
     var romBlobUrl = b64toBlobUrl(EMBEDDED_ROM_B64, 'application/octet-stream');
 
     window.EJS_player = '#game';
@@ -422,6 +585,7 @@ body {
     window.EJS_color = '#FF4444';
     window.EJS_startOnLoaded = false;
     window.EJS_pathtodata = 'https://cdn.emulatorjs.org/stable/data/';
+    window.EJS_threads = false;  // Force non-threaded cores (avoids needing SharedArrayBuffer/COOP/COEP headers)
     window.EJS_CacheLimit = 0;
     window.EJS_startButtonName = 'Play {{TITLE}}';
     window.EJS_disableLocalStorage = false;
@@ -441,7 +605,7 @@ body {
 window.EJS_core = '{{CORE_NAME}}';
 </script>
 
-<!-- EmulatorJS Engine (emulator.min.js) -->
+<!-- EmulatorJS Engine (emulator.min.js) — embedded inline -->
 <script>
 {{EJS_ENGINE_JS}}
 </script>
@@ -488,7 +652,7 @@ window.EJS_core = '{{CORE_NAME}}';
 # ============================================================
 #  HTML Generation
 # ============================================================
-def generate_html(rom_path, title, system_id, ejs_css, ejs_engine_js, core_b64, rom_b64):
+def generate_html(rom_path, title, system_id, ejs_css, ejs_engine_js, core_b64, core_legacy_b64, rom_b64, extra_assets_json):
     """Generate the complete self-contained HTML file."""
     system_info = SYSTEMS[system_id]
     rom_filename = os.path.basename(rom_path).lower()
@@ -499,11 +663,42 @@ def generate_html(rom_path, title, system_id, ejs_css, ejs_engine_js, core_b64, 
     html = html.replace('{{ROM_B64}}', rom_b64)
     html = html.replace('{{ROM_FILENAME}}', rom_filename)
     html = html.replace('{{CORE_B64}}', core_b64)
+    html = html.replace('{{CORE_LEGACY_B64}}', core_legacy_b64)
     html = html.replace('{{CORE_NAME}}', system_info['core'])
     html = html.replace('{{EJS_CSS}}', ejs_css)
     html = html.replace('{{EJS_ENGINE_JS}}', ejs_engine_js)
+    html = html.replace('{{EXTRA_ASSETS_JSON}}', extra_assets_json)
 
     return html
+
+
+# ============================================================
+#  Download Extra Assets
+# ============================================================
+def download_extra_assets(cache_dir, offline_dir):
+    """Download all additional EmulatorJS assets needed for offline support.
+    Returns a dict of {filename: base64_data}."""
+    extra = {}
+    for asset_path in ALL_EXTRA_ASSETS:
+        filename = os.path.basename(asset_path)
+        cache_path = os.path.join(cache_dir, filename)
+        offline_path = os.path.join(offline_dir, filename) if offline_dir else None
+        is_binary = asset_path in COMPRESSION_ASSETS_BINARY
+
+        # Try offline dir first, then cache, then CDN
+        if offline_path and os.path.isfile(offline_path):
+            with open(offline_path, 'rb') as f:
+                data = f.read()
+            print(f"  ✅ Offline: {filename} ({len(data) // 1024} KB)")
+        elif is_binary:
+            data = download_binary(EJS_CDN_BASE + asset_path, cache_path)
+        else:
+            text = download_text(EJS_CDN_BASE + asset_path, cache_path)
+            data = text.encode('utf-8')
+
+        extra[filename] = base64.b64encode(data).decode('ascii')
+
+    return extra
 
 
 # ============================================================
@@ -523,6 +718,7 @@ Supported systems:
                        help='Target system (auto-detected from extension if omitted)')
     parser.add_argument('--title', '-t', help='Game title (default: filename without extension)')
     parser.add_argument('--output', '-o', help='Output HTML file path (default: <rom_name>.html)')
+    parser.add_argument('--core', help='Override default core (e.g. nestopia, desmume). See ALT_CORES in source.')
     parser.add_argument('--color', '-c', default='#FF4444', help='EmulatorJS accent color (default: #FF4444)')
     parser.add_argument('--list-systems', action='store_true', help='List all supported systems and exit')
     parser.add_argument('--prefetch-all', action='store_true', help='Download all cores to cores/ directory for offline use')
@@ -545,27 +741,37 @@ Supported systems:
         cores_dir = os.path.join(script_dir, OFFLINE_DIR_NAME)
         os.makedirs(cores_dir, exist_ok=True)
         print(f"\n📥 Prefetching all cores to {cores_dir}/")
-        unique_cores = sorted(set(info['core'] for info in SYSTEMS.values()))
+        # Collect all cores: default systems + alternative cores
+        unique_cores = sorted(set(
+            [info['core'] for info in SYSTEMS.values()] +
+            list(ALT_CORES.keys())
+        ))
         cache_dir = get_cache_dir()
-        for i, core in enumerate(unique_cores, 1):
-            fname = f"{core}-wasm.data"
-            dest = os.path.join(cores_dir, fname)
-            if os.path.isfile(dest):
-                print(f"  [{i}/{len(unique_cores)}] ✅ {fname} (already present)")
-                continue
-            cache_path = os.path.join(cache_dir, fname)
-            if os.path.isfile(cache_path):
-                import shutil
-                shutil.copy2(cache_path, dest)
-                print(f"  [{i}/{len(unique_cores)}] ✅ {fname} (copied from cache)")
-                continue
-            print(f"  [{i}/{len(unique_cores)}] ⬇️  Downloading {fname}...")
-            try:
-                data = download_binary(EJS_CDN_BASE + f'cores/{fname}')
-                with open(dest, 'wb') as f:
-                    f.write(data)
-            except Exception:
-                print(f"  ❌ Failed to download {fname}")
+        # Download both normal and legacy variants for each core
+        variants = ['-wasm.data', '-legacy-wasm.data']
+        total_variants = len(unique_cores) * len(variants)
+        idx = 0
+        for core in unique_cores:
+            for variant_suffix in variants:
+                idx += 1
+                fname = f"{core}{variant_suffix}"
+                dest = os.path.join(cores_dir, fname)
+                if os.path.isfile(dest):
+                    print(f"  [{idx}/{total_variants}] ✅ {fname} (already present)")
+                    continue
+                cache_path = os.path.join(cache_dir, fname)
+                if os.path.isfile(cache_path):
+                    import shutil
+                    shutil.copy2(cache_path, dest)
+                    print(f"  [{idx}/{total_variants}] ✅ {fname} (copied from cache)")
+                    continue
+                print(f"  [{idx}/{total_variants}] ⬇️  Downloading {fname}...")
+                try:
+                    data = download_binary(EJS_CDN_BASE + f'cores/{fname}')
+                    with open(dest, 'wb') as f:
+                        f.write(data)
+                except Exception:
+                    print(f"  ❌ Failed to download {fname}")
         for asset in ['emulator.min.js', 'emulator.min.css']:
             dest = os.path.join(cores_dir, asset)
             if os.path.isfile(dest):
@@ -581,6 +787,34 @@ Supported systems:
             data_text = download_text(EJS_CDN_BASE + asset)
             with open(dest, 'w', encoding='utf-8') as f:
                 f.write(data_text)
+
+        # Also prefetch extra assets for offline packing
+        print(f"\n📥 Prefetching extra EmulatorJS assets...")
+        for asset_path in ALL_EXTRA_ASSETS:
+            filename = os.path.basename(asset_path)
+            dest = os.path.join(cores_dir, filename)
+            if os.path.isfile(dest):
+                print(f"  ✅ {filename} (already present)")
+                continue
+            cache_path = os.path.join(cache_dir, filename)
+            if os.path.isfile(cache_path):
+                import shutil
+                shutil.copy2(cache_path, dest)
+                print(f"  ✅ {filename} (copied from cache)")
+                continue
+            print(f"  ⬇️  Downloading {filename}...")
+            try:
+                if asset_path in COMPRESSION_ASSETS_BINARY:
+                    data = download_binary(EJS_CDN_BASE + asset_path)
+                    with open(dest, 'wb') as f:
+                        f.write(data)
+                else:
+                    data = download_text(EJS_CDN_BASE + asset_path)
+                    with open(dest, 'w', encoding='utf-8') as f:
+                        f.write(data)
+            except Exception:
+                print(f"  ❌ Failed to download {filename}")
+
         total = sum(os.path.getsize(os.path.join(cores_dir, f)) for f in os.listdir(cores_dir))
         print(f"\n✅ Offline bundle ready: {len(os.listdir(cores_dir))} files, {total/1024/1024:.1f} MB")
         print(f"   The script can now work 100% offline.")
@@ -589,28 +823,41 @@ Supported systems:
     if args.offline_status:
         offline_dir = get_offline_dir()
         cache_dir = get_cache_dir()
-        unique_cores = sorted(set(info['core'] for info in SYSTEMS.values()))
+        unique_cores = sorted(set(
+            [info['core'] for info in SYSTEMS.values()] +
+            list(ALT_CORES.keys())
+        ))
         print(f"\n📊 Offline Status:")
         if offline_dir:
             print(f"   Offline dir: {offline_dir} ✅")
         else:
             print(f"   Offline dir: not found (create with --prefetch-all)")
         ready = 0
+        total_needed = len(unique_cores) * 2  # normal + legacy for each
         for core in unique_cores:
-            fname = f"{core}-wasm.data"
-            in_offline = offline_dir and os.path.isfile(os.path.join(offline_dir, fname))
-            in_cache = os.path.isfile(os.path.join(cache_dir, fname))
-            status = "✅ offline" if in_offline else ("📦 cached" if in_cache else "❌ missing")
-            if in_offline or in_cache:
-                ready += 1
-            print(f"   {core:25s} {status}")
+            for variant_suffix, variant_label in [('-wasm.data', ''), ('-legacy-wasm.data', ' (legacy)')]:
+                fname = f"{core}{variant_suffix}"
+                in_offline = offline_dir and os.path.isfile(os.path.join(offline_dir, fname))
+                in_cache = os.path.isfile(os.path.join(cache_dir, fname))
+                status = "✅ offline" if in_offline else ("📦 cached" if in_cache else "❌ missing")
+                if in_offline or in_cache:
+                    ready += 1
+                print(f"   {core + variant_label:35s} {status}")
         # Check EJS assets
         for asset in ['emulator.min.js', 'emulator.min.css']:
             in_offline = offline_dir and os.path.isfile(os.path.join(offline_dir, asset))
             in_cache = os.path.isfile(os.path.join(cache_dir, asset))
             status = "✅ offline" if in_offline else ("📦 cached" if in_cache else "❌ missing")
             print(f"   {asset:25s} {status}")
-        print(f"\n   {ready}/{len(unique_cores)} cores available locally")
+        # Check extra assets
+        print(f"\n   Extra assets (offline embedding):")
+        for asset_path in ALL_EXTRA_ASSETS:
+            filename = os.path.basename(asset_path)
+            in_offline = offline_dir and os.path.isfile(os.path.join(offline_dir, filename))
+            in_cache = os.path.isfile(os.path.join(cache_dir, filename))
+            status = "✅ offline" if in_offline else ("📦 cached" if in_cache else "❌ missing")
+            print(f"   {filename:25s} {status}")
+        print(f"\n   {ready}/{total_needed} core variants available locally (normal + legacy)")
         return
 
 
@@ -623,7 +870,20 @@ Supported systems:
 
     # Detect system
     system_id = args.system or detect_system(args.rom)
-    system_info = SYSTEMS[system_id]
+    system_info = SYSTEMS[system_id].copy()  # copy so we don't mutate the global
+    # Override core if --core is specified
+    if args.core:
+        if args.core in ALT_CORES:
+            system_info['core'] = args.core
+            print(f"\n🔄 Using alternative core: {args.core} ({ALT_CORES[args.core]['label']})")
+        elif args.core in [info['core'] for info in SYSTEMS.values()]:
+            system_info['core'] = args.core
+            print(f"\n🔄 Using core override: {args.core}")
+        else:
+            all_cores = sorted(set(info['core'] for info in SYSTEMS.values()) | set(ALT_CORES.keys()))
+            print(f"❌ Unknown core: {args.core}")
+            print(f"   Available cores: {', '.join(all_cores)}")
+            sys.exit(1)
     print(f"\n🕹️  Universal Retro Game Packer")
     print(f"   System:  {system_info['label']} ({system_id})")
     print(f"   Core:    {system_info['core']}")
@@ -650,10 +910,10 @@ Supported systems:
 
     # Cache directory
     cache_dir = get_cache_dir()
+    offline_dir = get_offline_dir()
     print(f"\n📦 Loading EmulatorJS assets...")
 
     # Load EmulatorJS CSS (offline dir > cache > CDN)
-    offline_dir = get_offline_dir()
     ejs_css_path = os.path.join(cache_dir, 'emulator.min.css')
     offline_css_path = os.path.join(offline_dir, 'emulator.min.css') if offline_dir else None
     if offline_css_path and os.path.isfile(offline_css_path):
@@ -681,12 +941,13 @@ Supported systems:
     else:
         ejs_engine_js = download_text(EJS_CDN_BASE + 'emulator.min.js', ejs_js_path)
 
-    # Download Core WASM data
+    # Download Core WASM data (normal + legacy variants)
     core_name = system_info['core']
+    print(f"\n⚙️  Loading emulator core: {core_name}")
+
+    # Normal core
     core_filename = f"{core_name}-wasm.data"
     core_cache_path = os.path.join(cache_dir, core_filename)
-
-    print(f"\n⚙️  Loading emulator core: {core_name}")
     offline_core_path = os.path.join(offline_dir, core_filename) if offline_dir else None
     if offline_core_path and os.path.isfile(offline_core_path):
         with open(offline_core_path, 'rb') as f:
@@ -697,9 +958,29 @@ Supported systems:
     core_b64 = base64.b64encode(core_data).decode('ascii')
     print(f"   Core size: {len(core_data) / 1024:.0f} KB → Base64: {len(core_b64)} chars")
 
+    # Legacy core (for browsers without WebGL2 or when defaultWebGL2 is false)
+    core_legacy_filename = f"{core_name}-legacy-wasm.data"
+    core_legacy_cache_path = os.path.join(cache_dir, core_legacy_filename)
+    offline_legacy_path = os.path.join(offline_dir, core_legacy_filename) if offline_dir else None
+    if offline_legacy_path and os.path.isfile(offline_legacy_path):
+        with open(offline_legacy_path, 'rb') as f:
+            core_legacy_data = f.read()
+        print(f"  ✅ Offline: {core_legacy_filename} ({len(core_legacy_data) / 1024:.0f} KB)")
+    else:
+        core_legacy_data = download_binary(EJS_CDN_BASE + f'cores/{core_legacy_filename}', core_legacy_cache_path)
+    core_legacy_b64 = base64.b64encode(core_legacy_data).decode('ascii')
+    print(f"   Legacy core size: {len(core_legacy_data) / 1024:.0f} KB → Base64: {len(core_legacy_b64)} chars")
+
+    # ── NEW: Download extra assets for 100% offline support ──
+    print(f"\n📦 Loading extra EmulatorJS assets (offline support)...")
+    extra_assets = download_extra_assets(cache_dir, offline_dir)
+    extra_assets_json = json.dumps(extra_assets)
+    extra_size_kb = len(extra_assets_json) / 1024
+    print(f"   Total extra assets: {len(extra_assets)} files, {extra_size_kb:.0f} KB (base64)")
+
     # Generate HTML
     print(f"\n🏗️  Generating HTML...")
-    html = generate_html(args.rom, title, system_id, ejs_css, ejs_engine_js, core_b64, rom_b64)
+    html = generate_html(args.rom, title, system_id, ejs_css, ejs_engine_js, core_b64, core_legacy_b64, rom_b64, extra_assets_json)
 
     # Output
     output_path = args.output or os.path.splitext(args.rom)[0] + '.html'
@@ -716,6 +997,7 @@ Supported systems:
     print(f"  🔌 100% offline — no internet needed")
     print(f"  📱 Mobile touch controls included (EmulatorJS)")
     print(f"  🌐 Open in any modern browser")
+    print(f"  🛡️  3-layer offline: EJS_paths + fetch/XHR + script interception")
     print(f"{'='*60}\n")
 
 
