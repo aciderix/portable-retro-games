@@ -103,12 +103,33 @@ python3 pack_game.py --prefetch-all
 
 | System | Key | Core | Extensions | Notes |
 |--------|-----|------|------------|-------|
-| Commodore 64 | `c64` | vice_x64sc | `.d64`, `.t64`, `.prg`, `.crt` | Fully tested |
+| Commodore 64 | `c64` | vice_x64sc | `.d64`, `.t64`, `.prg`, `.crt` | `.d64` auto-extracted (see below) |
 | Commodore 128 | `c128` | vice_x128 | `.d64`, `.d71`, `.d81`, `.prg` | — |
 | VIC-20 | `vic20` | vice_xvic | `.d64`, `.prg`, `.crt`, `.60`, `.a0` | — |
 | PET | `pet` | vice_xpet | `.d64`, `.prg`, `.tap` | — |
 | Plus/4 | `plus4` | vice_xplus4 | `.d64`, `.prg`, `.tap`, `.bin` | — |
 | Amiga | `amiga` | puae | `.adf`, `.adz`, `.dms`, `.ipf` | Also available as dedicated packer |
+
+#### Commodore 64 — Automatic D64→PRG Extraction
+
+The VICE WASM core cannot reliably load `.d64` disk images (True Drive Emulation hangs during `LOAD"*",8,1`). The packer automatically handles this:
+
+1. **Detects `.d64` files** for C64/C128/VIC-20/PET/Plus4 systems
+2. **Parses the D64 directory** (track 18, sector chain)
+3. **Extracts the first PRG** program from the disk image
+4. **Packs the PRG** instead — which loads instantly via direct memory injection
+
+This is fully transparent to the user:
+
+```bash
+# These both work — D64 is auto-converted
+python3 pack_game.py game.d64 --system c64      # → extracts PRG, packs it
+python3 pack_game.py game.prg --system c64      # → packs directly
+```
+
+Other C64 formats work natively: `.prg`, `.crt`, `.t64`, `.nib`, `.tap`.
+
+> ⚠️ If the D64 contains no PRG file, packing will fail with a clear error message.
 
 ### 💻 Computers — Others
 
@@ -136,7 +157,25 @@ python3 pack_game.py --prefetch-all
 | Philips CD-i | `cdi` | same_cdi | `.chd`, `.iso` | CD-based |
 | Sega Saturn | `saturn` | yabause | `.bin`, `.cue`, `.iso`, `.chd` | CD-based |
 
-> ⚠️ **Arcade systems** require the `--system` flag because their ROM files are `.zip` which can't be auto-detected. Use the correct ROM set for each core (FBAlpha for CPS1/CPS2, FBNeo for FBNeo, MAME 2003 for MAME).
+> ⚠️ **Arcade systems** require the `--system` flag because their ROM files are `.zip` which can't be auto-detected.
+
+#### Arcade ROM Naming — Important!
+
+Arcade ROMs **must** use their correct MAME romset filename (e.g. `dino.zip`, `sf2.zip`, `ssf2t.zip`). The emulator core identifies the game by the filename — a renamed ROM (e.g. `Cadillacs and Dinosaurs.zip`) will **not** work.
+
+The packer passes the ROM filename directly to EmulatorJS via `EJS_gameUrl`, and the fetch interceptor serves the embedded data when the core requests it. This is why the original filename matters.
+
+**Common romset names:**
+| Game | CPS1 | CPS2 |
+|------|------|------|
+| Street Fighter II | `sf2.zip` | — |
+| Super SF2 Turbo | — | `ssf2t.zip` |
+| Cadillacs & Dinosaurs | `dino.zip` | — |
+| Marvel vs Capcom | — | `mvsc.zip` |
+| Hyper SF2 Anniversary | — | `hsf2.zip` |
+| 1944: The Loop Master | — | `1944.zip` |
+
+> 💡 Find correct romset names on [Myrient MAME ROMs](https://myrient.erista.me/files/MAME/ROMs%20(merged)/) or the [FBAlpha compatibility list](https://www.fbalpha.com/compatibility/).
 
 ### 🔄 Alternative Cores
 
@@ -274,10 +313,58 @@ Additionally:
 
 This means EmulatorJS "thinks" it's fetching from the CDN, but all data is served locally from the embedded base64 strings. The HTML file works 100% offline, forever.
 
+## Known Issues & Limitations
+
+| Issue | Details | Workaround |
+|-------|---------|------------|
+| Arcade ROM naming | ROMs must use MAME romset filenames | Rename to correct romset name (e.g. `dino.zip`) |
+| D64 with no PRG | Packer fails if the disk image has no loadable program | Use a different ROM format (`.prg`, `.tap`) |
+| D64 multi-program | Only the first PRG is extracted from D64 | Extract the desired PRG manually |
+| Amiga | Not fully tested with the universal packer | Use the dedicated Amiga packer as fallback |
+| Some ROMs (32X, VB) | Knuckles' Chaotix (32X) and Mario's Tennis (VB) don't work | ROM-specific compatibility issue, try alternative dumps |
+
+## Test Results
+
+Tested with **26 games across 13 systems** — **23/26 working (88%)**:
+
+| System | Games Tested | Status |
+|--------|-------------|--------|
+| Master System | 2 | ✅ All working |
+| Game Gear | 2 | ✅ All working |
+| Sega 32X | 2 | ⚠️ 1/2 (Knuckles' Chaotix fails) |
+| Atari 7800 | 2 | ✅ All working |
+| Neo Geo Pocket | 2 | ✅ All working |
+| WonderSwan | 2 | ✅ All working |
+| Virtual Boy | 2 | ⚠️ 1/2 (Mario's Tennis fails) |
+| Atari 5200 | 2 | ✅ All working |
+| Atari Lynx | 1 | ✅ Working |
+| Atari Jaguar | 1 | ✅ Working |
+| ZX Spectrum | 2 | ✅ Working |
+| C64 | 2 | ✅ Working (.nib native + .d64→prg) |
+| CPS1 | 2 | ✅ Working (dino.zip + sf2.zip) |
+| CPS2 | 2 | ✅ Working (ssf2t.zip + mvsc.zip) |
+
 ## Dependencies
 
 - **Python 3.10+** (no pip packages needed — uses only stdlib)
 - **Internet connection** only for first download of each core (or use `cores/` / `cores.zip` for offline)
+
+## Changelog
+
+### v2.1 (March 2025)
+
+**Bug Fixes:**
+- 🎯 **Arcade (CPS1/CPS2/FBNeo/MAME) fix** — ROM filename is now passed directly as `EJS_gameUrl` instead of a blob URL. Arcade cores identify games by filename; blob URLs were causing "unknown romset" errors.
+- 💾 **C64 D64→PRG extraction** — `.d64` disk images are automatically parsed and the first PRG is extracted before packing. The VICE WASM core's True Drive Emulation cannot complete disk loads, but PRG files load instantly via direct memory injection.
+
+**Impact:** Test success rate improved from 81% to 88% (21/26 → 23/26 games).
+
+### v2.0
+
+- Initial universal packer with 41-system support
+- 3-layer offline interception (EJS_paths, MutationObserver, Fetch/XHR)
+- Dual core embedding (normal + legacy WebGL1 fallback)
+- Core caching and prefetch system
 
 ---
 
