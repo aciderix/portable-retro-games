@@ -71,33 +71,33 @@ python3 pack_game.py --prefetch-all
 | Master System | `sms` | smsplus | `.sms` | < 2 MB |
 | Game Gear | `gg` | genesis_plus_gx | `.gg` | < 2 MB |
 | Sega 32X | `32x` | picodrive | `.32x` | < 6 MB |
-| Sega CD | `segacd` | genesis_plus_gx | `.cue`, `.bin`, `.chd` | CD-size games |
+| Sega CD | `segacd` | genesis_plus_gx | `.cue`, `.bin`, `.chd` | CD-size games, **BIOS required** (`BIOS_CD_U.BIN`) |
 
 ### 🎮 Consoles — Atari
 
 | System | Key | Core | Extensions | Notes |
 |--------|-----|------|------------|-------|
 | Atari 2600 | `atari2600` | stella2014 | `.a26`, `.bin` | < 1 MB |
-| Atari 5200 | `atari5200` | a5200 | `.a52` | < 1 MB |
+| Atari 5200 | `atari5200` | a5200 | `.a52` | < 1 MB, **BIOS required** (`5200.rom`) |
 | Atari 7800 | `atari7800` | prosystem | `.a78` | < 1 MB |
-| Atari Lynx | `lynx` | handy | `.lnx` | < 2 MB |
+| Atari Lynx | `lynx` | handy | `.lnx` | < 2 MB, **BIOS required** (`lynxboot.img`) |
 | Atari Jaguar | `jaguar` | virtualjaguar | `.j64`, `.jag` | May need tuning |
 
 ### 🎮 Consoles — Sony
 
 | System | Key | Core | Extensions | Notes |
 |--------|-----|------|------------|-------|
-| PlayStation | `psx` | pcsx_rearmed | `.bin`, `.cue`, `.iso`, `.pbp` | May need BIOS |
+| PlayStation | `psx` | pcsx_rearmed | `.bin`, `.cue`, `.iso`, `.pbp` | **BIOS required** (`SCPH5501.BIN`) |
 
 ### 🎮 Consoles — Others
 
 | System | Key | Core | Extensions | Notes |
 |--------|-----|------|------------|-------|
-| PC Engine / TurboGrafx-16 | `pce` | mednafen_pce | `.pce` | < 4 MB |
-| PC-FX | `pcfx` | mednafen_pcfx | `.cue`, `.ccd`, `.chd` | CD-based |
+| PC Engine / TurboGrafx-16 | `pce` | mednafen_pce | `.pce` | < 4 MB, **BIOS required** (`syscard3.pce`) for CD games |
+| PC-FX | `pcfx` | mednafen_pcfx | `.cue`, `.ccd`, `.chd` | CD-based, **BIOS required** (`pcfx.rom`) |
 | Neo Geo Pocket / Color | `ngp` | mednafen_ngp | `.ngp`, `.ngc` | < 5 MB |
 | WonderSwan / Color | `ws` | mednafen_wswan | `.ws`, `.wsc` | < 5 MB |
-| ColecoVision | `coleco` | gearcoleco | `.col` | < 1 MB |
+| ColecoVision | `coleco` | gearcoleco | `.col` | < 1 MB, **BIOS required** (`colecovision.rom`) |
 
 ### 💻 Computers — Commodore
 
@@ -155,7 +155,7 @@ Other C64 formats work natively: `.prg`, `.crt`, `.t64`, `.nib`, `.tap`.
 |--------|-----|------|------------|-------|
 | 3DO | `3do` | opera | `.iso`, `.bin`, `.cue`, `.chd` | CD-based |
 | Philips CD-i | `cdi` | same_cdi | `.chd`, `.iso` | CD-based |
-| Sega Saturn | `saturn` | yabause | `.bin`, `.cue`, `.iso`, `.chd` | CD-based |
+| Sega Saturn | `saturn` | yabause | `.bin`, `.cue`, `.iso`, `.chd` | CD-based, **BIOS required** (`mpr-17933.bin`) |
 
 > ⚠️ **Arcade systems** require the `--system` flag because their ROM files are `.zip` which can't be auto-detected.
 
@@ -200,12 +200,68 @@ python3 pack_game.py mario.nes --core nestopia
 python3 pack_game.py mario64.z64 --core parallel_n64
 ```
 
+## BIOS Management
+
+Some systems require BIOS files to run. The packer automatically finds, embeds, and configures BIOS files so the generated HTML works 100% offline — just like cores and ROMs.
+
+### Systems Requiring BIOS
+
+| System | BIOS File | Size | Notes |
+|--------|-----------|------|-------|
+| ColecoVision | `colecovision.rom` | 8 KB | Required — core won't start without it |
+| Atari 5200 | `5200.rom` | 2 KB | Required |
+| Atari Lynx | `lynxboot.img` | 512 B | Required |
+| PlayStation | `SCPH5501.BIN` | 512 KB | US BIOS (also: `SCPH5500.BIN` JP, `SCPH5502.BIN` EU) |
+| Sega CD | `BIOS_CD_U.BIN` | 128 KB | US BIOS (also: `BIOS_CD_E.BIN` EU, `BIOS_CD_J.BIN` JP) |
+| PC Engine CD | `syscard3.pce` | 256 KB | System Card 3 — needed for CD games |
+| PC-FX | `pcfx.rom` | 1 MB | Required |
+| Sega Saturn | `mpr-17933.bin` | 512 KB | Required |
+
+### BIOS Auto-Search
+
+The packer automatically searches for BIOS files in the following locations (in order):
+
+1. **Explicit path** — via `--bios /path/to/bios_file`
+2. **`bios/` next to the ROM** — `<rom_directory>/bios/`
+3. **`bios/` next to the script** — `<pack_game.py_directory>/bios/`
+4. **`bios/` in project root** — `<script>/../../bios/`
+5. **`bios/` in current directory** — `./bios/`
+
+### Quick BIOS Setup
+
+```bash
+# Place BIOS files next to the packer script
+universal/
+├── pack_game.py
+├── bios/                    # ← Put BIOS files here
+│   ├── colecovision.rom
+│   ├── 5200.rom
+│   ├── lynxboot.img
+│   ├── SCPH5501.BIN
+│   ├── BIOS_CD_U.BIN
+│   ├── syscard3.pce
+│   ├── pcfx.rom
+│   └── mpr-17933.bin
+└── cores/
+
+# Then pack normally — BIOS is auto-detected
+python3 pack_game.py game.col --system coleco
+# 🧬 BIOS: colecovision.rom (8192 bytes) — embedded from ./bios/colecovision.rom
+
+# Or specify a BIOS path explicitly
+python3 pack_game.py game.col --system coleco --bios /path/to/colecovision.rom
+```
+
+> 💡 The BIOS is embedded in the HTML as base64, served via the same fetch/XHR interceptors as cores and ROMs. EmulatorJS receives it through `EJS_biosUrl`, fully offline.
+
+> ⚠️ If no BIOS is found for a system that requires one, the packer prints a warning but still generates the HTML. The game may not work without the BIOS.
+
 ## CLI Reference
 
 ```
 usage: pack_game.py [-h] [--system SYSTEM] [--title TITLE] [--output OUTPUT]
-                    [--color COLOR] [--list-systems] [--offline-status]
-                    [--prefetch-all]
+                    [--color COLOR] [--bios BIOS] [--list-systems]
+                    [--offline-status] [--prefetch-all]
                     [rom]
 
 Universal Retro Game Packer — Pack any ROM into a standalone offline HTML file
@@ -220,6 +276,7 @@ options:
   --output, -o OUTPUT   Output HTML file path (default: <rom_name>.html)
   --core CORE_NAME      Use an alternative core (e.g., nestopia, desmume, parallel_n64)
   --color, -c COLOR     EmulatorJS accent color (default: #FF4444)
+  --bios, -b BIOS       Path to BIOS file (auto-searched in bios/ folders if omitted)
   --list-systems        List all supported systems and exit
   --offline-status      Show which cores are cached locally
   --prefetch-all        Download all cores for full offline use
@@ -240,6 +297,15 @@ The packer resolves WASM cores and EmulatorJS assets in this order:
 ```
 universal/
 ├── pack_game.py          # Main script (Python 3.10+, stdlib only)
+├── bios/                 # BIOS files for systems that require them
+│   ├── colecovision.rom      # ColecoVision (8 KB)
+│   ├── 5200.rom              # Atari 5200 (2 KB)
+│   ├── lynxboot.img          # Atari Lynx (512 B)
+│   ├── SCPH5501.BIN          # PlayStation US (512 KB)
+│   ├── BIOS_CD_U.BIN         # Sega CD US (128 KB)
+│   ├── syscard3.pce          # PC Engine CD (256 KB)
+│   ├── pcfx.rom              # PC-FX (1 MB)
+│   └── mpr-17933.bin         # Sega Saturn (512 KB)
 ├── cores/                # 92 core files (46 cores × normal + legacy) + 12 assets (~137 MB)
 │   ├── emulator.min.js
 │   ├── emulator.min.css
@@ -350,6 +416,21 @@ Tested with **26 games across 13 systems** — **23/26 working (88%)**:
 - **Internet connection** only for first download of each core (or use `cores/` / `cores.zip` for offline)
 
 ## Changelog
+
+### v2.2 (March 2025)
+
+**New Features:**
+- 🧬 **BIOS auto-embedding** — Systems requiring BIOS files (ColecoVision, Atari 5200, Atari Lynx, PlayStation, Sega CD, PC Engine CD, PC-FX, Sega Saturn) are now fully supported. The packer automatically finds BIOS files in `bios/` folders, embeds them as base64 in the HTML, and configures EmulatorJS via `EJS_biosUrl`.
+- 📁 **`--bios` CLI flag** — Optionally specify an explicit path to a BIOS file.
+- 🔍 **BIOS auto-search** — Searches `bios/` directories next to the ROM, next to the script, in the project root, and in the current directory.
+
+**Bug Fixes:**
+- 🎮 **ColecoVision now works** (Issue #9) — `gearcoleco` core requires `colecovision.rom` BIOS to start. The packer now embeds it automatically.
+
+**Web Packer (GitHub Pages):**
+- Both FR and EN web packers updated with BIOS support
+- BIOS files served from `data/bios/` on GitHub Pages
+- Fallback to EmulatorJS CDN if local BIOS unavailable
 
 ### v2.1 (March 2025)
 

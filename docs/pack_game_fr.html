@@ -618,20 +618,20 @@ const SYSTEMS = {
   'gg':        { core: 'genesis_plus_gx',   label: 'Sega Game Gear',             extensions: ['.gg'],                                               category: 'Console' },
   'atari2600': { core: 'stella2014',        label: 'Atari 2600',                 extensions: ['.a26', '.bin'],                                      category: 'Console' },
   'atari7800': { core: 'prosystem',         label: 'Atari 7800',                 extensions: ['.a78'],                                              category: 'Console' },
-  'atari5200': { core: 'a5200',             label: 'Atari 5200',                 extensions: ['.a52'],                                              category: 'Console' },
-  'lynx':      { core: 'handy',             label: 'Atari Lynx',                 extensions: ['.lnx'],                                              category: 'Console' },
-  'coleco':    { core: 'gearcoleco',        label: 'ColecoVision',               extensions: ['.col'],                                              category: 'Console' },
+  'atari5200': { core: 'a5200',             label: 'Atari 5200',                 extensions: ['.a52'],                                              category: 'Console', bios: '5200.rom' },
+  'lynx':      { core: 'handy',             label: 'Atari Lynx',                 extensions: ['.lnx'],                                              category: 'Console', bios: 'lynxboot.img' },
+  'coleco':    { core: 'gearcoleco',        label: 'ColecoVision',               extensions: ['.col'],                                              category: 'Console', bios: 'colecovision.rom' },
   'ngp':       { core: 'mednafen_ngp',      label: 'Neo Geo Pocket / Color',     extensions: ['.ngp', '.ngc'],                                      category: 'Console' },
   'ws':        { core: 'mednafen_wswan',    label: 'WonderSwan / Color',         extensions: ['.ws', '.wsc'],                                       category: 'Console' },
   'vb':        { core: 'beetle_vb',         label: 'Virtual Boy',                extensions: ['.vb'],                                               category: 'Console' },
-  'pce':       { core: 'mednafen_pce',      label: 'PC Engine / TurboGrafx-16',  extensions: ['.pce'],                                              category: 'Console' },
+  'pce':       { core: 'mednafen_pce',      label: 'PC Engine / TurboGrafx-16',  extensions: ['.pce'],                                              category: 'Console', bios: 'syscard3.pce' },
   '32x':       { core: 'picodrive',         label: 'Sega 32X',                   extensions: ['.32x'],                                              category: 'Console' },
   'gba':       { core: 'mgba',              label: 'Game Boy Advance',           extensions: ['.gba'],                                              category: 'Console' },
   'n64':       { core: 'mupen64plus_next',  label: 'Nintendo 64',                extensions: ['.n64', '.z64', '.v64'],                              category: 'Console' },
   'nds':       { core: 'melonds',           label: 'Nintendo DS',                extensions: ['.nds'],                                              category: 'Console' },
-  'psx':       { core: 'pcsx_rearmed',      label: 'PlayStation',                extensions: ['.bin', '.cue', '.iso', '.pbp'],                      category: 'Console' },
-  'segacd':    { core: 'genesis_plus_gx',   label: 'Sega CD / Mega CD',          extensions: ['.cue', '.bin', '.chd'],                              category: 'Console' },
-  'pcfx':      { core: 'mednafen_pcfx',     label: 'PC-FX',                      extensions: ['.cue', '.ccd', '.toc'],                              category: 'Console' },
+  'psx':       { core: 'pcsx_rearmed',      label: 'PlayStation',                extensions: ['.bin', '.cue', '.iso', '.pbp'],                      category: 'Console', bios: 'SCPH5501.BIN' },
+  'segacd':    { core: 'genesis_plus_gx',   label: 'Sega CD / Mega CD',          extensions: ['.cue', '.bin', '.chd'],                              category: 'Console', bios: 'BIOS_CD_U.BIN' },
+  'pcfx':      { core: 'mednafen_pcfx',     label: 'PC-FX',                      extensions: ['.cue', '.ccd', '.toc'],                              category: 'Console', bios: 'pcfx.rom' },
   'jaguar':    { core: 'virtualjaguar',     label: 'Atari Jaguar',               extensions: ['.j64', '.jag', '.rom', '.abs', '.cof', '.bin'],      category: 'Console' },
   'c64':       { core: 'vice_x64sc',        label: 'Commodore 64',               extensions: ['.d64', '.t64', '.prg', '.crt'],                     category: 'Ordinateur' },
   'c128':      { core: 'vice_x128',         label: 'Commodore 128',              extensions: ['.d64', '.d71', '.d81', '.prg', '.t64', '.tap'],     category: 'Ordinateur' },
@@ -648,7 +648,7 @@ const SYSTEMS = {
   'mame':      { core: 'mame2003_plus',     label: 'Arcade (MAME 2003+)',        extensions: ['.zip'],                                              category: 'Arcade' },
   'doom':      { core: 'prboom',            label: 'DOOM (PrBoom)',              extensions: ['.wad'],                                              category: 'Autre' },
   '3do':       { core: 'opera',             label: '3DO Interactive',            extensions: ['.iso', '.bin', '.chd', '.cue'],                      category: 'Console' },
-  'saturn':    { core: 'yabause',           label: 'Sega Saturn',               extensions: ['.bin', '.cue', '.iso', '.chd', '.mds'],              category: 'Console' },
+  'saturn':    { core: 'yabause',           label: 'Sega Saturn',               extensions: ['.bin', '.cue', '.iso', '.chd', '.mds'],              category: 'Console', bios: 'mpr-17933.bin' },
   'cdi':       { core: 'same_cdi',          label: 'Philips CD-i',              extensions: ['.chd', '.iso'],                                      category: 'Console' },
 };
 
@@ -1039,6 +1039,7 @@ body {
     window.EJS_CacheLimit = 0;
     window.EJS_startButtonName = 'Play {{TITLE}}';
     window.EJS_disableLocalStorage = false;
+    {{BIOS_SETUP}}
 
     window.EJS_ready = function() {
         setProgress(100, 'Ready!');
@@ -1608,6 +1609,29 @@ generateBtn.addEventListener('click', async () => {
       }
       extraAssetsJson[shortName] = assetCache.extras[shortName];
     }
+    // Step 4c: Fetch BIOS if required by this system
+    if (sysInfo.bios) {
+      const biosName = sysInfo.bios;
+      if (!assetCache.extras[biosName]) {
+        try {
+          const biosBuffer = await fetchBinary(LOCAL_MIRROR + 'bios/' + biosName);
+          assetCache.extras[biosName] = arrayBufferToBase64(biosBuffer);
+          console.log('BIOS loaded: ' + biosName + ' (' + biosBuffer.byteLength + ' bytes)');
+        } catch (e) {
+          console.warn('BIOS not available locally, trying CDN: ' + biosName);
+          try {
+            const biosBuffer = await fetchBinary(EJS_CDN_BASE + 'bios/' + biosName);
+            assetCache.extras[biosName] = arrayBufferToBase64(biosBuffer);
+          } catch (e2) {
+            console.warn('BIOS not available: ' + biosName + '. The game may not work.');
+          }
+        }
+      }
+      if (assetCache.extras[biosName]) {
+        extraAssetsJson[biosName] = assetCache.extras[biosName];
+      }
+    }
+
     setStep('extras', 'done');
     setProgress(80);
 
@@ -1626,6 +1650,13 @@ generateBtn.addEventListener('click', async () => {
     html = html.split('{{EJS_CSS}}').join(ejsCss);
     html = html.split('{{EJS_ENGINE_JS}}').join(ejsJs);
     html = html.split('{{EXTRA_ASSETS_JSON}}').join(JSON.stringify(extraAssetsJson));
+
+    // BIOS setup: set EJS_biosUrl if system requires a BIOS
+    if (sysInfo.bios && assetCache.extras[sysInfo.bios]) {
+      html = html.split('{{BIOS_SETUP}}').join("window.EJS_biosUrl = '" + sysInfo.bios + "';");
+    } else {
+      html = html.split('{{BIOS_SETUP}}').join('// No BIOS required for this system');
+    }
 
     // Apply accent color (replace the default #FF4444 with chosen color in the loading overlay styles)
     if (accentColor.toUpperCase() !== '#FF4444') {

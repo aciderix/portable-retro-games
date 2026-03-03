@@ -41,20 +41,20 @@ SYSTEMS = {
     'gg':        {'core': 'genesis_plus_gx',   'label': 'Sega Game Gear',             'extensions': ['.gg']},
     'atari2600': {'core': 'stella2014',        'label': 'Atari 2600',                 'extensions': ['.a26', '.bin']},
     'atari7800': {'core': 'prosystem',         'label': 'Atari 7800',                 'extensions': ['.a78']},
-    'atari5200': {'core': 'a5200',             'label': 'Atari 5200',                 'extensions': ['.a52']},
-    'lynx':      {'core': 'handy',             'label': 'Atari Lynx',                 'extensions': ['.lnx']},
-    'coleco':    {'core': 'gearcoleco',        'label': 'ColecoVision',               'extensions': ['.col']},
+    'atari5200': {'core': 'a5200',             'label': 'Atari 5200',                 'extensions': ['.a52'], 'bios': '5200.rom'},
+    'lynx':      {'core': 'handy',             'label': 'Atari Lynx',                 'extensions': ['.lnx'], 'bios': 'lynxboot.img'},
+    'coleco':    {'core': 'gearcoleco',        'label': 'ColecoVision',               'extensions': ['.col'],          'bios': 'colecovision.rom'},
     'ngp':       {'core': 'mednafen_ngp',      'label': 'Neo Geo Pocket / Color',     'extensions': ['.ngp', '.ngc']},
     'ws':        {'core': 'mednafen_wswan',    'label': 'WonderSwan / Color',         'extensions': ['.ws', '.wsc']},
     'vb':        {'core': 'beetle_vb',         'label': 'Virtual Boy',                'extensions': ['.vb']},
-    'pce':       {'core': 'mednafen_pce',      'label': 'PC Engine / TurboGrafx-16',  'extensions': ['.pce']},
+    'pce':       {'core': 'mednafen_pce',      'label': 'PC Engine / TurboGrafx-16',  'extensions': ['.pce'], 'bios': 'syscard3.pce'},
     '32x':       {'core': 'picodrive',         'label': 'Sega 32X',                   'extensions': ['.32x']},
     # Tier 2 — Feasible with caveats
     'gba':       {'core': 'mgba',              'label': 'Game Boy Advance',           'extensions': ['.gba']},
     'n64':       {'core': 'mupen64plus_next',  'label': 'Nintendo 64',                'extensions': ['.n64', '.z64', '.v64']},
     'nds':       {'core': 'melonds',           'label': 'Nintendo DS',                'extensions': ['.nds']},
-    'psx':       {'core': 'pcsx_rearmed',      'label': 'PlayStation',                'extensions': ['.bin', '.cue', '.iso', '.pbp']},
-    'segacd':    {'core': 'genesis_plus_gx',   'label': 'Sega CD / Mega CD',          'extensions': ['.cue', '.bin', '.chd']},
+    'psx':       {'core': 'pcsx_rearmed',      'label': 'PlayStation',                'extensions': ['.bin', '.cue', '.iso', '.pbp'], 'bios': 'SCPH5501.BIN'},
+    'segacd':    {'core': 'genesis_plus_gx',   'label': 'Sega CD / Mega CD',          'extensions': ['.cue', '.bin', '.chd'], 'bios': 'BIOS_CD_U.BIN'},
     # Tier 3 — Retro computers
     'c64':       {'core': 'vice_x64sc',        'label': 'Commodore 64',               'extensions': ['.d64', '.t64', '.prg', '.crt']},
     'zxspectrum':{'core': 'fuse',              'label': 'ZX Spectrum',                'extensions': ['.z80', '.tap', '.sna', '.tzx']},
@@ -74,7 +74,7 @@ SYSTEMS = {
     # id Software
     'doom':      {'core': 'prboom',            'label': 'DOOM (PrBoom)',              'extensions': ['.wad']},
     # NEC
-    'pcfx':      {'core': 'mednafen_pcfx',     'label': 'PC-FX',                     'extensions': ['.cue', '.ccd', '.toc']},
+    'pcfx':      {'core': 'mednafen_pcfx',     'label': 'PC-FX',                     'extensions': ['.cue', '.ccd', '.toc'], 'bios': 'pcfx.rom'},
     'cps1':      {'core': 'fbalpha2012_cps1', 'label': 'Arcade (CPS1)',              'extensions': ['.zip']},
     'cps2':      {'core': 'fbalpha2012_cps2', 'label': 'Arcade (CPS2)',              'extensions': ['.zip']},
     'fbneo':     {'core': 'fbneo',            'label': 'Arcade (FBNeo)',             'extensions': ['.zip']},
@@ -82,7 +82,7 @@ SYSTEMS = {
     # --- NEW SYSTEMS (CDN cores not previously included) ---
     '3do':       {'core': 'opera',            'label': '3DO Interactive',            'extensions': ['.iso', '.bin', '.cue', '.chd']},
     'cdi':       {'core': 'same_cdi',         'label': 'Philips CD-i',              'extensions': ['.chd', '.cue']},
-    'saturn':    {'core': 'yabause',          'label': 'Sega Saturn',               'extensions': ['.bin', '.cue', '.iso', '.chd']},
+    'saturn':    {'core': 'yabause',          'label': 'Sega Saturn',               'extensions': ['.bin', '.cue', '.iso', '.chd'], 'bios': 'mpr-17933.bin'},
     # NOTE: dosbox_pure (DOS) and ppsspp (PSP) are listed in EmulatorJS docs
     # but their cores do NOT exist on any CDN version as of March 2026.
 }
@@ -590,6 +590,7 @@ body {
     window.EJS_CacheLimit = 0;
     window.EJS_startButtonName = 'Play {{TITLE}}';
     window.EJS_disableLocalStorage = false;
+    {{BIOS_SETUP}}
 
     window.EJS_ready = function() {
         setProgress(100, 'Ready!');
@@ -787,6 +788,13 @@ def generate_html(rom_path, title, system_id, ejs_css, ejs_engine_js, core_b64, 
     html = html.replace('{{EJS_ENGINE_JS}}', ejs_engine_js)
     html = html.replace('{{EXTRA_ASSETS_JSON}}', extra_assets_json)
 
+    # BIOS support: set EJS_biosUrl for systems that require a BIOS file
+    if 'bios' in system_info:
+        bios_filename = system_info['bios']
+        html = html.replace('{{BIOS_SETUP}}', f"window.EJS_biosUrl = '{bios_filename}';")
+    else:
+        html = html.replace('{{BIOS_SETUP}}', '')
+
     return html
 
 
@@ -838,6 +846,7 @@ Supported systems:
     parser.add_argument('--output', '-o', help='Output HTML file path (default: <rom_name>.html)')
     parser.add_argument('--core', help='Override default core (e.g. nestopia, desmume). See ALT_CORES in source.')
     parser.add_argument('--color', '-c', default='#FF4444', help='EmulatorJS accent color (default: #FF4444)')
+    parser.add_argument('--bios', '-b', help='Path to BIOS file (auto-searched in ./bios/, ../bios/, script_dir/bios/ if omitted)')
     parser.add_argument('--list-systems', action='store_true', help='List all supported systems and exit')
     parser.add_argument('--prefetch-all', action='store_true', help='Download all cores to cores/ directory for offline use')
     parser.add_argument('--offline-status', action='store_true', help='Show offline readiness status')
@@ -1109,6 +1118,49 @@ Supported systems:
     # ── NEW: Download extra assets for 100% offline support ──
     print(f"\n📦 Loading extra EmulatorJS assets (offline support)...")
     extra_assets = download_extra_assets(cache_dir, offline_dir)
+
+    # ── BIOS embedding for systems that require it ──
+    if 'bios' in system_info:
+        bios_filename = system_info['bios']
+        bios_path = None
+
+        if args.bios:
+            # Explicit --bios argument
+            if os.path.isfile(args.bios):
+                bios_path = args.bios
+            else:
+                print(f"❌ BIOS file not found: {args.bios}")
+                sys.exit(1)
+        else:
+            # Auto-search in common locations
+            script_dir = os.path.dirname(os.path.abspath(__file__))
+            rom_dir = os.path.dirname(os.path.abspath(args.rom))
+            search_dirs = [
+                os.path.join(rom_dir, 'bios'),
+                rom_dir,
+                os.path.join(script_dir, 'bios'),
+                os.path.join(script_dir, '..', '..', 'bios'),
+                script_dir,
+                '.',
+                os.path.join('.', 'bios'),
+            ]
+            for search_dir in search_dirs:
+                candidate = os.path.join(search_dir, bios_filename)
+                if os.path.isfile(candidate):
+                    bios_path = candidate
+                    break
+
+        if bios_path:
+            with open(bios_path, 'rb') as f:
+                bios_data = f.read()
+            extra_assets[bios_filename] = base64.b64encode(bios_data).decode('ascii')
+            print(f"\n🧬 BIOS: {bios_filename} ({len(bios_data)} bytes) — embedded from {bios_path}")
+        else:
+            print(f"\n⚠️  BIOS required: {bios_filename} (for {system_info['label']})")
+            print(f"   Searched in: {', '.join(search_dirs)}")
+            print(f"   Use --bios <path> to specify the BIOS file location.")
+            print(f"   The game may not boot without it!")
+
     extra_assets_json = json.dumps(extra_assets)
     extra_size_kb = len(extra_assets_json) / 1024
     print(f"   Total extra assets: {len(extra_assets)} files, {extra_size_kb:.0f} KB (base64)")
