@@ -1,4 +1,2 @@
 # Only track Python packer cache with LFS (not served by GitHub Pages)
-packers/universal/cores/*.data filter=lfs diff=lfs merge=lfs -text
-packers/universal/cores/*.wasm filter=lfs diff=lfs merge=lfs -text
 # docs/data/ is NOT tracked by LFS — GitHub Pages needs to serve real files
