@@ -71,7 +71,7 @@ SYSTEMS = {
     'plus4':     {'core': 'vice_xplus4',       'label': 'Commodore Plus/4',           'extensions': ['.d64', '.prg', '.t64', '.tap', '.bin', '.crt']},
     'amiga':     {'core': 'puae',              'label': 'Commodore Amiga',            'extensions': ['.adf', '.adz', '.dms', '.ipf']},
     # Amstrad
-    'cpc':       {'core': 'cap32',             'label': 'Amstrad CPC',                'extensions': ['.dsk', '.sna', '.cdt', '.voc']},
+    'cpc':       {'core': 'crocods',            'label': 'Amstrad CPC',                'extensions': ['.dsk', '.sna', '.cdt', '.voc']},
     # Sinclair
     'zx81':      {'core': '81',                'label': 'Sinclair ZX81',              'extensions': ['.p', '.81', '.tzx']},
     # id Software
@@ -100,7 +100,7 @@ ALT_CORES = {
     'mednafen_psx_hw':  {'for_system': 'psx',   'label': 'PlayStation (Mednafen HW)'},
     'parallel_n64':     {'for_system': 'n64',   'label': 'Nintendo 64 (Parallel)'},
     'vice_x64':         {'for_system': 'c64',   'label': 'Commodore 64 (VICE x64)'},
-    'crocods':          {'for_system': 'cpc',   'label': 'Amstrad CPC (CrocoDS)'},
+    'cap32':            {'for_system': 'cpc',   'label': 'Amstrad CPC (Cap32)'},
 }
 
 # Build reverse lookup: extension → system
