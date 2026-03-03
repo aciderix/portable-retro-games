@@ -1158,6 +1158,7 @@ Supported systems:
                 rom_dir,
                 os.path.join(script_dir, 'bios'),
                 os.path.join(script_dir, '..', '..', 'bios'),
+                os.path.join(script_dir, '..', '..', 'docs', 'data', 'bios'),
                 script_dir,
                 '.',
                 os.path.join('.', 'bios'),

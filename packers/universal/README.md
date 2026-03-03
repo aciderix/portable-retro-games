@@ -243,6 +243,7 @@ The packer automatically searches for BIOS files in the following locations (in 
 1. **Explicit path** — via `--bios /path/to/bios_file`
 2. **`bios/` next to the ROM** — `<rom_directory>/bios/`
 3. **`bios/` next to the script** — `<pack_game.py_directory>/bios/`
+4. **`docs/data/bios/`** — shared BIOS directory (same as web packers / GitHub Pages)
 4. **`bios/` in project root** — `<script>/../../bios/`
 5. **`bios/` in current directory** — `./bios/`
 
@@ -454,7 +455,7 @@ Tested with **26 games across 13 systems** — **23/26 working (88%)**:
 **New Features:**
 - 🧬 **BIOS auto-embedding** — Systems requiring BIOS files (ColecoVision, Atari 5200, Atari Lynx, PlayStation, Sega CD, PC Engine CD, PC-FX, Sega Saturn) are now fully supported. The packer automatically finds BIOS files in `bios/` folders, embeds them as base64 in the HTML, and configures EmulatorJS via `EJS_biosUrl`.
 - 📁 **`--bios` CLI flag** — Optionally specify an explicit path to a BIOS file.
-- 🔍 **BIOS auto-search** — Searches `bios/` directories next to the ROM, next to the script, in the project root, and in the current directory.
+- 🔍 **BIOS auto-search** — Searches `bios/` directories next to the ROM, next to the script, in the project root, in `docs/data/bios/` (shared with web packers), and in the current directory.
 
 **Bug Fixes:**
 - 🎮 **ColecoVision now works** (Issue #9) — `gearcoleco` core requires `colecovision.rom` BIOS to start. The packer now embeds it automatically.
