@@ -577,10 +577,11 @@ body {
     // ═══════════════════════════════════════════════════════════
     //  EJS CONFIGURATION
     // ═══════════════════════════════════════════════════════════
-    var romBlobUrl = b64toBlobUrl(EMBEDDED_ROM_B64, 'application/octet-stream');
-
     window.EJS_player = '#game';
-    window.EJS_gameUrl = romBlobUrl;
+    // Use filename instead of blob URL — arcade cores (fbalpha, fbneo) identify
+    // the romset by filename in the URL. Blob URLs have no filename → romset unknown.
+    // The fetch interceptor already matches requests by EMBEDDED_ROM_FILENAME.
+    window.EJS_gameUrl = EMBEDDED_ROM_FILENAME;
     window.EJS_gameName = '{{TITLE}}';
     window.EJS_color = '#FF4444';
     window.EJS_startOnLoaded = false;
@@ -652,6 +653,123 @@ window.EJS_core = '{{CORE_NAME}}';
 # ============================================================
 #  HTML Generation
 # ============================================================
+# ============================================================
+#  D64 → PRG Extraction (for C64/C128/VIC-20/PET/Plus4)
+# ============================================================
+# The VICE WASM core cannot reliably load .d64 disk images:
+# True Drive Emulation hangs during LOAD"*",8,1.
+# Extracting the first PRG program from the disk image and
+# feeding it directly bypasses this issue entirely.
+
+# D64 format: 35 tracks, 683 sectors of 256 bytes each
+# Track numbering starts at 1, sector numbering at 0
+# Directory is at track 18, sector 1
+
+D64_TRACK_OFFSETS = []  # Will be populated at import time
+
+def _build_d64_track_table():
+    """Build a lookup table: track number → byte offset in the D64 file.
+    D64 has variable sectors per track:
+      Tracks  1-17: 21 sectors each
+      Tracks 18-24: 19 sectors each
+      Tracks 25-30: 18 sectors each
+      Tracks 31-35: 17 sectors each
+    """
+    sectors_per_track = (
+        [21] * 17 +   # tracks 1-17
+        [19] * 7  +   # tracks 18-24
+        [18] * 6  +   # tracks 25-30
+        [17] * 5      # tracks 31-35
+    )
+    offset = 0
+    D64_TRACK_OFFSETS.append(0)  # index 0 unused (tracks start at 1)
+    for spt in sectors_per_track:
+        D64_TRACK_OFFSETS.append(offset)
+        offset += spt * 256
+    return sectors_per_track
+
+_D64_SECTORS_PER_TRACK = _build_d64_track_table()
+
+def d64_read_sector(d64_data, track, sector):
+    """Read a 256-byte sector from the D64 image."""
+    if track < 1 or track > 35:
+        return None
+    offset = D64_TRACK_OFFSETS[track] + sector * 256
+    if offset + 256 > len(d64_data):
+        return None
+    return d64_data[offset:offset + 256]
+
+def extract_prg_from_d64(d64_data):
+    """Extract the first PRG file from a D64 disk image.
+    Returns (prg_data, filename) or (None, None) if no PRG found.
+    
+    Directory format (each entry = 32 bytes):
+      Byte 0-1: Next dir sector (track, sector) — only in first entry of each sector
+      Byte 2:   File type (0x82 = PRG with closed flag)
+      Byte 3-4: First data sector (track, sector)
+      Byte 5-20: Filename (16 bytes, padded with 0xA0)
+      Byte 30-31: File size in sectors (little-endian)
+    """
+    # Read directory: starts at track 18, sector 1
+    dir_track, dir_sector = 18, 1
+    visited = set()
+    
+    while dir_track != 0:
+        if (dir_track, dir_sector) in visited:
+            break  # Avoid infinite loops
+        visited.add((dir_track, dir_sector))
+        
+        sector_data = d64_read_sector(d64_data, dir_track, dir_sector)
+        if not sector_data:
+            break
+        
+        # Each directory sector has 8 entries of 32 bytes
+        for i in range(8):
+            entry = sector_data[i * 32:(i + 1) * 32]
+            file_type = entry[2] & 0x0F  # Lower nibble = type (2 = PRG)
+            closed = entry[2] & 0x80     # Bit 7 = closed flag
+            
+            if file_type == 2 and closed:  # PRG file, properly closed
+                data_track = entry[3]
+                data_sector = entry[4]
+                # Extract filename (strip 0xA0 padding)
+                raw_name = entry[5:21]
+                name = raw_name.split(b'\xa0')[0].decode('ascii', errors='replace').strip()
+                
+                # Follow the sector chain to read the full PRG
+                prg_data = bytearray()
+                data_visited = set()
+                while data_track != 0:
+                    if (data_track, data_sector) in data_visited:
+                        break
+                    data_visited.add((data_track, data_sector))
+                    
+                    block = d64_read_sector(d64_data, data_track, data_sector)
+                    if not block:
+                        break
+                    
+                    next_track = block[0]
+                    next_sector = block[1]
+                    
+                    if next_track == 0:
+                        # Last sector: next_sector = number of bytes used (1-based)
+                        prg_data.extend(block[2:2 + next_sector - 1])
+                    else:
+                        prg_data.extend(block[2:])
+                    
+                    data_track = next_track
+                    data_sector = next_sector
+                
+                if prg_data:
+                    return bytes(prg_data), name
+        
+        # Follow chain to next directory sector
+        dir_track = sector_data[0]
+        dir_sector = sector_data[1]
+    
+    return None, None
+
+
 def generate_html(rom_path, title, system_id, ejs_css, ejs_engine_js, core_b64, core_legacy_b64, rom_b64, extra_assets_json):
     """Generate the complete self-contained HTML file."""
     system_info = SYSTEMS[system_id]
@@ -894,6 +1012,23 @@ Supported systems:
         rom_data = f.read()
     rom_size_kb = len(rom_data) / 1024
     print(f"   Size: {rom_size_kb:.0f} KB ({len(rom_data)} bytes)")
+
+    # D64 → PRG extraction for Commodore systems
+    # The VICE WASM core hangs when loading .d64 disk images via True Drive Emulation.
+    # Extracting the PRG program and feeding it directly works perfectly.
+    rom_ext = os.path.splitext(args.rom)[1].lower()
+    if rom_ext == '.d64' and system_id in ('c64', 'c128', 'vic20', 'pet', 'plus4'):
+        print(f"\n🔄 D64 disk image detected — extracting PRG program...")
+        prg_data, prg_name = extract_prg_from_d64(rom_data)
+        if prg_data:
+            print(f"   ✅ Extracted: {prg_name}.prg ({len(prg_data)} bytes)")
+            print(f"   (VICE WASM cannot load .d64 via True Drive Emulation)")
+            rom_data = prg_data
+            # Update the ROM path for filename generation (.prg extension)
+            args.rom = os.path.splitext(args.rom)[0] + '.prg'
+        else:
+            print(f"   ⚠️  No PRG file found in D64 image — packing as-is")
+            print(f"   (Game may hang at BASIC screen if True Drive Emulation fails)")
 
     rom_b64 = base64.b64encode(rom_data).decode('ascii')
     print(f"   Base64: {len(rom_b64)} chars")
