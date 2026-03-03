@@ -633,10 +633,10 @@ const SYSTEMS = {
   'segacd':    { core: 'genesis_plus_gx',   label: 'Sega CD / Mega CD',          extensions: ['.cue', '.bin', '.chd'],                              category: 'Console', bios: 'BIOS_CD_U.BIN' },
   'pcfx':      { core: 'mednafen_pcfx',     label: 'PC-FX',                      extensions: ['.cue', '.ccd', '.toc'],                              category: 'Console', bios: 'pcfx.rom' },
   'jaguar':    { core: 'virtualjaguar',     label: 'Atari Jaguar',               extensions: ['.j64', '.jag', '.rom', '.abs', '.cof', '.bin'],      category: 'Console' },
-  'c64':       { core: 'vice_x64sc',        label: 'Commodore 64',               extensions: ['.d64', '.t64', '.prg', '.crt'],                     category: 'Ordinateur' },
+  'c64':       { core: 'vice_x64sc',        label: 'Commodore 64',               extensions: ['.d64', '.t64', '.prg', '.crt'],                     category: 'Ordinateur', core_options: { vice_autostart: 'warp', vice_drive_true_emulation: 'disabled' } },
   'c128':      { core: 'vice_x128',         label: 'Commodore 128',              extensions: ['.d64', '.d71', '.d81', '.prg', '.t64', '.tap'],     category: 'Ordinateur' },
-  'vic20':     { core: 'vice_xvic',         label: 'Commodore VIC-20',           extensions: ['.d64', '.prg', '.crt', '.t64', '.tap', '.20', '.60', '.a0'], category: 'Ordinateur' },
-  'pet':       { core: 'vice_xpet',         label: 'Commodore PET',              extensions: ['.d64', '.prg', '.t64', '.tap'],                     category: 'Ordinateur' },
+  'vic20':     { core: 'vice_xvic',         label: 'Commodore VIC-20',           extensions: ['.d64', '.prg', '.crt', '.t64', '.tap', '.20', '.60', '.a0'], category: 'Ordinateur', core_options: { vice_autostart: 'warp', vice_drive_true_emulation: 'disabled' } },
+  'pet':       { core: 'vice_xpet',         label: 'Commodore PET',              extensions: ['.d64', '.prg', '.t64', '.tap'],                     category: 'Ordinateur', core_options: { vice_autostart: 'warp', vice_drive_true_emulation: 'disabled' } },
   'plus4':     { core: 'vice_xplus4',       label: 'Commodore Plus/4',           extensions: ['.d64', '.prg', '.t64', '.tap', '.bin', '.crt'],     category: 'Ordinateur' },
   'amiga':     { core: 'puae',              label: 'Commodore Amiga',            extensions: ['.adf', '.adz', '.dms', '.ipf'],                     category: 'Ordinateur' },
   'cpc':       { core: 'cap32',             label: 'Amstrad CPC',                extensions: ['.dsk', '.sna', '.cdt', '.voc'],                     category: 'Ordinateur' },
@@ -1040,6 +1040,7 @@ body {
     window.EJS_startButtonName = 'Play {{TITLE}}';
     window.EJS_disableLocalStorage = false;
     {{BIOS_SETUP}}
+    {{CORE_OPTIONS}}
 
     window.EJS_ready = function() {
         setProgress(100, 'Ready!');
@@ -1656,6 +1657,14 @@ generateBtn.addEventListener('click', async () => {
       html = html.split('{{BIOS_SETUP}}').join("window.EJS_biosUrl = '" + sysInfo.bios + "';");
     } else {
       html = html.split('{{BIOS_SETUP}}').join('// No BIOS required for this system');
+    }
+
+    // Core options for VICE autostart (VIC-20, PET, C64, etc.)
+    if (sysInfo.core_options) {
+      const opts = JSON.stringify(sysInfo.core_options);
+      html = html.split('{{CORE_OPTIONS}}').join('window.EJS_defaultOptions = ' + opts + ';');
+    } else {
+      html = html.split('{{CORE_OPTIONS}}').join('// No core options for this system');
     }
 
     // Apply accent color (replace the default #FF4444 with chosen color in the loading overlay styles)

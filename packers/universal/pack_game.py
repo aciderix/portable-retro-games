@@ -56,15 +56,18 @@ SYSTEMS = {
     'psx':       {'core': 'pcsx_rearmed',      'label': 'PlayStation',                'extensions': ['.bin', '.cue', '.iso', '.pbp'], 'bios': 'SCPH5501.BIN'},
     'segacd':    {'core': 'genesis_plus_gx',   'label': 'Sega CD / Mega CD',          'extensions': ['.cue', '.bin', '.chd'], 'bios': 'BIOS_CD_U.BIN'},
     # Tier 3 — Retro computers
-    'c64':       {'core': 'vice_x64sc',        'label': 'Commodore 64',               'extensions': ['.d64', '.t64', '.prg', '.crt']},
+    'c64':       {'core': 'vice_x64sc',        'label': 'Commodore 64',               'extensions': ['.d64', '.t64', '.prg', '.crt'],
+                  'core_options': {'vice_autostart': 'warp', 'vice_drive_true_emulation': 'disabled'}},
     'zxspectrum':{'core': 'fuse',              'label': 'ZX Spectrum',                'extensions': ['.z80', '.tap', '.sna', '.tzx']},
     # --- NEW SYSTEMS (added Feb 2026) ---
     # Atari
     'jaguar':    {'core': 'virtualjaguar',     'label': 'Atari Jaguar',               'extensions': ['.j64', '.jag', '.rom', '.abs', '.cof', '.bin']},
     # Commodore family
     'c128':      {'core': 'vice_x128',         'label': 'Commodore 128',              'extensions': ['.d64', '.d71', '.d81', '.prg', '.t64', '.tap']},
-    'vic20':     {'core': 'vice_xvic',         'label': 'Commodore VIC-20',           'extensions': ['.d64', '.prg', '.crt', '.t64', '.tap', '.20', '.60', '.a0']},
-    'pet':       {'core': 'vice_xpet',         'label': 'Commodore PET',              'extensions': ['.d64', '.prg', '.t64', '.tap']},
+    'vic20':     {'core': 'vice_xvic',         'label': 'Commodore VIC-20',           'extensions': ['.d64', '.prg', '.crt', '.t64', '.tap', '.20', '.60', '.a0'],
+                  'core_options': {'vice_autostart': 'warp', 'vice_drive_true_emulation': 'disabled'}},
+    'pet':       {'core': 'vice_xpet',         'label': 'Commodore PET',              'extensions': ['.d64', '.prg', '.t64', '.tap'],
+                  'core_options': {'vice_autostart': 'warp', 'vice_drive_true_emulation': 'disabled'}},
     'plus4':     {'core': 'vice_xplus4',       'label': 'Commodore Plus/4',           'extensions': ['.d64', '.prg', '.t64', '.tap', '.bin', '.crt']},
     'amiga':     {'core': 'puae',              'label': 'Commodore Amiga',            'extensions': ['.adf', '.adz', '.dms', '.ipf']},
     # Amstrad
@@ -607,6 +610,9 @@ body {
 window.EJS_core = '{{CORE_NAME}}';
 </script>
 
+<!-- Core options for autorun (injected by packer) -->
+{{CORE_OPTIONS}}
+
 <!-- EmulatorJS Engine (emulator.min.js) — embedded inline -->
 <script>
 {{EJS_ENGINE_JS}}
@@ -794,6 +800,18 @@ def generate_html(rom_path, title, system_id, ejs_css, ejs_engine_js, core_b64, 
         html = html.replace('{{BIOS_SETUP}}', f"window.EJS_biosUrl = '{bios_filename}';")
     else:
         html = html.replace('{{BIOS_SETUP}}', '')
+
+    # Core options injection (e.g. VICE autostart for VIC-20, PET, C64)
+    if 'core_options' in system_info and system_info['core_options']:
+        opts_js = json.dumps(system_info['core_options'])
+        core_options_block = (
+            '<script>\n'
+            f'    window.EJS_defaultOptions = {opts_js};\n'
+            '</script>'
+        )
+    else:
+        core_options_block = ''
+    html = html.replace('{{CORE_OPTIONS}}', core_options_block)
 
     return html
 

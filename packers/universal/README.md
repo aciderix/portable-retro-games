@@ -103,10 +103,10 @@ python3 pack_game.py --prefetch-all
 
 | System | Key | Core | Extensions | Notes |
 |--------|-----|------|------------|-------|
-| Commodore 64 | `c64` | vice_x64sc | `.d64`, `.t64`, `.prg`, `.crt` | `.d64` auto-extracted (see below) |
+| Commodore 64 | `c64` | vice_x64sc | `.d64`, `.t64`, `.prg`, `.crt` | `.d64` auto-extracted + **autostart** (see below) |
 | Commodore 128 | `c128` | vice_x128 | `.d64`, `.d71`, `.d81`, `.prg` | — |
-| VIC-20 | `vic20` | vice_xvic | `.d64`, `.prg`, `.crt`, `.60`, `.a0` | — |
-| PET | `pet` | vice_xpet | `.d64`, `.prg`, `.tap` | — |
+| VIC-20 | `vic20` | vice_xvic | `.d64`, `.prg`, `.crt`, `.60`, `.a0` | **Autostart** via VICE core options |
+| PET | `pet` | vice_xpet | `.d64`, `.prg`, `.tap` | **Autostart** via VICE core options |
 | Plus/4 | `plus4` | vice_xplus4 | `.d64`, `.prg`, `.tap`, `.bin` | — |
 | Amiga | `amiga` | puae | `.adf`, `.adz`, `.dms`, `.ipf` | Also available as dedicated packer |
 
@@ -130,6 +130,25 @@ python3 pack_game.py game.prg --system c64      # → packs directly
 Other C64 formats work natively: `.prg`, `.crt`, `.t64`, `.nib`, `.tap`.
 
 > ⚠️ If the D64 contains no PRG file, packing will fail with a clear error message.
+
+#### VICE Autostart — C64, VIC-20 & PET
+
+The VICE WASM cores (x64sc, xvic, xpet) boot into the BASIC prompt by default, requiring the user to manually type `RUN` — or worse, waiting 30+ seconds for True Drive Emulation to load a program. The packer now injects **VICE core options** via `EJS_defaultOptions` to fix this:
+
+```javascript
+window.EJS_defaultOptions = {
+  "vice_autostart": "warp",               // Autostart in warp mode (1-2s boot)
+  "vice_drive_true_emulation": "disabled"  // Prevents WASM TDE hangs
+};
+```
+
+**How it works:**
+- `vice_autostart: "warp"` — VICE autoloads the ROM and fast-forwards through boot at maximum speed
+- `vice_drive_true_emulation: "disabled"` — Disables True Drive Emulation which can cause infinite hangs in the WASM build
+
+This is fully automatic — any system with `core_options` defined in the `SYSTEMS` dict gets the options injected. No user action needed.
+
+> 💡 This mechanism is generic: to add core options for any other system, simply add a `core_options` dict to its entry in `SYSTEMS`. The template and generation logic handle the rest.
 
 ### 💻 Computers — Others
 
@@ -416,6 +435,19 @@ Tested with **26 games across 13 systems** — **23/26 working (88%)**:
 - **Internet connection** only for first download of each core (or use `cores/` / `cores.zip` for offline)
 
 ## Changelog
+
+### v2.3 (March 2025)
+
+**New Features:**
+- 🚀 **VICE Autostart** (Issue #6, #10) — C64, VIC-20 and PET games now autostart instantly via VICE core options (`vice_autostart: "warp"` + `vice_drive_true_emulation: "disabled"`). No more stuck BASIC prompts or 30-second boot waits.
+- 🎛️ **Generic core options injection** — Systems can now define `core_options` in the `SYSTEMS` dict. These are automatically injected as `EJS_defaultOptions` in the generated HTML. Extensible to any RetroArch core.
+
+**Updated files:**
+- `pack_game.py` — CLI packer with core options support
+- `docs/pack_game_fr.html` — French web packer
+- `docs/pack_game_en.html` — English web packer
+
+**Impact:** VIC-20 and PET games now boot and run automatically — previously they were stuck on the BASIC prompt requiring manual keyboard input.
 
 ### v2.2 (March 2025)
 
