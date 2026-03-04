@@ -72,6 +72,10 @@ vAmigaWeb/
 *.rom
 *.bin
 
+# Exception: BIOS files and emulator assets served via GitHub Pages
+!docs/data/bios/**
+!docs/data/vamigaweb/**
+
 # -----------------------------------------------------------------------------
 # IDE / Editor
 # -----------------------------------------------------------------------------
