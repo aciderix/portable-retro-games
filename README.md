@@ -56,6 +56,7 @@ The **Universal Packer** (`packers/universal/pack_game.py`) supports **41 retro 
 | 🎮 **Bandai** | WonderSwan / Color |
 | 🎮 **Coleco** | ColecoVision |
 | 💻 **Commodore** | C64, C128, VIC-20, PET, Plus/4, Amiga |
+| 💻 **PC / DOS** | MS-DOS (DOSBox) |
 | 💻 **Sinclair** | ZX Spectrum, ZX81 |
 | 💻 **Amstrad** | CPC |
 | 🕹️ **Arcade** | CPS1, CPS2, FBNeo, MAME 2003+ |
@@ -568,6 +569,7 @@ Un seul script Python, zéro dépendance pip, auto-détection du système :
 | 💻 Commodore | C64, C128, VIC-20, PET, Plus/4, Amiga |
 | 💻 Sinclair | ZX Spectrum, ZX81 |
 | 💻 Amstrad | CPC |
+| 💻 **PC / DOS** | MS-DOS (DOSBox) |
 | 🕹️ Arcade | CPS1, CPS2, FBNeo, MAME 2003+ |
 | 🔫 id Software | DOOM (PrBoom) |
 | 🎮 Autres | 3DO, Philips CD-i, Sega Saturn |
