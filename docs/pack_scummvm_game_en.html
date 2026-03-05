@@ -1,0 +1,1556 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ScummVM Packer – Standalone HTML Game Generator</title>
+<style>
+:root {
+    --bg: #0a0a0a;
+    --bg-card: #111118;
+    --border: #1e1e2e;
+    --border-accent: #2a2a3e;
+    --text: #e0e0e0;
+    --text-dim: #888;
+    --text-dimmer: #555;
+    --accent: #FF4444;
+    --accent-orange: #ff8800;
+    --success: #44cc66;
+    --error: #ff4466;
+    --warning: #ffaa33;
+    --radius: 12px;
+    --radius-sm: 8px;
+}
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+    line-height: 1.6;
+    min-height: 100vh;
+}
+a { color: var(--accent); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+/* ── Nav Bar ── */
+.nav-bar {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    background: var(--bg-card);
+    border-bottom: 1px solid var(--border);
+    padding: 0 16px;
+    height: 48px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+.nav-bar a, .nav-bar span {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 0 16px;
+    height: 100%;
+    font-size: 0.9em;
+    color: var(--text-dim);
+    white-space: nowrap;
+    transition: color .2s, background .2s;
+    text-decoration: none;
+}
+.nav-bar a:hover { color: var(--text); background: rgba(255,255,255,.04); text-decoration: none; }
+.nav-bar .active {
+    color: var(--accent);
+    border-bottom: 2px solid var(--accent);
+    font-weight: 600;
+}
+.nav-spacer { flex: 1; }
+.nav-lang { font-size: 0.85em !important; padding: 0 10px !important; }
+
+/* ── Container ── */
+.container { max-width: 900px; margin: 0 auto; padding: 32px 20px 60px; }
+.hero { text-align: center; padding: 40px 0 24px; }
+.hero h1 { font-size: 2em; margin-bottom: 8px; }
+.hero h1 .emoji { font-size: 1.1em; }
+.hero p { color: var(--text-dim); font-size: 1.05em; max-width: 600px; margin: 0 auto; }
+
+/* ── Tabs ── */
+.tabs { display: flex; gap: 4px; margin-bottom: 24px; border-bottom: 1px solid var(--border); }
+.tab-btn {
+    padding: 10px 20px;
+    background: none;
+    border: none;
+    color: var(--text-dim);
+    font-size: 0.95em;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    transition: color .2s, border-color .2s;
+    font-family: inherit;
+}
+.tab-btn:hover { color: var(--text); }
+.tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); font-weight: 600; }
+.tab-content { display: none; }
+.tab-content.active { display: block; }
+
+/* ── Cards ── */
+.card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 24px;
+    margin-bottom: 20px;
+}
+.card h2 { font-size: 1.15em; margin-bottom: 14px; display: flex; align-items: center; gap: 8px; }
+.card h2 .step-num {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 28px; height: 28px; border-radius: 50%;
+    background: var(--accent); color: #fff; font-size: 0.8em; font-weight: 700;
+}
+
+/* ── Dropzone ── */
+.dropzone {
+    border: 2px dashed var(--border-accent);
+    border-radius: var(--radius);
+    padding: 40px 20px;
+    text-align: center;
+    cursor: pointer;
+    transition: border-color .2s, background .2s;
+    position: relative;
+}
+.dropzone:hover, .dropzone.dragover {
+    border-color: var(--accent);
+    background: rgba(255,68,68,.04);
+}
+.dropzone .icon { font-size: 2.5em; margin-bottom: 10px; }
+.dropzone .label { font-size: 1.05em; color: var(--text); margin-bottom: 4px; }
+.dropzone .sublabel { font-size: 0.85em; color: var(--text-dim); }
+.dropzone input[type="file"] {
+    position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%;
+}
+
+/* ── File info ── */
+.file-info {
+    display: none;
+    margin-top: 16px;
+    padding: 16px;
+    background: rgba(255,255,255,.02);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+}
+.file-info.visible { display: block; }
+.file-info .meta { display: flex; flex-wrap: wrap; gap: 16px; margin-bottom: 10px; }
+.file-info .meta-item { font-size: 0.9em; }
+.file-info .meta-item .lbl { color: var(--text-dim); margin-right: 4px; }
+.file-info .meta-item .val { color: var(--text); font-weight: 600; }
+.file-info .meta-item .val.detected { color: var(--success); }
+.file-info .meta-item .val.unknown { color: var(--warning); }
+
+.file-list-toggle {
+    background: none; border: none; color: var(--accent); cursor: pointer;
+    font-size: 0.85em; margin-top: 6px; font-family: inherit;
+}
+.file-list {
+    display: none;
+    margin-top: 8px;
+    max-height: 200px;
+    overflow-y: auto;
+    font-size: 0.82em;
+    color: var(--text-dim);
+    font-family: 'Courier New', monospace;
+    line-height: 1.7;
+    padding: 8px;
+    background: rgba(0,0,0,.3);
+    border-radius: var(--radius-sm);
+}
+.file-list.visible { display: block; }
+
+/* ── Options ── */
+.option-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    margin-bottom: 14px;
+}
+.option-group { flex: 1; min-width: 200px; }
+.option-group label {
+    display: block;
+    font-size: 0.85em;
+    color: var(--text-dim);
+    margin-bottom: 6px;
+}
+.option-group select,
+.option-group input[type="text"] {
+    width: 100%;
+    padding: 10px 12px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    color: var(--text);
+    font-size: 0.95em;
+    font-family: inherit;
+    outline: none;
+    transition: border-color .2s;
+}
+.option-group select:focus,
+.option-group input[type="text"]:focus { border-color: var(--accent); }
+.option-group select option { background: var(--bg-card); color: var(--text); }
+.option-group select optgroup { color: var(--text-dim); font-style: normal; }
+
+/* ── Generate Button ── */
+.generate-btn {
+    display: block;
+    width: 100%;
+    padding: 14px;
+    font-size: 1.1em;
+    font-weight: 700;
+    color: #fff;
+    background: linear-gradient(135deg, var(--accent), var(--accent-orange));
+    border: none;
+    border-radius: var(--radius);
+    cursor: pointer;
+    font-family: inherit;
+    transition: opacity .2s, transform .1s;
+}
+.generate-btn:hover:not(:disabled) { opacity: .9; }
+.generate-btn:active:not(:disabled) { transform: scale(.99); }
+.generate-btn:disabled { opacity: .35; cursor: not-allowed; filter: grayscale(.5); }
+
+/* ── Progress ── */
+.progress-section { display: none; margin-top: 20px; }
+.progress-section.visible { display: block; }
+.progress-bar-outer {
+    width: 100%;
+    height: 12px;
+    background: var(--border);
+    border-radius: 6px;
+    overflow: hidden;
+    margin-bottom: 16px;
+}
+.progress-bar-inner {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent), var(--accent-orange));
+    width: 0%;
+    transition: width .3s;
+    border-radius: 6px;
+}
+.progress-steps { list-style: none; }
+.progress-steps li {
+    padding: 6px 0;
+    font-size: 0.9em;
+    color: var(--text-dimmer);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.progress-steps li .icon { font-size: 1em; width: 20px; text-align: center; }
+.progress-steps li.active { color: var(--accent); }
+.progress-steps li.done { color: var(--success); }
+.progress-steps li.error { color: var(--error); }
+
+/* ── Download Section ── */
+.download-section { display: none; margin-top: 20px; }
+.download-section.visible { display: block; }
+.download-card {
+    background: linear-gradient(135deg, rgba(68,204,102,.08), rgba(255,136,0,.06));
+    border: 1px solid var(--success);
+    border-radius: var(--radius);
+    padding: 24px;
+    text-align: center;
+}
+.download-card h3 { font-size: 1.2em; color: var(--success); margin-bottom: 12px; }
+.download-card .dl-meta {
+    display: flex; flex-wrap: wrap; justify-content: center; gap: 20px;
+    margin-bottom: 16px; font-size: 0.9em; color: var(--text-dim);
+}
+.download-card .dl-meta span { display: flex; align-items: center; gap: 4px; }
+.download-btn {
+    display: inline-block;
+    padding: 12px 40px;
+    background: var(--success);
+    color: #000;
+    font-weight: 700;
+    font-size: 1.05em;
+    border: none;
+    border-radius: var(--radius);
+    cursor: pointer;
+    font-family: inherit;
+    transition: opacity .2s;
+    text-decoration: none;
+}
+.download-btn:hover { opacity: .85; text-decoration: none; }
+.offline-badge {
+    display: inline-block;
+    margin-top: 12px;
+    padding: 4px 12px;
+    background: rgba(68,204,102,.12);
+    border: 1px solid rgba(68,204,102,.3);
+    border-radius: 20px;
+    font-size: 0.82em;
+    color: var(--success);
+}
+
+/* ── Engines Tab ── */
+.engine-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 10px;
+    margin-top: 12px;
+}
+.engine-item {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 12px 14px;
+}
+.engine-item .ename { font-weight: 600; font-size: 0.95em; color: var(--text); }
+.engine-item .eplugin { font-size: 0.78em; color: var(--text-dim); font-family: 'Courier New', monospace; margin-top: 2px; }
+.engine-item .edata { font-size: 0.75em; color: var(--text-dimmer); margin-top: 4px; }
+.engine-group-title { font-size: 1.1em; margin: 20px 0 10px; color: var(--accent); }
+.engine-group-title:first-child { margin-top: 0; }
+
+.engine-search {
+    width: 100%;
+    padding: 10px 14px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    color: var(--text);
+    font-size: 0.95em;
+    font-family: inherit;
+    outline: none;
+    margin-bottom: 16px;
+}
+.engine-search:focus { border-color: var(--accent); }
+
+/* ── About Tab ── */
+.about-section { margin-bottom: 20px; }
+.about-section h3 { font-size: 1.05em; margin-bottom: 8px; color: var(--accent); }
+.about-section p, .about-section li { font-size: 0.93em; color: var(--text-dim); line-height: 1.7; }
+.about-section ul { padding-left: 20px; }
+.about-section li { margin-bottom: 4px; }
+
+/* ── Scrollbar ── */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border-accent); border-radius: 3px; }
+
+/* ── Responsive ── */
+@media (max-width: 600px) {
+    .container { padding: 16px 12px 40px; }
+    .hero h1 { font-size: 1.5em; }
+    .nav-bar { overflow-x: auto; }
+    .option-row { flex-direction: column; }
+}
+</style>
+</head>
+<body>
+
+<!-- ── Navigation Bar ── -->
+<nav class="nav-bar">
+    <a href="pack_game_en.html">🕹️ Retro Packer</a>
+    <a href="pack_dos_game_en.html">🖥️ DOS Packer</a>
+    <span class="active">🎮 ScummVM Packer</span>
+    <span class="nav-spacer"></span>
+    <a href="pack_scummvm_game_fr.html" class="nav-lang">🇫🇷</a>
+    <span class="nav-lang active">🇬🇧</span>
+</nav>
+
+<!-- ── Main Container ── -->
+<div class="container">
+    <div class="hero">
+        <h1><span class="emoji">🎮</span> ScummVM Packer</h1>
+        <p>Pack classic point-and-click adventure games into a single offline HTML file powered by ScummVM WASM.</p>
+    </div>
+
+    <!-- Tabs -->
+    <div class="tabs">
+        <button class="tab-btn active" data-tab="packer">⚡ Packer</button>
+        <button class="tab-btn" data-tab="engines">📋 Engines</button>
+        <button class="tab-btn" data-tab="about">ℹ️ About</button>
+    </div>
+
+    <!-- ═══════ Tab: Packer ═══════ -->
+    <div id="tab-packer" class="tab-content active">
+
+        <!-- Step 1: Game Files -->
+        <div class="card">
+            <h2><span class="step-num">1</span> Game Files</h2>
+            <div class="dropzone" id="dropzone">
+                <div class="icon">📂</div>
+                <div class="label">Drop a game folder here or click to browse</div>
+                <div class="sublabel">Select the folder containing your ScummVM game files</div>
+                <input type="file" id="folder-input" webkitdirectory multiple>
+            </div>
+            <div class="file-info" id="file-info">
+                <div class="meta">
+                    <div class="meta-item"><span class="lbl">Files:</span> <span class="val" id="fi-count">0</span></div>
+                    <div class="meta-item"><span class="lbl">Size:</span> <span class="val" id="fi-size">0 KB</span></div>
+                    <div class="meta-item"><span class="lbl">Engine:</span> <span class="val" id="fi-engine">—</span></div>
+                </div>
+                <button class="file-list-toggle" id="file-list-toggle">Show file list ▾</button>
+                <div class="file-list" id="file-list"></div>
+            </div>
+        </div>
+
+        <!-- Step 2: Options -->
+        <div class="card">
+            <h2><span class="step-num">2</span> Options</h2>
+            <div class="option-row">
+                <div class="option-group">
+                    <label for="engine-select">Engine</label>
+                    <select id="engine-select">
+                        <option value="auto">🔍 Auto-detect</option>
+                        <optgroup label="── Popular / Classic ──">
+                            <option value="scumm">scumm – SCUMM (LucasArts)</option>
+                            <option value="sci">sci – Sierra SCI</option>
+                            <option value="agi">agi – Sierra AGI</option>
+                            <option value="sky">sky – Beneath a Steel Sky</option>
+                            <option value="queen">queen – Flight of the Amazon Queen</option>
+                            <option value="lure">lure – Lure of the Temptress</option>
+                            <option value="sword1">sword1 – Broken Sword 1</option>
+                            <option value="sword2">sword2 – Broken Sword 2</option>
+                            <option value="kyra">kyra – Kyrandia / Westwood</option>
+                            <option value="gob">gob – Gobliiins</option>
+                            <option value="cine">cine – Cinematique evo 1</option>
+                            <option value="agos">agos – Simon the Sorcerer</option>
+                            <option value="mohawk">mohawk – Myst / Mohawk</option>
+                            <option value="saga">saga – SAGA (ITE / IHNM)</option>
+                            <option value="groovie">groovie – Groovie (7th Guest)</option>
+                            <option value="tinsel">tinsel – Tinsel (Discworld)</option>
+                            <option value="touche">touche – Touché</option>
+                            <option value="teenagent">teenagent – Teen Agent</option>
+                            <option value="drascula">drascula – Drascula</option>
+                            <option value="hugo">hugo – Hugo</option>
+                            <option value="dreamweb">dreamweb – DreamWeb</option>
+                            <option value="toon">toon – Toonstruck</option>
+                            <option value="tony">tony – Tony Tough</option>
+                            <option value="neverhood">neverhood – The Neverhood</option>
+                            <option value="sherlock">sherlock – Sherlock Holmes</option>
+                            <option value="bladerunner">bladerunner – Blade Runner</option>
+                            <option value="wintermute">wintermute – Wintermute</option>
+                            <option value="ags">ags – Adventure Game Studio</option>
+                            <option value="director">director – Macromedia Director</option>
+                        </optgroup>
+                        <optgroup label="── Other Engines ──">
+                            <option value="access">access – Access</option>
+                            <option value="adl">adl – ADL</option>
+                            <option value="asylum">asylum – Asylum</option>
+                            <option value="avalanche">avalanche – Avalanche</option>
+                            <option value="bagel">bagel – Bagel</option>
+                            <option value="bbvs">bbvs – Beavis and Butt-Head</option>
+                            <option value="buried">buried – Buried in Time</option>
+                            <option value="chamber">chamber – Chamber</option>
+                            <option value="chewy">chewy – Chewy: ESC from F5</option>
+                            <option value="cge">cge – CGE</option>
+                            <option value="cge2">cge2 – CGE2</option>
+                            <option value="composer">composer – Composer</option>
+                            <option value="cruise">cruise – Cruise for a Corpse</option>
+                            <option value="cryo">cryo – Cryo</option>
+                            <option value="cryomni3d">cryomni3d – CryOmni3D</option>
+                            <option value="darkseed">darkseed – Dark Seed</option>
+                            <option value="dgds">dgds – DGDS</option>
+                            <option value="dm">dm – Dungeon Master</option>
+                            <option value="dragons">dragons – Dragons</option>
+                            <option value="draci">draci – Draci</option>
+                            <option value="efh">efh – Escape from Hell</option>
+                            <option value="freescape">freescape – Freescape</option>
+                            <option value="fullpipe">fullpipe – Full Pipe</option>
+                            <option value="glk">glk – GLK</option>
+                            <option value="gnap">gnap – Gnap</option>
+                            <option value="got">got – GoT</option>
+                            <option value="griffon">griffon – Griffon</option>
+                            <option value="grim">grim – Grim Fandango</option>
+                            <option value="hdb">hdb – Hyperspace Delivery Boy</option>
+                            <option value="hopkins">hopkins – Hopkins FBI</option>
+                            <option value="hypno">hypno – Hypno</option>
+                            <option value="icb">icb – ICB</option>
+                            <option value="illusions">illusions – Illusions</option>
+                            <option value="kingdom">kingdom – Kingdom</option>
+                            <option value="lab">lab – Lab</option>
+                            <option value="lastexpress">lastexpress – The Last Express</option>
+                            <option value="lilliput">lilliput – Lilliput</option>
+                            <option value="macventure">macventure – MacVenture</option>
+                            <option value="mads">mads – MADS</option>
+                            <option value="mm">mm – Might and Magic</option>
+                            <option value="mortevielle">mortevielle – Mortévielle</option>
+                            <option value="mutationofjb">mutationofjb – Mutation of J.B.</option>
+                            <option value="myst3">myst3 – Myst III</option>
+                            <option value="nancy">nancy – Nancy Drew</option>
+                            <option value="ngi">ngi – NGI</option>
+                            <option value="parallaction">parallaction – Parallaction</option>
+                            <option value="pegasus">pegasus – Pegasus Prime</option>
+                            <option value="petka">petka – Petka</option>
+                            <option value="pink">pink – Pink Panther</option>
+                            <option value="plumbers">plumbers – Plumbers</option>
+                            <option value="prince">prince – The Prince and the Coward</option>
+                            <option value="private">private – Private Eye</option>
+                            <option value="qdengine">qdengine – QD Engine</option>
+                            <option value="ring">ring – Ring</option>
+                            <option value="sludge">sludge – SLUDGE</option>
+                            <option value="startrek">startrek – Star Trek</option>
+                            <option value="supernova">supernova – Supernova</option>
+                            <option value="sword25">sword25 – Broken Sword 2.5</option>
+                            <option value="tetraedge">tetraedge – Tetraedge</option>
+                            <option value="titanic">titanic – Starship Titanic</option>
+                            <option value="tsage">tsage – TsAGE</option>
+                            <option value="twine">twine – Twine</option>
+                            <option value="twp">twp – Thimbleweed Park</option>
+                            <option value="ultima">ultima – Ultima</option>
+                            <option value="vcruise">vcruise – V-Cruise</option>
+                            <option value="voyeur">voyeur – Voyeur</option>
+                            <option value="wage">wage – WAGE</option>
+                            <option value="watchmaker">watchmaker – Watchmaker</option>
+                            <option value="zvision">zvision – Z-Vision</option>
+                        </optgroup>
+                    </select>
+                </div>
+            </div>
+            <div class="option-row">
+                <div class="option-group">
+                    <label for="game-title">Game Title</label>
+                    <input type="text" id="game-title" placeholder="e.g. Day of the Tentacle">
+                </div>
+                <div class="option-group">
+                    <label for="output-filename">Output Filename</label>
+                    <input type="text" id="output-filename" placeholder="e.g. day-of-the-tentacle.html">
+                </div>
+            </div>
+        </div>
+
+        <!-- Step 3: Generate -->
+        <div class="card">
+            <h2><span class="step-num">3</span> Generate</h2>
+            <button class="generate-btn" id="generate-btn" disabled>🎮 Generate Standalone HTML</button>
+
+            <div class="progress-section" id="progress-section">
+                <div class="progress-bar-outer"><div class="progress-bar-inner" id="progress-bar"></div></div>
+                <ul class="progress-steps" id="progress-steps">
+                    <li id="ps-1"><span class="icon">⏳</span> Reading game files...</li>
+                    <li id="ps-2"><span class="icon">⏳</span> Fetching ScummVM WASM core (~37 MB)...</li>
+                    <li id="ps-3"><span class="icon">⏳</span> Fetching ScummVM JS engine (~9 MB)...</li>
+                    <li id="ps-4"><span class="icon">⏳</span> Fetching engine plugin...</li>
+                    <li id="ps-5"><span class="icon">⏳</span> Fetching engine data files...</li>
+                    <li id="ps-6"><span class="icon">⏳</span> Compressing game files...</li>
+                    <li id="ps-7"><span class="icon">⏳</span> Assembling HTML file...</li>
+                    <li id="ps-8"><span class="icon">⏳</span> Done! 🎮 100% offline</li>
+                </ul>
+            </div>
+
+            <div class="download-section" id="download-section">
+                <div class="download-card">
+                    <h3>✅ Game packed successfully!</h3>
+                    <div class="dl-meta">
+                        <span>🎮 <span id="dl-engine">—</span></span>
+                        <span>📝 <span id="dl-title">—</span></span>
+                        <span>📦 <span id="dl-size">—</span></span>
+                    </div>
+                    <a class="download-btn" id="download-btn" download>⬇️ Download HTML File</a>
+                    <div class="offline-badge">✈️ 100% offline — no internet needed to play</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════ Tab: Engines ═══════ -->
+    <div id="tab-engines" class="tab-content">
+        <div class="card">
+            <h2>📋 ScummVM Engines</h2>
+            <p style="color:var(--text-dim);font-size:0.9em;margin-bottom:14px;">ScummVM supports 115+ game engines. Below are the most commonly used ones. Each engine has a plugin file (<code>lib&lt;engine&gt;.so</code>) loaded at runtime.</p>
+            <input type="text" class="engine-search" id="engine-search" placeholder="🔍 Search engines...">
+            <div id="engine-list"></div>
+        </div>
+    </div>
+
+    <!-- ═══════ Tab: About ═══════ -->
+    <div id="tab-about" class="tab-content">
+        <div class="card">
+            <div class="about-section">
+                <h3>🎮 What is ScummVM Packer?</h3>
+                <p>ScummVM Packer lets you package classic point-and-click adventure games into a <strong>single, self-contained HTML file</strong> that runs entirely in the browser. No server, no installation — just open the file and play.</p>
+            </div>
+            <div class="about-section">
+                <h3>⚙️ How It Works</h3>
+                <ul>
+                    <li>Your game files are compressed and embedded inside the HTML.</li>
+                    <li>The ScummVM WASM core, JavaScript engine, and the correct engine plugin are fetched and embedded.</li>
+                    <li>Common data files (themes, fonts, engine-specific data) are also included.</li>
+                    <li>When you open the generated file, everything decompresses in-browser and ScummVM boots your game instantly.</li>
+                </ul>
+            </div>
+            <div class="about-section">
+                <h3>🛠️ Technologies</h3>
+                <ul>
+                    <li><strong>ScummVM WASM</strong> — compiled to WebAssembly from <a href="https://scummvm.kuendig.io/" target="_blank">scummvm.kuendig.io</a></li>
+                    <li><strong>CompressionStream API</strong> — native browser gzip for fast, efficient compression</li>
+                    <li><strong>Emscripten FS</strong> — virtual filesystem to mount game files at runtime</li>
+                </ul>
+            </div>
+            <div class="about-section">
+                <h3>🔒 Privacy</h3>
+                <p>All processing happens <strong>locally in your browser</strong>. Your game files are never uploaded anywhere. The only network requests fetch the ScummVM engine binaries (WASM, JS, plugins, data files) — and those are cached in memory for subsequent packs.</p>
+            </div>
+            <div class="about-section">
+                <h3>🔗 Links</h3>
+                <ul>
+                    <li><a href="https://github.com/nicokimmel/scummvm-web" target="_blank">ScummVM WASM on GitHub</a></li>
+                    <li><a href="https://www.scummvm.org/" target="_blank">ScummVM Official Site</a></li>
+                    <li><a href="https://scummvm.kuendig.io/" target="_blank">ScummVM WASM Demo</a></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+</div><!-- /container -->
+
+<script>
+// ══════════════════════════════════════════════════════════
+//  ScummVM Web Packer — All-in-browser game packer
+// ══════════════════════════════════════════════════════════
+
+// ── Constants ──
+const LOCAL_MIRROR = 'data/scummvm/';
+const SCUMMVM_CDN  = 'https://scummvm.kuendig.io/';
+
+// ── Engine Detection by Filename ──
+const DETECTION_BY_FILENAME = {
+    'sky.dsk': 'sky', 'sky.dnr': 'sky',
+    'queen.1': 'queen', 'queen.1c': 'queen',
+    'godfat.dat': 'got',
+    'lure.exe': 'lure',
+    'touche.dat': 'touche',
+    'teenagent.dat': 'teenagent',
+    'packet.001': 'drascula',
+    'swordres.rif': 'sword1', 'bs1': 'sword1',
+    'sword2.clu': 'sword2', 'sword2.clr': 'sword2',
+    'dw.scn': 'tinsel', 'dw2.scn': 'tinsel',
+    'script.grv': 'groovie',
+    'simon.gme': 'agos', 'simon2.gme': 'agos', 'stripped.txt': 'agos', 'feeble.cmp': 'agos',
+    'myst.dat': 'mohawk', 'channel.mov': 'mohawk',
+    'ihnm.res': 'saga', 'itedata.ite': 'saga', 'ihnmdata.ihn': 'saga',
+    'roasted.mpr': 'tony', 'roasted.mpc': 'tony',
+    'misc.pak': 'toon',
+    'res_vga.res': 'hopkins', 'reslng.res': 'hopkins',
+    'hd.blb': 'neverhood', 'c.blb': 'neverhood',
+    'images.dir': 'pegasus',
+    'st.exe': 'titanic', 'y222.dat': 'titanic',
+    'gamedata.slg': 'sludge',
+    'dreamweb.r00': 'dreamweb', 'dreamweb.ad1': 'dreamweb',
+    'hugo.dat': 'hugo',
+    'menufr.mor': 'mortevielle', 'menuen.mor': 'mortevielle',
+    'cd1.hpf': 'lastexpress', 'hdheader.bin': 'lastexpress',
+    'intro.stk': 'gob', 'gob.lic': 'gob',
+    'vol.cnf': 'cruise',
+    'auto00.prc': 'cine', 'procs00': 'cine',
+    'kyrandia.exe': 'kyra', 'gemcut.pak': 'kyra', 'insignia.pak': 'kyra', 'westwood.001': 'kyra',
+    '000.lfl': 'scumm', '990.lfl': 'scumm', '901.lfl': 'scumm',
+    'talk.lib': 'sherlock', 'journal.txt': 'sherlock',
+    'allitems.gfx': 'griffon',
+    'room.dat': 'access',
+    'academy.rl2': 'tsage',
+    'data.dcp': 'wintermute', 'default.game': 'wintermute',
+    'acsetup.cfg': 'ags',
+};
+
+const DETECTION_BY_PATTERN = [
+    [f => f.endsWith('.000') && !f.startsWith('resource'), 'scumm'],
+    [f => f.endsWith('.la0'), 'scumm'],
+    [f => f.endsWith('.lfl'), 'scumm'],
+    [f => f.endsWith('.he0'), 'scumm'],
+    [f => f === 'resource.map' || f === 'resource.000', 'sci'],
+    [f => f === 'ressci.000' || f === 'ressci.001', 'sci'],
+    [f => ['logdir','viewdir','picdir','snddir'].includes(f), 'agi'],
+    [f => f === 'words.tok', 'agi'],
+    [f => f === 'agidata.ovl', 'agi'],
+    [f => f.startsWith('advent') && f.endsWith('.dat'), 'adl'],
+    [f => f.endsWith('.tlk') && f.includes('blade'), 'bladerunner'],
+    [f => f === 'startup.mix', 'bladerunner'],
+    [f => f.endsWith('.dxr') || f.endsWith('.dcr'), 'director'],
+    [f => f.endsWith('.cxt'), 'director'],
+];
+
+// ── Engine Data Files ──
+const ENGINE_DATA_FILES = {
+    'access': ['access.dat'],
+    'bagel': ['bagel.dat'],
+    'cryo': ['cryo.dat'],
+    'cryomni3d': ['cryomni3d.dat'],
+    'darkseed': ['darkseed.dat'],
+    'drascula': ['drascula.dat'],
+    'freescape': ['freescape.dat'],
+    'got': ['got.gfx', 'got.aud'],
+    'hugo': ['hugo.dat'],
+    'kyra': ['kyra.dat'],
+    'lure': ['lure.dat'],
+    'macventure': ['macventure.dat'],
+    'mm': ['mm.dat'],
+    'mohawk': [],
+    'mortevielle': ['mort.dat'],
+    'myst3': ['myst3.dat'],
+    'nancy': ['nancy.dat'],
+    'neverhood': ['neverhood.dat'],
+    'prince': ['prince_translation.dat'],
+    'queen': ['queen.tbl'],
+    'scumm': [],
+    'sci': [],
+    'sky': ['sky.cpt'],
+    'supernova': ['supernova.dat'],
+    'teenagent': ['teenagent.dat'],
+    'titanic': ['titanic.dat'],
+    'tony': ['tony.dat'],
+    'toon': ['toon.dat'],
+    'ultima': ['ultima.dat'],
+    'wintermute': ['wintermute.zip'],
+};
+
+const COMMON_DATA_FILES = ['scummmodern.zip', 'scummremastered.zip'];
+
+// ── Engine Catalog (for Engines tab) ──
+const ENGINE_CATALOG = {
+    'Adventure (LucasArts / Sierra)': [
+        { id: 'scumm', name: 'SCUMM (LucasArts)', data: [] },
+        { id: 'sci', name: 'Sierra SCI', data: [] },
+        { id: 'agi', name: 'Sierra AGI', data: [] },
+        { id: 'agos', name: 'Simon the Sorcerer / Feeble', data: [] },
+        { id: 'kyra', name: 'Kyrandia / Westwood', data: ['kyra.dat'] },
+        { id: 'groovie', name: 'Groovie (7th Guest)', data: [] },
+        { id: 'saga', name: 'SAGA (ITE / IHNM)', data: [] },
+        { id: 'tinsel', name: 'Tinsel (Discworld)', data: [] },
+        { id: 'mohawk', name: 'Myst / Mohawk', data: [] },
+        { id: 'sherlock', name: 'Sherlock Holmes', data: [] },
+        { id: 'gob', name: 'Gobliiins', data: [] },
+        { id: 'cine', name: 'Cinematique evo 1', data: [] },
+        { id: 'touche', name: 'Touché: Adventures of the Fifth Musketeer', data: [] },
+        { id: 'dreamweb', name: 'DreamWeb', data: [] },
+        { id: 'hugo', name: 'Hugo', data: ['hugo.dat'] },
+        { id: 'drascula', name: 'Drascula: The Vampire Strikes Back', data: ['drascula.dat'] },
+        { id: 'teenagent', name: 'Teen Agent', data: ['teenagent.dat'] },
+        { id: 'bladerunner', name: 'Blade Runner', data: [] },
+        { id: 'wintermute', name: 'Wintermute', data: ['wintermute.zip'] },
+        { id: 'ags', name: 'Adventure Game Studio', data: [] },
+        { id: 'director', name: 'Macromedia Director', data: [] },
+        { id: 'neverhood', name: 'The Neverhood', data: ['neverhood.dat'] },
+        { id: 'tony', name: 'Tony Tough', data: ['tony.dat'] },
+        { id: 'toon', name: 'Toonstruck', data: ['toon.dat'] },
+    ],
+    'Revolution / Other Adventures': [
+        { id: 'sky', name: 'Beneath a Steel Sky', data: ['sky.cpt'] },
+        { id: 'queen', name: 'Flight of the Amazon Queen', data: ['queen.tbl'] },
+        { id: 'lure', name: 'Lure of the Temptress', data: ['lure.dat'] },
+        { id: 'sword1', name: 'Broken Sword 1', data: [] },
+        { id: 'sword2', name: 'Broken Sword 2', data: [] },
+        { id: 'cruise', name: 'Cruise for a Corpse', data: [] },
+        { id: 'hopkins', name: 'Hopkins FBI', data: [] },
+        { id: 'lastexpress', name: 'The Last Express', data: [] },
+        { id: 'mortevielle', name: 'Mortévielle', data: ['mort.dat'] },
+        { id: 'sludge', name: 'SLUDGE', data: [] },
+        { id: 'fullpipe', name: 'Full Pipe', data: [] },
+        { id: 'titanic', name: 'Starship Titanic', data: ['titanic.dat'] },
+        { id: 'pegasus', name: 'Pegasus Prime', data: [] },
+    ],
+    'Other / Misc Engines': [
+        { id: 'access', name: 'Access', data: ['access.dat'] },
+        { id: 'adl', name: 'ADL', data: [] },
+        { id: 'asylum', name: 'Asylum', data: [] },
+        { id: 'avalanche', name: 'Avalanche', data: [] },
+        { id: 'bagel', name: 'Bagel', data: ['bagel.dat'] },
+        { id: 'bbvs', name: 'Beavis and Butt-Head', data: [] },
+        { id: 'buried', name: 'Buried in Time', data: [] },
+        { id: 'chamber', name: 'Chamber', data: [] },
+        { id: 'chewy', name: 'Chewy: ESC from F5', data: [] },
+        { id: 'cge', name: 'CGE', data: [] },
+        { id: 'cge2', name: 'CGE2', data: [] },
+        { id: 'composer', name: 'Composer', data: [] },
+        { id: 'cryo', name: 'Cryo', data: ['cryo.dat'] },
+        { id: 'cryomni3d', name: 'CryOmni3D', data: ['cryomni3d.dat'] },
+        { id: 'darkseed', name: 'Dark Seed', data: ['darkseed.dat'] },
+        { id: 'dgds', name: 'DGDS', data: [] },
+        { id: 'dm', name: 'Dungeon Master', data: [] },
+        { id: 'dragons', name: 'Dragons', data: [] },
+        { id: 'draci', name: 'Draci', data: [] },
+        { id: 'efh', name: 'Escape from Hell', data: [] },
+        { id: 'freescape', name: 'Freescape', data: ['freescape.dat'] },
+        { id: 'glk', name: 'GLK', data: [] },
+        { id: 'gnap', name: 'Gnap', data: [] },
+        { id: 'got', name: 'GoT', data: ['got.gfx', 'got.aud'] },
+        { id: 'griffon', name: 'Griffon', data: [] },
+        { id: 'grim', name: 'Grim Fandango', data: [] },
+        { id: 'hdb', name: 'Hyperspace Delivery Boy', data: [] },
+        { id: 'hypno', name: 'Hypno', data: [] },
+        { id: 'icb', name: 'ICB', data: [] },
+        { id: 'illusions', name: 'Illusions', data: [] },
+        { id: 'kingdom', name: 'Kingdom', data: [] },
+        { id: 'lab', name: 'Lab', data: [] },
+        { id: 'lilliput', name: 'Lilliput', data: [] },
+        { id: 'macventure', name: 'MacVenture', data: ['macventure.dat'] },
+        { id: 'mads', name: 'MADS', data: [] },
+        { id: 'mm', name: 'Might and Magic', data: ['mm.dat'] },
+        { id: 'mutationofjb', name: 'Mutation of J.B.', data: [] },
+        { id: 'myst3', name: 'Myst III', data: ['myst3.dat'] },
+        { id: 'nancy', name: 'Nancy Drew', data: ['nancy.dat'] },
+        { id: 'ngi', name: 'NGI', data: [] },
+        { id: 'parallaction', name: 'Parallaction', data: [] },
+        { id: 'petka', name: 'Petka', data: [] },
+        { id: 'pink', name: 'Pink Panther', data: [] },
+        { id: 'plumbers', name: 'Plumbers', data: [] },
+        { id: 'prince', name: 'The Prince and the Coward', data: ['prince_translation.dat'] },
+        { id: 'private', name: 'Private Eye', data: [] },
+        { id: 'qdengine', name: 'QD Engine', data: [] },
+        { id: 'ring', name: 'Ring', data: [] },
+        { id: 'startrek', name: 'Star Trek', data: [] },
+        { id: 'supernova', name: 'Supernova', data: ['supernova.dat'] },
+        { id: 'sword25', name: 'Broken Sword 2.5', data: [] },
+        { id: 'tetraedge', name: 'Tetraedge', data: [] },
+        { id: 'tsage', name: 'TsAGE', data: [] },
+        { id: 'twine', name: 'Twine', data: [] },
+        { id: 'twp', name: 'Thimbleweed Park', data: [] },
+        { id: 'ultima', name: 'Ultima', data: ['ultima.dat'] },
+        { id: 'vcruise', name: 'V-Cruise', data: [] },
+        { id: 'voyeur', name: 'Voyeur', data: [] },
+        { id: 'wage', name: 'WAGE', data: [] },
+        { id: 'watchmaker', name: 'Watchmaker', data: [] },
+        { id: 'zvision', name: 'Z-Vision', data: [] },
+    ],
+};
+
+// ── Asset Cache ──
+const assetCache = { wasm: null, js: null, plugins: {}, dataFiles: {} };
+
+// ── State ──
+let gameFiles = {};       // { relativePath: File }
+let detectedEngine = null;
+let generating = false;
+
+// ══════════════════════════════
+//  Tab Navigation
+// ══════════════════════════════
+document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+        btn.classList.add('active');
+        document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
+    });
+});
+
+// ══════════════════════════════
+//  Utility: Format bytes
+// ══════════════════════════════
+function formatBytes(bytes) {
+    if (bytes < 1024) return bytes + ' B';
+    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+    if (bytes < 1024 * 1024 * 1024) return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+    return (bytes / (1024 * 1024 * 1024)).toFixed(2) + ' GB';
+}
+
+// ══════════════════════════════
+//  Engine Detection
+// ══════════════════════════════
+function detectEngine(filenames) {
+    const lower = filenames.map(f => {
+        const parts = f.split('/');
+        return parts[parts.length - 1].toLowerCase();
+    });
+    // Check exact filenames first
+    for (const fn of lower) {
+        if (DETECTION_BY_FILENAME[fn]) return DETECTION_BY_FILENAME[fn];
+    }
+    // Check patterns
+    for (const fn of lower) {
+        for (const [testFn, engine] of DETECTION_BY_PATTERN) {
+            if (testFn(fn)) return engine;
+        }
+    }
+    return null;
+}
+
+// ══════════════════════════════
+//  File Input / Drop Zone
+// ══════════════════════════════
+const dropzone = document.getElementById('dropzone');
+const folderInput = document.getElementById('folder-input');
+const fileInfo = document.getElementById('file-info');
+
+// Handle folder input
+folderInput.addEventListener('change', () => {
+    const files = Array.from(folderInput.files);
+    if (!files.length) return;
+    processFileList(files);
+});
+
+// Drag & drop
+dropzone.addEventListener('dragover', e => { e.preventDefault(); dropzone.classList.add('dragover'); });
+dropzone.addEventListener('dragleave', () => dropzone.classList.remove('dragover'));
+dropzone.addEventListener('drop', async e => {
+    e.preventDefault();
+    dropzone.classList.remove('dragover');
+    const items = Array.from(e.dataTransfer.items);
+    const entries = items.map(i => i.webkitGetAsEntry && i.webkitGetAsEntry()).filter(Boolean);
+    if (entries.length > 0) {
+        const allFiles = [];
+        for (const entry of entries) {
+            const result = await readEntry(entry, '');
+            if (Array.isArray(result)) allFiles.push(...result);
+            else allFiles.push(result);
+        }
+        processDroppedFiles(allFiles);
+    }
+});
+
+async function readEntry(entry, path) {
+    if (entry.isFile) {
+        return new Promise(resolve => {
+            entry.file(f => resolve({ path: path + f.name, file: f }));
+        });
+    } else if (entry.isDirectory) {
+        const reader = entry.createReader();
+        let allEntries = [];
+        // readEntries can return partial results; must loop
+        const readAll = () => new Promise(resolve => {
+            reader.readEntries(entries => {
+                if (entries.length === 0) resolve(allEntries);
+                else { allEntries = allEntries.concat(entries); readAll().then(resolve); }
+            });
+        });
+        await readAll();
+        const results = [];
+        for (const e of allEntries) {
+            const sub = await readEntry(e, path + entry.name + '/');
+            if (Array.isArray(sub)) results.push(...sub);
+            else results.push(sub);
+        }
+        return results;
+    }
+    return [];
+}
+
+function processDroppedFiles(fileEntries) {
+    gameFiles = {};
+    // Strip leading folder name if all files share a common root
+    const paths = fileEntries.map(f => f.path);
+    const prefix = getCommonPrefix(paths);
+    for (const entry of fileEntries) {
+        const rel = prefix ? entry.path.substring(prefix.length) : entry.path;
+        if (rel) gameFiles[rel] = entry.file;
+    }
+    updateFileInfo();
+}
+
+function processFileList(files) {
+    gameFiles = {};
+    // webkitRelativePath: "FolderName/subdir/file.dat" — strip root folder
+    const paths = files.map(f => f.webkitRelativePath);
+    const prefix = getCommonPrefix(paths);
+    for (const f of files) {
+        const rel = prefix ? f.webkitRelativePath.substring(prefix.length) : f.webkitRelativePath;
+        if (rel) gameFiles[rel] = f;
+    }
+    updateFileInfo();
+}
+
+function getCommonPrefix(paths) {
+    if (!paths.length) return '';
+    const first = paths[0];
+    const slashIdx = first.indexOf('/');
+    if (slashIdx < 0) return '';
+    const candidate = first.substring(0, slashIdx + 1);
+    if (paths.every(p => p.startsWith(candidate))) return candidate;
+    return '';
+}
+
+function updateFileInfo() {
+    const names = Object.keys(gameFiles);
+    const count = names.length;
+    let totalSize = 0;
+    for (const f of Object.values(gameFiles)) totalSize += f.size;
+
+    document.getElementById('fi-count').textContent = count;
+    document.getElementById('fi-size').textContent = formatBytes(totalSize);
+
+    // Detect engine
+    detectedEngine = detectEngine(names);
+    const engineEl = document.getElementById('fi-engine');
+    if (detectedEngine) {
+        engineEl.textContent = detectedEngine;
+        engineEl.className = 'val detected';
+        // Auto-select in dropdown if on auto
+        if (document.getElementById('engine-select').value === 'auto') {
+            // Keep auto selected, detection is used at generation time
+        }
+    } else {
+        engineEl.textContent = 'Unknown (select manually)';
+        engineEl.className = 'val unknown';
+    }
+
+    // File list
+    const listEl = document.getElementById('file-list');
+    listEl.textContent = names.sort().join('\n');
+
+    // Auto-fill title & filename from folder name
+    const firstFile = Object.values(gameFiles)[0];
+    let folderName = '';
+    if (firstFile && firstFile.webkitRelativePath) {
+        folderName = firstFile.webkitRelativePath.split('/')[0];
+    } else {
+        // Try from keys
+        const parts = Object.keys(gameFiles)[0];
+        folderName = parts ? parts.split('/')[0] : 'game';
+    }
+    if (!folderName || folderName.includes('.')) {
+        // Fallback: use detected engine or 'game'
+        folderName = detectedEngine || 'game';
+    }
+    const titleInput = document.getElementById('game-title');
+    const filenameInput = document.getElementById('output-filename');
+    if (!titleInput.value) titleInput.value = folderName.replace(/[-_]/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+    if (!filenameInput.value) filenameInput.value = folderName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/-+$/, '') + '.html';
+
+    fileInfo.classList.add('visible');
+    updateGenerateButton();
+}
+
+// File list toggle
+document.getElementById('file-list-toggle').addEventListener('click', () => {
+    const list = document.getElementById('file-list');
+    const btn = document.getElementById('file-list-toggle');
+    const visible = list.classList.toggle('visible');
+    btn.textContent = visible ? 'Hide file list ▴' : 'Show file list ▾';
+});
+
+// ══════════════════════════════
+//  Options change handlers
+// ══════════════════════════════
+document.getElementById('engine-select').addEventListener('change', updateGenerateButton);
+document.getElementById('game-title').addEventListener('input', updateGenerateButton);
+document.getElementById('output-filename').addEventListener('input', updateGenerateButton);
+
+function updateGenerateButton() {
+    const hasFiles = Object.keys(gameFiles).length > 0;
+    const engineSel = document.getElementById('engine-select').value;
+    const hasEngine = (engineSel !== 'auto' || detectedEngine !== null);
+    document.getElementById('generate-btn').disabled = !hasFiles || !hasEngine || generating;
+}
+
+// ══════════════════════════════
+//  Compression Utilities
+// ══════════════════════════════
+async function gzipCompress(data) {
+    const cs = new CompressionStream('gzip');
+    const writer = cs.writable.getWriter();
+    writer.write(data);
+    writer.close();
+    const reader = cs.readable.getReader();
+    const chunks = [];
+    let totalLen = 0;
+    while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        chunks.push(value);
+        totalLen += value.length;
+    }
+    const result = new Uint8Array(totalLen);
+    let offset = 0;
+    for (const chunk of chunks) {
+        result.set(chunk, offset);
+        offset += chunk.length;
+    }
+    return result;
+}
+
+function arrayBufferToBase64(buffer) {
+    const bytes = new Uint8Array(buffer);
+    const CHUNK = 0x8000;
+    let result = '';
+    for (let i = 0; i < bytes.length; i += CHUNK) {
+        result += String.fromCharCode.apply(null, bytes.subarray(i, Math.min(i + CHUNK, bytes.length)));
+    }
+    return btoa(result);
+}
+
+async function compressAndEncode(data) {
+    const compressed = await gzipCompress(data instanceof Uint8Array ? data : new Uint8Array(data));
+    return arrayBufferToBase64(compressed);
+}
+
+// ══════════════════════════════
+//  Asset Fetching (local mirror → CDN fallback)
+// ══════════════════════════════
+async function fetchBinary(localPath, cdnPath) {
+    // Try local mirror first
+    try {
+        const resp = await fetch(LOCAL_MIRROR + localPath);
+        if (resp.ok) return await resp.arrayBuffer();
+    } catch(e) { /* ignore */ }
+    // Fallback to CDN
+    const resp = await fetch(SCUMMVM_CDN + cdnPath);
+    if (!resp.ok) throw new Error('Failed to fetch ' + cdnPath + ' (HTTP ' + resp.status + ')');
+    return await resp.arrayBuffer();
+}
+
+// ══════════════════════════════
+//  Progress Helpers
+// ══════════════════════════════
+function setProgressBar(pct) {
+    document.getElementById('progress-bar').style.width = pct + '%';
+}
+function setStepActive(n) {
+    for (let i = 1; i <= 8; i++) {
+        const el = document.getElementById('ps-' + i);
+        if (i < n) { el.className = 'done'; el.querySelector('.icon').textContent = '✅'; }
+        else if (i === n) { el.className = 'active'; el.querySelector('.icon').textContent = '⏳'; }
+        else { el.className = ''; el.querySelector('.icon').textContent = '⏳'; }
+    }
+}
+function setStepDone(n) {
+    const el = document.getElementById('ps-' + n);
+    el.className = 'done';
+    el.querySelector('.icon').textContent = '✅';
+}
+function setStepError(n, msg) {
+    const el = document.getElementById('ps-' + n);
+    el.className = 'error';
+    el.querySelector('.icon').textContent = '❌';
+    if (msg) el.textContent = '❌ ' + msg;
+}
+
+// ══════════════════════════════
+//  HTML Template
+// ══════════════════════════════
+const _CS = '<' + '/script>';
+const HTML_TEMPLATE = `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>{{GAME_TITLE}}</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html, body { width: 100%; height: 100%; overflow: hidden; background: #000; }
+        #loading {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            background: #1a1a2e; color: #e0e0e0; font-family: 'Courier New', monospace; z-index: 100;
+        }
+        #loading h1 { font-size: 1.5em; margin-bottom: 20px; color: #00d4ff; }
+        #loading .progress-bar { width: 300px; height: 20px; background: #333; border-radius: 10px; overflow: hidden; margin: 10px 0; }
+        #loading .progress-fill { height: 100%; background: linear-gradient(90deg, #00d4ff, #7b2ff7); width: 0%; transition: width 0.3s; border-radius: 10px; }
+        #loading .status { font-size: 0.9em; color: #888; margin-top: 10px; }
+        #loading .detail { font-size: 0.75em; color: #666; margin-top: 5px; }
+        #canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; display: none; cursor: default; }
+        #error { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #1a1a2e; color: #ff4444; font-family: 'Courier New', monospace; padding: 40px; z-index: 200; overflow: auto; }
+        #error h1 { margin-bottom: 20px; }
+        #error pre { color: #ccc; white-space: pre-wrap; font-size: 0.85em; }
+    </style>
+</head>
+<body>
+    <div id="loading">
+        <h1>🎮 {{GAME_TITLE}}</h1>
+        <div class="progress-bar"><div class="progress-fill" id="progress"></div></div>
+        <div class="status" id="status">Initializing...</div>
+        <div class="detail" id="detail"></div>
+    </div>
+    <div id="error"><h1>❌ Error</h1><pre id="error-text"></pre></div>
+    <canvas id="canvas" oncontextmenu="event.preventDefault()" tabindex="-1"></canvas>
+
+    <!-- Embedded compressed data -->
+    <script id="wasm-data" type="application/gzip-base64">{{WASM_DATA}}${_CS}
+    <script id="js-data" type="application/gzip-base64">{{JS_DATA}}${_CS}
+    <script id="plugin-data" type="application/gzip-base64" data-name="{{PLUGIN_NAME}}">{{PLUGIN_DATA}}${_CS}
+    <script id="engine-data-files" type="application/json">{{ENGINE_DATA_JSON}}${_CS}
+    <script id="game-files" type="application/json">{{GAME_FILES_JSON}}${_CS}
+
+    <script>
+    const GAME_ENGINE = '{{ENGINE_ID}}';
+    const GAME_TITLE = '{{GAME_TITLE_JS}}';
+
+    function setProgress(pct) { document.getElementById('progress').style.width = pct + '%'; }
+    function setStatus(msg) { document.getElementById('status').textContent = msg; }
+    function setDetail(msg) { document.getElementById('detail').textContent = msg; }
+    function showError(msg) {
+        document.getElementById('loading').style.display = 'none';
+        document.getElementById('error').style.display = 'block';
+        document.getElementById('error-text').textContent = msg;
+    }
+
+    async function decompressB64(b64String) {
+        const binaryStr = atob(b64String);
+        const bytes = new Uint8Array(binaryStr.length);
+        for (let i = 0; i < binaryStr.length; i++) bytes[i] = binaryStr.charCodeAt(i);
+        const ds = new DecompressionStream('gzip');
+        const writer = ds.writable.getWriter();
+        writer.write(bytes);
+        writer.close();
+        const reader = ds.readable.getReader();
+        const chunks = [];
+        let totalLen = 0;
+        while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+            chunks.push(value);
+            totalLen += value.length;
+        }
+        const result = new Uint8Array(totalLen);
+        let offset = 0;
+        for (const chunk of chunks) { result.set(chunk, offset); offset += chunk.length; }
+        return result;
+    }
+
+    async function boot() {
+        try {
+            setStatus('Decompressing ScummVM core...');
+            setProgress(5);
+            const wasmB64 = document.getElementById('wasm-data').textContent.trim();
+            const wasmData = await decompressB64(wasmB64);
+            setDetail('WASM: ' + (wasmData.length / 1024 / 1024).toFixed(1) + ' MB');
+            setProgress(30);
+
+            setStatus('Loading engine plugin...');
+            const pluginEl = document.getElementById('plugin-data');
+            const pluginName = pluginEl.dataset.name;
+            const pluginData = await decompressB64(pluginEl.textContent.trim());
+            setDetail('Plugin: ' + pluginName + ' (' + (pluginData.length / 1024).toFixed(0) + ' KB)');
+            setProgress(40);
+
+            setStatus('Loading engine data...');
+            const engineDataJson = JSON.parse(document.getElementById('engine-data-files').textContent);
+            const engineDataFiles = {};
+            for (const [name, b64] of Object.entries(engineDataJson)) {
+                engineDataFiles[name] = await decompressB64(b64);
+                setDetail('Data: ' + name);
+            }
+            setProgress(50);
+
+            setStatus('Decompressing game files...');
+            const gameFilesJson = JSON.parse(document.getElementById('game-files').textContent);
+            const gameFileNames = Object.keys(gameFilesJson);
+            const gameFiles = {};
+            let gameIdx = 0;
+            for (const [name, b64] of Object.entries(gameFilesJson)) {
+                gameFiles[name] = await decompressB64(b64);
+                gameIdx++;
+                const pct = 50 + (gameIdx / gameFileNames.length) * 20;
+                setProgress(Math.round(pct));
+                setDetail(name + ' (' + (gameFiles[name].length / 1024).toFixed(0) + ' KB)');
+            }
+            setProgress(70);
+
+            window.location.hash = '-p /game --auto-detect --fullscreen';
+
+            const scummvmIni = [
+                '[scummvm]', 'fullscreen=true', 'gfx_mode=surfacesdl',
+                'aspect_ratio=true', 'filtering=true', 'gui_theme=scummmodern', ''
+            ].join('\\n');
+
+            const indexJson = {};
+            for (const [filename, data] of Object.entries(engineDataFiles)) {
+                indexJson[filename] = data.length;
+            }
+            indexJson['plugins'] = {};
+            indexJson['plugins'][pluginName] = pluginData.length;
+            const pluginIndex = {};
+            pluginIndex[pluginName] = pluginData.length;
+
+            setStatus('Configuring ScummVM...');
+            const originalFetch = window.fetch;
+            window.fetch = function(url, options) {
+                const urlStr = (typeof url === 'string') ? url : url.url || url.toString();
+                if (urlStr.includes('/data/index.json')) return Promise.resolve(new Response(JSON.stringify(indexJson), { status: 200, headers: { 'Content-Type': 'application/json' } }));
+                if (urlStr.includes('/data/plugins/index.json')) return Promise.resolve(new Response(JSON.stringify(pluginIndex), { status: 200, headers: { 'Content-Type': 'application/json' } }));
+                if (urlStr.includes('/data/plugins/' + pluginName)) return Promise.resolve(new Response(pluginData.buffer, { status: 200, headers: { 'Content-Type': 'application/octet-stream' } }));
+                if (urlStr.includes('scummvm.wasm')) return Promise.resolve(new Response(wasmData.buffer, { status: 200, headers: { 'Content-Type': 'application/wasm' } }));
+                if (urlStr.includes('scummvm.ini')) return Promise.resolve(new Response(scummvmIni, { status: 200 }));
+                for (const [filename, data] of Object.entries(engineDataFiles)) {
+                    if (urlStr.endsWith('/' + filename) || urlStr.endsWith('/data/' + filename))
+                        return Promise.resolve(new Response(data.buffer, { status: 200 }));
+                }
+                return Promise.resolve(new Response('', { status: 200 }));
+            };
+            setProgress(75);
+
+            setStatus('Setting up ScummVM...');
+            window.Module = {
+                canvas: document.getElementById('canvas'),
+                wasmBinary: wasmData.buffer,
+                preRun: [function() {
+                    FS.mkdir('/game');
+                    try { FS.mkdir('/data'); } catch(e) {}
+                    try { FS.mkdir('/data/plugins'); } catch(e) {}
+                    FS.writeFile('/data/plugins/' + pluginName, pluginData);
+                    for (const [name, data] of Object.entries(gameFiles)) {
+                        const fullPath = '/game/' + name;
+                        const parts = name.split('/');
+                        if (parts.length > 1) {
+                            let dir = '/game';
+                            for (let i = 0; i < parts.length - 1; i++) {
+                                dir += '/' + parts[i];
+                                try { FS.mkdir(dir); } catch(e) {}
+                            }
+                        }
+                        FS.writeFile(fullPath, data);
+                    }
+                }],
+                onRuntimeInitialized: function() {
+                    document.getElementById('loading').style.display = 'none';
+                    document.getElementById('canvas').style.display = 'block';
+                    document.getElementById('canvas').focus();
+                },
+                print: function(text) { console.log('[ScummVM]', text); },
+                printErr: function(text) { console.error('[ScummVM]', text); },
+                noInitialRun: false,
+            };
+            setProgress(80);
+
+            setStatus('Starting ScummVM...');
+            const jsB64 = document.getElementById('js-data').textContent.trim();
+            const jsBytes = await decompressB64(jsB64);
+            const jsText = new TextDecoder().decode(jsBytes);
+            setProgress(90);
+            const script = document.createElement('script');
+            script.textContent = jsText;
+            document.body.appendChild(script);
+            setProgress(100);
+            setStatus('ScummVM is starting...');
+            setTimeout(function() {
+                const loading = document.getElementById('loading');
+                if (loading.style.display !== 'none') {
+                    loading.style.display = 'none';
+                    document.getElementById('canvas').style.display = 'block';
+                    document.getElementById('canvas').focus();
+                }
+            }, 10000);
+        } catch (err) {
+            showError('Failed to start game:\\n\\n' + err.message + '\\n\\n' + err.stack);
+        }
+    }
+    window.addEventListener('DOMContentLoaded', boot);
+    ${_CS}
+</body>
+</html>`;
+
+// ══════════════════════════════
+//  Main Generation Logic
+// ══════════════════════════════
+document.getElementById('generate-btn').addEventListener('click', generate);
+
+async function generate() {
+    if (generating) return;
+    generating = true;
+
+    const genBtn = document.getElementById('generate-btn');
+    genBtn.disabled = true;
+    genBtn.textContent = '⏳ Generating...';
+
+    const progressSection = document.getElementById('progress-section');
+    const downloadSection = document.getElementById('download-section');
+    progressSection.classList.add('visible');
+    downloadSection.classList.remove('visible');
+
+    // Check CompressionStream support
+    if (typeof CompressionStream === 'undefined') {
+        setStepError(1, 'Your browser does not support CompressionStream. Please use Chrome, Edge, or Firefox 113+.');
+        generating = false;
+        genBtn.textContent = '🎮 Generate Standalone HTML';
+        updateGenerateButton();
+        return;
+    }
+
+    // Determine engine
+    const engineSel = document.getElementById('engine-select').value;
+    const engine = (engineSel === 'auto') ? detectedEngine : engineSel;
+    if (!engine) {
+        setStepError(1, 'Could not detect engine. Please select one manually.');
+        generating = false;
+        genBtn.textContent = '🎮 Generate Standalone HTML';
+        updateGenerateButton();
+        return;
+    }
+
+    const gameTitle = document.getElementById('game-title').value || 'ScummVM Game';
+    const outputFilename = document.getElementById('output-filename').value || 'scummvm-game.html';
+    const pluginName = 'lib' + engine + '.so';
+
+    let currentStep = 1;
+    try {
+        // Step 1: Read game files
+        setStepActive(1);
+        setProgressBar(5);
+        const gameFileData = {};
+        const entries = Object.entries(gameFiles);
+        for (let i = 0; i < entries.length; i++) {
+            const [path, file] = entries[i];
+            const buf = await file.arrayBuffer();
+            gameFileData[path] = new Uint8Array(buf);
+        }
+        setStepDone(1);
+        setProgressBar(10);
+
+        // Step 2: Fetch WASM
+        currentStep = 2;
+        setStepActive(2);
+        let wasmBuf;
+        if (assetCache.wasm) {
+            wasmBuf = assetCache.wasm;
+        } else {
+            wasmBuf = await fetchBinary('scummvm.wasm', 'scummvm.wasm');
+            assetCache.wasm = wasmBuf;
+        }
+        setStepDone(2);
+        setProgressBar(25);
+
+        // Step 3: Fetch JS
+        currentStep = 3;
+        setStepActive(3);
+        let jsBuf;
+        if (assetCache.js) {
+            jsBuf = assetCache.js;
+        } else {
+            jsBuf = await fetchBinary('scummvm.js', 'scummvm.js');
+            assetCache.js = jsBuf;
+        }
+        setStepDone(3);
+        setProgressBar(35);
+
+        // Step 4: Fetch plugin
+        currentStep = 4;
+        setStepActive(4);
+        let pluginBuf;
+        if (assetCache.plugins[engine]) {
+            pluginBuf = assetCache.plugins[engine];
+        } else {
+            // Plugins are CDN only
+            const resp = await fetch(SCUMMVM_CDN + 'data/plugins/' + pluginName);
+            if (!resp.ok) throw new Error('Failed to fetch plugin ' + pluginName + ' (HTTP ' + resp.status + ')');
+            pluginBuf = await resp.arrayBuffer();
+            assetCache.plugins[engine] = pluginBuf;
+        }
+        setStepDone(4);
+        setProgressBar(45);
+
+        // Step 5: Fetch engine data files + common data
+        currentStep = 5;
+        setStepActive(5);
+        const engineDataSpecific = ENGINE_DATA_FILES[engine] || [];
+        const allDataFiles = [...COMMON_DATA_FILES, ...engineDataSpecific];
+        const engineDataEncoded = {};
+        for (let i = 0; i < allDataFiles.length; i++) {
+            const fname = allDataFiles[i];
+            let buf;
+            if (assetCache.dataFiles[fname]) {
+                buf = assetCache.dataFiles[fname];
+            } else {
+                buf = await fetchBinary('data/' + fname, 'data/' + fname);
+                assetCache.dataFiles[fname] = buf;
+            }
+            engineDataEncoded[fname] = await compressAndEncode(buf);
+            setProgressBar(45 + ((i + 1) / allDataFiles.length) * 10);
+        }
+        setStepDone(5);
+        setProgressBar(55);
+
+        // Step 6: Compress game files
+        currentStep = 6;
+        setStepActive(6);
+        const gameFilesEncoded = {};
+        const gfEntries = Object.entries(gameFileData);
+        for (let i = 0; i < gfEntries.length; i++) {
+            const [path, data] = gfEntries[i];
+            gameFilesEncoded[path] = await compressAndEncode(data);
+            setProgressBar(55 + ((i + 1) / gfEntries.length) * 25);
+        }
+        setStepDone(6);
+        setProgressBar(80);
+
+        // Step 7: Assemble HTML
+        currentStep = 7;
+        setStepActive(7);
+
+        const wasmB64 = await compressAndEncode(wasmBuf);
+        setProgressBar(85);
+        const jsB64 = await compressAndEncode(jsBuf);
+        setProgressBar(88);
+        const pluginB64 = await compressAndEncode(pluginBuf);
+        setProgressBar(90);
+
+        const gameTitleEscaped = gameTitle.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+        const gameTitleJs = gameTitle.replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/"/g, '\\"');
+
+        let html = HTML_TEMPLATE;
+        html = html.replace(/\{\{GAME_TITLE\}\}/g, gameTitleEscaped);
+        html = html.replace(/\{\{GAME_TITLE_JS\}\}/g, gameTitleJs);
+        html = html.replace('{{ENGINE_ID}}', engine);
+        html = html.replace('{{PLUGIN_NAME}}', pluginName);
+        html = html.replace('{{WASM_DATA}}', wasmB64);
+        html = html.replace('{{JS_DATA}}', jsB64);
+        html = html.replace('{{PLUGIN_DATA}}', pluginB64);
+        html = html.replace('{{ENGINE_DATA_JSON}}', JSON.stringify(engineDataEncoded));
+        html = html.replace('{{GAME_FILES_JSON}}', JSON.stringify(gameFilesEncoded));
+
+        setStepDone(7);
+        setProgressBar(95);
+
+        // Step 8: Done
+        currentStep = 8;
+        setStepActive(8);
+
+        const blob = new Blob([html], { type: 'text/html' });
+        const url = URL.createObjectURL(blob);
+
+        // Show download
+        document.getElementById('dl-engine').textContent = engine;
+        document.getElementById('dl-title').textContent = gameTitle;
+        document.getElementById('dl-size').textContent = formatBytes(blob.size);
+        const dlBtn = document.getElementById('download-btn');
+        dlBtn.href = url;
+        dlBtn.download = outputFilename;
+
+        setStepDone(8);
+        setProgressBar(100);
+        downloadSection.classList.add('visible');
+
+    } catch (err) {
+        setStepError(currentStep, 'Error: ' + err.message);
+        console.error(err);
+    }
+
+    generating = false;
+    genBtn.textContent = '🎮 Generate Standalone HTML';
+    updateGenerateButton();
+}
+
+// ══════════════════════════════
+//  Engines Tab
+// ══════════════════════════════
+function renderEngines(filter) {
+    const container = document.getElementById('engine-list');
+    container.innerHTML = '';
+    const lf = (filter || '').toLowerCase();
+
+    for (const [category, engines] of Object.entries(ENGINE_CATALOG)) {
+        const filtered = engines.filter(e =>
+            !lf || e.id.includes(lf) || e.name.toLowerCase().includes(lf)
+        );
+        if (!filtered.length) continue;
+
+        const title = document.createElement('div');
+        title.className = 'engine-group-title';
+        title.textContent = category;
+        container.appendChild(title);
+
+        const grid = document.createElement('div');
+        grid.className = 'engine-grid';
+        for (const eng of filtered) {
+            const item = document.createElement('div');
+            item.className = 'engine-item';
+            item.innerHTML =
+                '<div class="ename">' + eng.name + '</div>' +
+                '<div class="eplugin">lib' + eng.id + '.so</div>' +
+                (eng.data.length ? '<div class="edata">Data: ' + eng.data.join(', ') + '</div>' : '');
+            grid.appendChild(item);
+        }
+        container.appendChild(grid);
+    }
+}
+renderEngines('');
+document.getElementById('engine-search').addEventListener('input', e => renderEngines(e.target.value));
+
+</script>
+</body>
+</html>
