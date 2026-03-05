@@ -310,6 +310,7 @@ def generate_html(game_zip_path, title, exe_name, jsdos_assets, dosbox_conf,
 
     # Determine virtual keyboard layout
     vkb_html, vkb_js = _generate_virtual_keyboard(keyboard_layout)
+    default_mode = 'gamepad' if keyboard_layout.startswith('gamepad') else 'keyboard'
 
     # Build HTML
     html = f"""<!DOCTYPE html>
@@ -536,27 +537,35 @@ html, body {{
 /* ======== KEYBOARD OVERLAY (fallback / adventure) ======== */
 #vkb {{
     position: fixed;
-    bottom: 50px; left: 50%;
+    bottom: 52px; left: 50%;
     transform: translateX(-50%);
-    z-index: 99;
+    z-index: 98;
     display: none;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 4px;
-    padding: 8px;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+    padding: 6px;
     background: rgba(0,0,0,0.88);
-    border-radius: 12px;
+    border-radius: 10px;
     backdrop-filter: blur(8px);
-    max-width: 98vw;
+    max-width: 96vw;
+    max-height: 35vh;
+    overflow-y: auto;
 }}
 #vkb.show {{ display: flex; }}
+.vkb-row {{
+    display: flex;
+    justify-content: center;
+    gap: 3px;
+    width: 100%;
+}}
 #vkb button {{
-    min-width: 40px; height: 40px;
+    min-width: 32px; height: 32px;
     background: rgba(255,255,255,0.12);
     color: #fff;
     border: 1px solid rgba(255,255,255,0.15);
     border-radius: 6px;
-    font-size: 0.8rem;
+    font-size: 0.7rem;
     font-family: monospace;
     cursor: pointer;
     display: flex; align-items: center; justify-content: center;
@@ -564,13 +573,13 @@ html, body {{
     touch-action: none;
 }}
 #vkb button:active {{ background: rgba(255,255,255,0.3); }}
-#vkb button.wide {{ min-width: 64px; }}
-#vkb button.space {{ min-width: 100px; }}
+#vkb button.wide {{ min-width: 50px; }}
+#vkb button.space {{ min-width: 80px; }}
 
 @media (max-width: 600px) {{
     .gp-btn {{ width: 48px; height: 48px; font-size: 0.7rem; }}
-    #vkb button {{ min-width: 36px; height: 36px; font-size: 0.7rem; }}
-    #vkb button.wide {{ min-width: 54px; }}
+    #vkb button {{ min-width: 28px; height: 28px; font-size: 0.65rem; }}
+    #vkb button.wide {{ min-width: 44px; }}
 }}
 
 /* Error screen */
@@ -826,36 +835,58 @@ function togglePause() {{
     }}
 }}
 
+var _defaultMode = '{default_mode}';
+
 function toggleVKB() {{
-    // Support both gamepad and keyboard overlays
     var gp = document.getElementById('gamepad');
     var vkb = document.getElementById('vkb');
-    var target = gp || vkb;
-    if (!target) return;
-    target.classList.toggle('show');
     var btn = document.getElementById('btn-vkb');
-    if (btn) btn.classList.toggle('active', target.classList.contains('show'));
+    // Determine current state
+    var gpShown = gp && gp.classList.contains('show');
+    var vkbShown = vkb && vkb.classList.contains('show');
+
+    if (gpShown) {{
+        // Gamepad shown → switch to keyboard
+        gp.classList.remove('show');
+        if (vkb) vkb.classList.add('show');
+        if (btn) btn.classList.add('active');
+    }} else if (vkbShown) {{
+        // Keyboard shown → hide all
+        if (vkb) vkb.classList.remove('show');
+        if (btn) btn.classList.remove('active');
+    }} else {{
+        // Nothing shown → show gamepad (or keyboard if no gamepad)
+        if (gp) {{ gp.classList.add('show'); }}
+        else if (vkb) {{ vkb.classList.add('show'); }}
+        if (btn) btn.classList.add('active');
+    }}
 }}
 
-// Auto-show gamepad on touch devices
+// Auto-show controls on touch devices (respects default mode)
 (function() {{
     var isTouchDevice = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
     if (isTouchDevice) {{
-        // Wait for loading to finish, then show gamepad
+        function _autoShow() {{
+            var target = (_defaultMode === 'keyboard')
+                ? document.getElementById('vkb')
+                : document.getElementById('gamepad');
+            if (!target) target = document.getElementById('gamepad') || document.getElementById('vkb');
+            if (target && !target.classList.contains('show')) {{
+                target.classList.add('show');
+                var btn = document.getElementById('btn-vkb');
+                if (btn) btn.classList.add('active');
+            }}
+        }}
         var checkReady = setInterval(function() {{
             var loading = document.getElementById('loading');
             if (loading && loading.style.display === 'none') {{
                 clearInterval(checkReady);
-                toggleVKB();
+                _autoShow();
             }}
         }}, 500);
-        // Fallback: show after 10s regardless
         setTimeout(function() {{
             clearInterval(checkReady);
-            var gp = document.getElementById('gamepad');
-            var vkb = document.getElementById('vkb');
-            var target = gp || vkb;
-            if (target && !target.classList.contains('show')) toggleVKB();
+            _autoShow();
         }}, 10000);
     }}
 }})()
@@ -893,64 +924,54 @@ JSDOS_KEYCODES = {
 }
 
 
-def _generate_virtual_keyboard(layout='default'):
-    """Generate virtual keyboard/gamepad HTML and JS for DOS games.
-    
-    Layouts:
-      - gamepad: D-pad + 4 action buttons + system bar (best for action games)
-      - gamepad-prince: optimized for Prince of Persia (Shift=sword, Space=jump)
-      - minimal, arrows: simple keyboard overlays
-      - adventure, default: full keyboard overlays
-    """
+def _generate_gamepad_html_js(layout='gamepad'):
+    """Generate gamepad HTML and JS."""
+    # Button mappings: label → [keyCode, keyName]
+    if layout == 'gamepad-prince':
+        btn_map = {
+            'A': [16, 'Shift'],     # Sword / careful step
+            'B': [32, 'Space'],     # Jump
+            'X': [38, 'Up'],        # Climb / run faster
+            'Y': [27, 'Esc'],       # Menu
+        }
+        sys_keys = ['Ctrl', 'F1', 'F2', 'Space']
+    else:
+        # Default gamepad: good for most action games
+        btn_map = {
+            'A': [32, 'Space'],     # Jump / action
+            'B': [13, 'Enter'],     # Confirm
+            'X': [17, 'Ctrl'],      # Alt action / fire
+            'Y': [27, 'Esc'],       # Menu / back
+        }
+        sys_keys = ['F1', 'F2', 'F3', 'Shift', 'Tab', '1', '2', '3']
 
-    # ---- GAMEPAD LAYOUTS ----
-    if layout.startswith('gamepad'):
-        # Button mappings: label → [keyCode, keyName]
-        if layout == 'gamepad-prince':
-            btn_map = {
-                'A': [16, 'Shift'],     # Sword / careful step
-                'B': [32, 'Space'],     # Jump
-                'X': [38, 'Up'],        # Climb / run faster
-                'Y': [27, 'Esc'],       # Menu
-            }
-            sys_keys = ['Ctrl', 'F1', 'F2', 'Space']
-        else:
-            # Default gamepad: good for most action games
-            btn_map = {
-                'A': [32, 'Space'],     # Jump / action
-                'B': [13, 'Enter'],     # Confirm
-                'X': [17, 'Ctrl'],      # Alt action / fire
-                'Y': [27, 'Esc'],       # Menu / back
-            }
-            sys_keys = ['F1', 'F2', 'F3', 'Shift', 'Tab', '1', '2', '3']
+    # -- D-pad + actions + sysbar HTML --
+    sys_btns = ''
+    for sk in sys_keys:
+        kc = JSDOS_KEYCODES.get(sk, ord(sk[0]) if len(sk) == 1 else 0)
+        label = sk
+        if sk == 'Space': label = '␣'
+        elif sk == 'Shift': label = '⇧'
+        elif sk == 'Tab': label = '⇥'
+        sys_btns += (
+            f'<button data-kc="{kc}" data-key="{sk}" '
+            f'ontouchstart="gpSysDown(this,event)" '
+            f'ontouchend="gpSysUp(this,event)">{label}</button>\n        '
+        )
 
-        # -- D-pad + actions + sysbar HTML --
-        sys_btns = ''
-        for sk in sys_keys:
-            kc = JSDOS_KEYCODES.get(sk, ord(sk[0]) if len(sk) == 1 else 0)
-            label = sk
-            if sk == 'Space': label = '␣'
-            elif sk == 'Shift': label = '⇧'
-            elif sk == 'Tab': label = '⇥'
-            sys_btns += (
-                f'<button data-kc="{kc}" data-key="{sk}" '
-                f'ontouchstart="gpSysDown(this,event)" '
-                f'ontouchend="gpSysUp(this,event)">{label}</button>\n        '
-            )
+    # Action button HTML
+    act_btns = ''
+    for pos in ['a', 'b', 'x', 'y']:
+        label = pos.upper()
+        info = btn_map[label]
+        act_btns += (
+            f'<div class="gp-btn btn-{pos}" data-kc="{info[0]}" '
+            f'data-key="{info[1]}" data-label="{label}" '
+            f'ontouchstart="gpBtnDown(this,event)" '
+            f'ontouchend="gpBtnUp(this,event)">{label}</div>\n    '
+        )
 
-        # Action button HTML
-        act_btns = ''
-        for pos in ['a', 'b', 'x', 'y']:
-            label = pos.upper()
-            info = btn_map[label]
-            act_btns += (
-                f'<div class="gp-btn btn-{pos}" data-kc="{info[0]}" '
-                f'data-key="{info[1]}" data-label="{label}" '
-                f'ontouchstart="gpBtnDown(this,event)" '
-                f'ontouchend="gpBtnUp(this,event)">{label}</div>\n    '
-            )
-
-        vkb_html = f'''<div id="gamepad">
+    gp_html = f'''<div id="gamepad">
     <!-- D-pad (angle-based touch zone) -->
     <div id="gp-dpad"
          ontouchstart="gpDpadTouch(event)"
@@ -973,7 +994,7 @@ def _generate_virtual_keyboard(layout='default'):
         {sys_btns}</div>
 </div>'''
 
-        vkb_js = """
+    gp_js = """
 // ============ GAMEPAD TOUCH CONTROLLER ============
 
 var _gpCanvas = null;
@@ -1110,71 +1131,80 @@ function gpSysUp(btn, e) {
 }
 """
 
-    # ---- KEYBOARD LAYOUTS ----
-    else:
-        if layout == 'minimal':
-            rows = [
-                ['Esc', 'Up', 'Enter', 'Space'],
-                ['Left', 'Down', 'Right', 'Y', 'N'],
-            ]
-        elif layout == 'arrows':
-            rows = [
-                ['Esc', 'F1', 'F2', 'F3', 'F4', 'F5'],
-                ['1', '2', '3', '4', '5', 'Enter'],
-                ['Up', 'Y', 'N', 'Space'],
-                ['Left', 'Down', 'Right', 'Ctrl', 'Alt'],
-            ]
-        elif layout == 'adventure':
-            rows = [
-                ['Esc', 'F1', 'F2', 'F3', 'F4', 'F5', 'F6'],
-                ['1', '2', '3', '4', '5', '6', '7', '8', '9', '0'],
-                ['Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P'],
-                ['A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L', 'Enter'],
-                ['Z', 'X', 'C', 'V', 'B', 'N', 'M', 'Backspace'],
-                ['Shift', 'Space', 'Ctrl', 'Alt', 'Tab'],
-            ]
-        else:  # default - balanced layout
-            rows = [
-                ['Esc', 'F1', 'F2', 'F3', 'F4', 'F5'],
-                ['1', '2', '3', '4', '5', '6', '7', '8', '9', '0'],
-                ['Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P'],
-                ['A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L', 'Enter'],
-                ['Shift', 'Z', 'X', 'C', 'V', 'B', 'N', 'M', 'Backspace'],
-                ['Ctrl', 'Alt', 'Left', 'Up', 'Down', 'Right', 'Space', 'Tab'],
-            ]
+    return gp_html, gp_js
 
-        # Generate keyboard HTML
+
+def _generate_keyboard_html_js(layout='default'):
+    """Generate keyboard HTML and JS."""
+    if layout == 'minimal':
+        rows = [
+            ['Esc', 'Up', 'Enter', 'Space'],
+            ['Left', 'Down', 'Right', 'Y', 'N'],
+        ]
+    elif layout == 'arrows':
+        rows = [
+            ['Esc', 'F1', 'F2', 'F3', 'F4', 'F5'],
+            ['1', '2', '3', '4', '5', 'Enter'],
+            ['Up', 'Y', 'N', 'Space'],
+            ['Left', 'Down', 'Right', 'Ctrl', 'Alt'],
+        ]
+    elif layout == 'adventure':
+        rows = [
+            ['Esc', 'F1', 'F2', 'F3', 'F4', 'F5', 'F6'],
+            ['1', '2', '3', '4', '5', '6', '7', '8', '9', '0'],
+            ['Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P'],
+            ['A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L', 'Enter'],
+            ['Z', 'X', 'C', 'V', 'B', 'N', 'M', 'Backspace'],
+            ['Shift', 'Space', 'Ctrl', 'Alt', 'Tab'],
+        ]
+    else:  # default - balanced layout
+        rows = [
+            ['Esc', 'F1', 'F2', 'F3', 'F4', 'F5'],
+            ['1', '2', '3', '4', '5', '6', '7', '8', '9', '0'],
+            ['Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P'],
+            ['A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L', 'Enter'],
+            ['Shift', 'Z', 'X', 'C', 'V', 'B', 'N', 'M', 'Backspace'],
+            ['Ctrl', 'Alt', 'Left', 'Up', 'Down', 'Right', 'Space', 'Tab'],
+        ]
+
+    # Generate keyboard HTML with row wrappers for horizontal layout
+    rows_html = []
+    for row in rows:
         buttons_html = []
-        for row in rows:
-            for key in row:
-                kc = JSDOS_KEYCODES.get(key, ord(key[0]) if len(key) == 1 else 0)
-                css_class = ''
-                if key in ('Space',):
-                    css_class = ' class="space"'
-                elif key in ('Enter', 'Backspace', 'Shift', 'Ctrl', 'Alt', 'Tab'):
-                    css_class = ' class="wide"'
+        for key in row:
+            kc = JSDOS_KEYCODES.get(key, ord(key[0]) if len(key) == 1 else 0)
+            css_class = ''
+            if key in ('Space',):
+                css_class = ' class="space"'
+            elif key in ('Enter', 'Backspace', 'Shift', 'Ctrl', 'Alt', 'Tab'):
+                css_class = ' class="wide"'
 
-                label = key
-                if key == 'Space': label = '␣'
-                elif key == 'Backspace': label = '⌫'
-                elif key == 'Enter': label = '↵'
-                elif key == 'Up': label = '▲'
-                elif key == 'Down': label = '▼'
-                elif key == 'Left': label = '◄'
-                elif key == 'Right': label = '►'
-                elif key == 'Tab': label = '⇥'
-                elif key == 'Shift': label = '⇧'
+            label = key
+            if key == 'Space': label = '␣'
+            elif key == 'Backspace': label = '⌫'
+            elif key == 'Enter': label = '↵'
+            elif key == 'Up': label = '▲'
+            elif key == 'Down': label = '▼'
+            elif key == 'Left': label = '◄'
+            elif key == 'Right': label = '►'
+            elif key == 'Tab': label = '⇥'
+            elif key == 'Shift': label = '⇧'
 
-                buttons_html.append(
-                    f'<button{css_class} data-kc="{kc}" data-key="{key}" '
-                    f'ontouchstart="vkbDown(this,event)" ontouchend="vkbUp(this,event)">'
-                    f'{label}</button>'
-                )
+            buttons_html.append(
+                f'<button{css_class} data-kc="{kc}" data-key="{key}" '
+                f'ontouchstart="vkbDown(this,event)" ontouchend="vkbUp(this,event)">'
+                f'{label}</button>'
+            )
 
-        vkb_inner = '\n    '.join(buttons_html)
-        vkb_html = f'<div id="vkb">\n    {vkb_inner}\n</div>'
+        row_inner = '\n        '.join(buttons_html)
+        rows_html.append(f'<div class="vkb-row">\n        {row_inner}\n    </div>')
 
-        vkb_js = """
+    vkb_inner = '\n    '.join(rows_html)
+    kb_html = f'<div id="vkb">\n    {vkb_inner}\n</div>'
+
+    kb_js = """
+// ============ KEYBOARD TOUCH CONTROLLER ============
+
 function vkbDown(btn, e) {
     if (e) e.preventDefault();
     var kc = parseInt(btn.dataset.kc);
@@ -1206,7 +1236,38 @@ function vkbUp(btn, e) {
 }
 """
 
-    # Shared key helpers (used by both modes)
+    return kb_html, kb_js
+
+
+def _generate_virtual_keyboard(layout='default'):
+    """Generate virtual keyboard/gamepad HTML and JS for DOS games.
+
+    Always generates BOTH gamepad and keyboard controls.
+    The layout parameter determines which is shown first (default mode).
+
+    Layouts:
+      - gamepad: D-pad + 4 action buttons + system bar (default mode: gamepad)
+      - gamepad-prince: optimized for Prince of Persia (default mode: gamepad)
+      - minimal, arrows: simple keyboard overlays (default mode: keyboard)
+      - adventure, default: full keyboard overlays (default mode: keyboard)
+    """
+
+    # Determine which specific layouts to use for each mode
+    if layout.startswith('gamepad'):
+        gp_layout = layout       # e.g. 'gamepad' or 'gamepad-prince'
+        kb_layout = 'default'    # fallback keyboard
+    else:
+        gp_layout = 'gamepad'    # fallback gamepad
+        kb_layout = layout       # e.g. 'default', 'minimal', 'arrows', 'adventure'
+
+    # Generate both
+    gp_html, gp_js = _generate_gamepad_html_js(gp_layout)
+    kb_html, kb_js = _generate_keyboard_html_js(kb_layout)
+
+    # Combine HTML (gamepad + keyboard)
+    combined_html = gp_html + '\n' + kb_html
+
+    # Shared key helpers (used by both modes) — only once
     shared_js = """
 function _keyToCode(key) {
     var map = {
@@ -1233,7 +1294,10 @@ function _keyToEventKey(key) {
 }
 """
 
-    return vkb_html, vkb_js + shared_js
+    # Combine JS: shared helpers first, then gamepad JS, then keyboard JS
+    combined_js = shared_js + gp_js + kb_js
+
+    return combined_html, combined_js
 
 
 # ============================================================

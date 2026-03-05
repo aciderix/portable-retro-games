@@ -1154,178 +1154,204 @@ function generateVirtualKeyboard(layout) {
         "    return key;\n" +
         "}\n";
 
-    // ---- GAMEPAD LAYOUTS ----
+    // Determine which specific layouts to use for each mode
+    var gpLayout, kbLayout, defaultMode;
     if (layout.indexOf('gamepad') === 0) {
-        var btnMap, sysKeys;
-        if (layout === 'gamepad-prince') {
-            btnMap = {
-                'A': [16, 'Shift'],
-                'B': [32, 'Space'],
-                'X': [38, 'Up'],
-                'Y': [27, 'Esc'],
-            };
-            sysKeys = ['Ctrl', 'F1', 'F2', 'Space'];
-        } else {
-            btnMap = {
-                'A': [32, 'Space'],
-                'B': [13, 'Enter'],
-                'X': [17, 'Ctrl'],
-                'Y': [27, 'Esc'],
-            };
-            sysKeys = ['F1', 'F2', 'F3', 'Shift', 'Tab', '1', '2', '3'];
-        }
-
-        // System bar buttons
-        var sysBtnsHtml = '';
-        sysKeys.forEach(function(sk) {
-            var kc = JSDOS_KEYCODES[sk] || (sk.length === 1 ? sk.charCodeAt(0) : 0);
-            var label = sk;
-            if (sk === 'Space') label = '\\u2423';
-            else if (sk === 'Shift') label = '\\u21E7';
-            else if (sk === 'Tab') label = '\\u21E5';
-            sysBtnsHtml += '<button data-kc="' + kc + '" data-key="' + sk + '" ' +
-                'ontouchstart="gpSysDown(this,event)" ' +
-                'ontouchend="gpSysUp(this,event)">' + label + '</button>\n        ';
-        });
-
-        // Action buttons
-        var actBtnsHtml = '';
-        ['a','b','x','y'].forEach(function(pos) {
-            var label = pos.toUpperCase();
-            var info = btnMap[label];
-            actBtnsHtml += '<div class="gp-btn btn-' + pos + '" data-kc="' + info[0] + '" ' +
-                'data-key="' + info[1] + '" data-label="' + label + '" ' +
-                'ontouchstart="gpBtnDown(this,event)" ' +
-                'ontouchend="gpBtnUp(this,event)">' + label + '</div>\n    ';
-        });
-
-        var vkbHtml = '<div id="gamepad">\n' +
-            '    <div id="gp-dpad"\n' +
-            '         ontouchstart="gpDpadTouch(event)"\n' +
-            '         ontouchmove="gpDpadTouch(event)"\n' +
-            '         ontouchend="gpDpadRelease(event)"\n' +
-            '         ontouchcancel="gpDpadRelease(event)">\n' +
-            '        <div class="dp-arrow dp-up" id="dp-up">\\u25B2</div>\n' +
-            '        <div class="dp-arrow dp-down" id="dp-down">\\u25BC</div>\n' +
-            '        <div class="dp-arrow dp-left" id="dp-left">\\u25C4</div>\n' +
-            '        <div class="dp-arrow dp-right" id="dp-right">\\u25BA</div>\n' +
-            '        <div class="dp-center"></div>\n' +
-            '    </div>\n' +
-            '    <div id="gp-actions">\n    ' + actBtnsHtml + '</div>\n' +
-            '    <div id="gp-sysbar">\n        ' + sysBtnsHtml + '</div>\n' +
-            '</div>';
-
-        var vkbJs = "\n" +
-            "var _gpCanvas = null;\n" +
-            "function _gpGetCanvas() {\n" +
-            "    if (!_gpCanvas) _gpCanvas = document.getElementById('jsdos');\n" +
-            "    return _gpCanvas;\n" +
-            "}\n" +
-            "function _gpKeyDown(kc, keyName) {\n" +
-            "    var c = _gpGetCanvas(); if (!c) return;\n" +
-            "    c.dispatchEvent(new KeyboardEvent('keydown', {\n" +
-            "        keyCode: kc, which: kc, code: _keyToCode(keyName),\n" +
-            "        key: _keyToEventKey(keyName), bubbles: true, cancelable: true\n" +
-            "    }));\n" +
-            "}\n" +
-            "function _gpKeyUp(kc, keyName) {\n" +
-            "    var c = _gpGetCanvas(); if (!c) return;\n" +
-            "    c.dispatchEvent(new KeyboardEvent('keyup', {\n" +
-            "        keyCode: kc, which: kc, code: _keyToCode(keyName),\n" +
-            "        key: _keyToEventKey(keyName), bubbles: true, cancelable: true\n" +
-            "    }));\n" +
-            "}\n" +
-            "function _gpVibrate(ms) {\n" +
-            "    if (navigator.vibrate) navigator.vibrate(ms || 12);\n" +
-            "}\n\n" +
-            "var _dpActive = { up: false, down: false, left: false, right: false };\n" +
-            "var _dpKC = { up: [38, 'Up'], down: [40, 'Down'], left: [37, 'Left'], right: [39, 'Right'] };\n\n" +
-            "function gpDpadTouch(e) {\n" +
-            "    e.preventDefault();\n" +
-            "    var dpad = document.getElementById('gp-dpad');\n" +
-            "    var rect = dpad.getBoundingClientRect();\n" +
-            "    var cx = rect.left + rect.width / 2;\n" +
-            "    var cy = rect.top + rect.height / 2;\n" +
-            "    var touch = e.touches[0];\n" +
-            "    var dx = touch.clientX - cx;\n" +
-            "    var dy = touch.clientY - cy;\n" +
-            "    var dist = Math.sqrt(dx * dx + dy * dy);\n" +
-            "    var radius = rect.width / 2;\n" +
-            "    var newState = { up: false, down: false, left: false, right: false };\n" +
-            "    if (dist > radius * 0.15) {\n" +
-            "        var angle = Math.atan2(dy, dx) * (180 / Math.PI);\n" +
-            "        if (angle >= -67.5 && angle < -22.5)  { newState.up = true; newState.right = true; }\n" +
-            "        else if (angle >= -112.5 && angle < -67.5) { newState.up = true; }\n" +
-            "        else if (angle >= -157.5 && angle < -112.5) { newState.up = true; newState.left = true; }\n" +
-            "        else if (angle >= 157.5 || angle < -157.5) { newState.left = true; }\n" +
-            "        else if (angle >= 112.5 && angle < 157.5) { newState.down = true; newState.left = true; }\n" +
-            "        else if (angle >= 67.5 && angle < 112.5) { newState.down = true; }\n" +
-            "        else if (angle >= 22.5 && angle < 67.5) { newState.down = true; newState.right = true; }\n" +
-            "        else { newState.right = true; }\n" +
-            "    }\n" +
-            "    var dirs = ['up', 'down', 'left', 'right'];\n" +
-            "    var changed = false;\n" +
-            "    for (var i = 0; i < dirs.length; i++) {\n" +
-            "        var d = dirs[i];\n" +
-            "        if (newState[d] && !_dpActive[d]) {\n" +
-            "            _gpKeyDown(_dpKC[d][0], _dpKC[d][1]);\n" +
-            "            document.getElementById('dp-' + d).classList.add('active');\n" +
-            "            changed = true;\n" +
-            "        } else if (!newState[d] && _dpActive[d]) {\n" +
-            "            _gpKeyUp(_dpKC[d][0], _dpKC[d][1]);\n" +
-            "            document.getElementById('dp-' + d).classList.remove('active');\n" +
-            "            changed = true;\n" +
-            "        }\n" +
-            "    }\n" +
-            "    if (changed) _gpVibrate(8);\n" +
-            "    _dpActive = newState;\n" +
-            "}\n\n" +
-            "function gpDpadRelease(e) {\n" +
-            "    e.preventDefault();\n" +
-            "    var dirs = ['up', 'down', 'left', 'right'];\n" +
-            "    for (var i = 0; i < dirs.length; i++) {\n" +
-            "        var d = dirs[i];\n" +
-            "        if (_dpActive[d]) {\n" +
-            "            _gpKeyUp(_dpKC[d][0], _dpKC[d][1]);\n" +
-            "            document.getElementById('dp-' + d).classList.remove('active');\n" +
-            "        }\n" +
-            "    }\n" +
-            "    _dpActive = { up: false, down: false, left: false, right: false };\n" +
-            "}\n\n" +
-            "function gpBtnDown(btn, e) {\n" +
-            "    e.preventDefault();\n" +
-            "    var kc = parseInt(btn.dataset.kc);\n" +
-            "    var key = btn.dataset.key;\n" +
-            "    btn.classList.add('active');\n" +
-            "    _gpKeyDown(kc, key);\n" +
-            "    _gpVibrate(15);\n" +
-            "}\n" +
-            "function gpBtnUp(btn, e) {\n" +
-            "    e.preventDefault();\n" +
-            "    var kc = parseInt(btn.dataset.kc);\n" +
-            "    var key = btn.dataset.key;\n" +
-            "    btn.classList.remove('active');\n" +
-            "    _gpKeyUp(kc, key);\n" +
-            "}\n\n" +
-            "function gpSysDown(btn, e) {\n" +
-            "    e.preventDefault();\n" +
-            "    var kc = parseInt(btn.dataset.kc);\n" +
-            "    var key = btn.dataset.key;\n" +
-            "    btn.classList.add('active');\n" +
-            "    _gpKeyDown(kc, key);\n" +
-            "}\n" +
-            "function gpSysUp(btn, e) {\n" +
-            "    e.preventDefault();\n" +
-            "    var kc = parseInt(btn.dataset.kc);\n" +
-            "    var key = btn.dataset.key;\n" +
-            "    btn.classList.remove('active');\n" +
-            "    _gpKeyUp(kc, key);\n" +
-            "}\n";
-
-        return { html: vkbHtml, js: vkbJs + sharedJs };
+        gpLayout = layout;
+        kbLayout = 'default';
+        defaultMode = 'gamepad';
+    } else {
+        gpLayout = 'gamepad';
+        kbLayout = layout;
+        defaultMode = 'keyboard';
     }
 
-    // ---- KEYBOARD LAYOUTS ----
+    // ---- Generate GAMEPAD HTML + JS ----
+    var gpResult = _generateGamepad(gpLayout);
+
+    // ---- Generate KEYBOARD HTML + JS ----
+    var kbResult = _generateKeyboard(kbLayout);
+
+    // Combine HTML: gamepad + keyboard
+    var combinedHtml = gpResult.html + '\n' + kbResult.html;
+
+    // Combine JS: shared helpers + gamepad JS + keyboard JS
+    var combinedJs = sharedJs + gpResult.js + kbResult.js;
+
+    return { html: combinedHtml, js: combinedJs, defaultMode: defaultMode };
+}
+
+function _generateGamepad(layout) {
+    var btnMap, sysKeys;
+    if (layout === 'gamepad-prince') {
+        btnMap = {
+            'A': [16, 'Shift'],
+            'B': [32, 'Space'],
+            'X': [38, 'Up'],
+            'Y': [27, 'Esc'],
+        };
+        sysKeys = ['Ctrl', 'F1', 'F2', 'Space'];
+    } else {
+        btnMap = {
+            'A': [32, 'Space'],
+            'B': [13, 'Enter'],
+            'X': [17, 'Ctrl'],
+            'Y': [27, 'Esc'],
+        };
+        sysKeys = ['F1', 'F2', 'F3', 'Shift', 'Tab', '1', '2', '3'];
+    }
+
+    // System bar buttons
+    var sysBtnsHtml = '';
+    sysKeys.forEach(function(sk) {
+        var kc = JSDOS_KEYCODES[sk] || (sk.length === 1 ? sk.charCodeAt(0) : 0);
+        var label = sk;
+        if (sk === 'Space') label = '\u2423';
+        else if (sk === 'Shift') label = '\u21E7';
+        else if (sk === 'Tab') label = '\u21E5';
+        sysBtnsHtml += '<button data-kc="' + kc + '" data-key="' + sk + '" ' +
+            'ontouchstart="gpSysDown(this,event)" ' +
+            'ontouchend="gpSysUp(this,event)">' + label + '</button>\n        ';
+    });
+
+    // Action buttons
+    var actBtnsHtml = '';
+    ['a','b','x','y'].forEach(function(pos) {
+        var label = pos.toUpperCase();
+        var info = btnMap[label];
+        actBtnsHtml += '<div class="gp-btn btn-' + pos + '" data-kc="' + info[0] + '" ' +
+            'data-key="' + info[1] + '" data-label="' + label + '" ' +
+            'ontouchstart="gpBtnDown(this,event)" ' +
+            'ontouchend="gpBtnUp(this,event)">' + label + '</div>\n    ';
+    });
+
+    var gpHtml = '<div id="gamepad">\n' +
+        '    <div id="gp-dpad"\n' +
+        '         ontouchstart="gpDpadTouch(event)"\n' +
+        '         ontouchmove="gpDpadTouch(event)"\n' +
+        '         ontouchend="gpDpadRelease(event)"\n' +
+        '         ontouchcancel="gpDpadRelease(event)">\n' +
+        '        <div class="dp-arrow dp-up" id="dp-up">\u25B2</div>\n' +
+        '        <div class="dp-arrow dp-down" id="dp-down">\u25BC</div>\n' +
+        '        <div class="dp-arrow dp-left" id="dp-left">\u25C4</div>\n' +
+        '        <div class="dp-arrow dp-right" id="dp-right">\u25BA</div>\n' +
+        '        <div class="dp-center"></div>\n' +
+        '    </div>\n' +
+        '    <div id="gp-actions">\n    ' + actBtnsHtml + '</div>\n' +
+        '    <div id="gp-sysbar">\n        ' + sysBtnsHtml + '</div>\n' +
+        '</div>';
+
+    var gpJs = "\n" +
+        "var _gpCanvas = null;\n" +
+        "function _gpGetCanvas() {\n" +
+        "    if (!_gpCanvas) _gpCanvas = document.getElementById('jsdos');\n" +
+        "    return _gpCanvas;\n" +
+        "}\n" +
+        "function _gpKeyDown(kc, keyName) {\n" +
+        "    var c = _gpGetCanvas(); if (!c) return;\n" +
+        "    c.dispatchEvent(new KeyboardEvent('keydown', {\n" +
+        "        keyCode: kc, which: kc, code: _keyToCode(keyName),\n" +
+        "        key: _keyToEventKey(keyName), bubbles: true, cancelable: true\n" +
+        "    }));\n" +
+        "}\n" +
+        "function _gpKeyUp(kc, keyName) {\n" +
+        "    var c = _gpGetCanvas(); if (!c) return;\n" +
+        "    c.dispatchEvent(new KeyboardEvent('keyup', {\n" +
+        "        keyCode: kc, which: kc, code: _keyToCode(keyName),\n" +
+        "        key: _keyToEventKey(keyName), bubbles: true, cancelable: true\n" +
+        "    }));\n" +
+        "}\n" +
+        "function _gpVibrate(ms) {\n" +
+        "    if (navigator.vibrate) navigator.vibrate(ms || 12);\n" +
+        "}\n\n" +
+        "var _dpActive = { up: false, down: false, left: false, right: false };\n" +
+        "var _dpKC = { up: [38, 'Up'], down: [40, 'Down'], left: [37, 'Left'], right: [39, 'Right'] };\n\n" +
+        "function gpDpadTouch(e) {\n" +
+        "    e.preventDefault();\n" +
+        "    var dpad = document.getElementById('gp-dpad');\n" +
+        "    var rect = dpad.getBoundingClientRect();\n" +
+        "    var cx = rect.left + rect.width / 2;\n" +
+        "    var cy = rect.top + rect.height / 2;\n" +
+        "    var touch = e.touches[0];\n" +
+        "    var dx = touch.clientX - cx;\n" +
+        "    var dy = touch.clientY - cy;\n" +
+        "    var dist = Math.sqrt(dx * dx + dy * dy);\n" +
+        "    var radius = rect.width / 2;\n" +
+        "    var newState = { up: false, down: false, left: false, right: false };\n" +
+        "    if (dist > radius * 0.15) {\n" +
+        "        var angle = Math.atan2(dy, dx) * (180 / Math.PI);\n" +
+        "        if (angle >= -67.5 && angle < -22.5)  { newState.up = true; newState.right = true; }\n" +
+        "        else if (angle >= -112.5 && angle < -67.5) { newState.up = true; }\n" +
+        "        else if (angle >= -157.5 && angle < -112.5) { newState.up = true; newState.left = true; }\n" +
+        "        else if (angle >= 157.5 || angle < -157.5) { newState.left = true; }\n" +
+        "        else if (angle >= 112.5 && angle < 157.5) { newState.down = true; newState.left = true; }\n" +
+        "        else if (angle >= 67.5 && angle < 112.5) { newState.down = true; }\n" +
+        "        else if (angle >= 22.5 && angle < 67.5) { newState.down = true; newState.right = true; }\n" +
+        "        else { newState.right = true; }\n" +
+        "    }\n" +
+        "    var dirs = ['up', 'down', 'left', 'right'];\n" +
+        "    var changed = false;\n" +
+        "    for (var i = 0; i < dirs.length; i++) {\n" +
+        "        var d = dirs[i];\n" +
+        "        if (newState[d] && !_dpActive[d]) {\n" +
+        "            _gpKeyDown(_dpKC[d][0], _dpKC[d][1]);\n" +
+        "            document.getElementById('dp-' + d).classList.add('active');\n" +
+        "            changed = true;\n" +
+        "        } else if (!newState[d] && _dpActive[d]) {\n" +
+        "            _gpKeyUp(_dpKC[d][0], _dpKC[d][1]);\n" +
+        "            document.getElementById('dp-' + d).classList.remove('active');\n" +
+        "            changed = true;\n" +
+        "        }\n" +
+        "    }\n" +
+        "    if (changed) _gpVibrate(8);\n" +
+        "    _dpActive = newState;\n" +
+        "}\n\n" +
+        "function gpDpadRelease(e) {\n" +
+        "    e.preventDefault();\n" +
+        "    var dirs = ['up', 'down', 'left', 'right'];\n" +
+        "    for (var i = 0; i < dirs.length; i++) {\n" +
+        "        var d = dirs[i];\n" +
+        "        if (_dpActive[d]) {\n" +
+        "            _gpKeyUp(_dpKC[d][0], _dpKC[d][1]);\n" +
+        "            document.getElementById('dp-' + d).classList.remove('active');\n" +
+        "        }\n" +
+        "    }\n" +
+        "    _dpActive = { up: false, down: false, left: false, right: false };\n" +
+        "}\n\n" +
+        "function gpBtnDown(btn, e) {\n" +
+        "    e.preventDefault();\n" +
+        "    var kc = parseInt(btn.dataset.kc);\n" +
+        "    var key = btn.dataset.key;\n" +
+        "    btn.classList.add('active');\n" +
+        "    _gpKeyDown(kc, key);\n" +
+        "    _gpVibrate(15);\n" +
+        "}\n" +
+        "function gpBtnUp(btn, e) {\n" +
+        "    e.preventDefault();\n" +
+        "    var kc = parseInt(btn.dataset.kc);\n" +
+        "    var key = btn.dataset.key;\n" +
+        "    btn.classList.remove('active');\n" +
+        "    _gpKeyUp(kc, key);\n" +
+        "}\n\n" +
+        "function gpSysDown(btn, e) {\n" +
+        "    e.preventDefault();\n" +
+        "    var kc = parseInt(btn.dataset.kc);\n" +
+        "    var key = btn.dataset.key;\n" +
+        "    btn.classList.add('active');\n" +
+        "    _gpKeyDown(kc, key);\n" +
+        "}\n" +
+        "function gpSysUp(btn, e) {\n" +
+        "    e.preventDefault();\n" +
+        "    var kc = parseInt(btn.dataset.kc);\n" +
+        "    var key = btn.dataset.key;\n" +
+        "    btn.classList.remove('active');\n" +
+        "    _gpKeyUp(kc, key);\n" +
+        "}\n";
+
+    return { html: gpHtml, js: gpJs };
+}
+
+function _generateKeyboard(layout) {
     var rows;
     if (layout === 'minimal') {
         rows = [
@@ -1349,7 +1375,6 @@ function generateVirtualKeyboard(layout) {
             ['Shift', 'Space', 'Ctrl', 'Alt', 'Tab'],
         ];
     } else {
-        // default
         rows = [
             ['Esc', 'F1', 'F2', 'F3', 'F4', 'F5'],
             ['1', '2', '3', '4', '5', '6', '7', '8', '9', '0'],
@@ -1360,8 +1385,9 @@ function generateVirtualKeyboard(layout) {
         ];
     }
 
-    var buttonsHtml = [];
+    var rowsHtml = [];
     rows.forEach(function(row) {
+        var buttonsHtml = [];
         row.forEach(function(key) {
             var kc = JSDOS_KEYCODES[key] || (key.length === 1 ? key.charCodeAt(0) : 0);
             var cssClass = '';
@@ -1383,11 +1409,12 @@ function generateVirtualKeyboard(layout) {
                 'ontouchstart="vkbDown(this,event)" ontouchend="vkbUp(this,event)">' +
                 label + '</button>');
         });
+        rowsHtml.push('<div class="vkb-row">' + buttonsHtml.join('') + '</div>');
     });
 
-    var vkbHtml = '<div id="vkb">\n    ' + buttonsHtml.join('\n    ') + '\n</div>';
+    var kbHtml = '<div id="vkb">\n    ' + rowsHtml.join('\n    ') + '\n</div>';
 
-    var vkbJs = "\n" +
+    var kbJs = "\n" +
         "function vkbDown(btn, e) {\n" +
         "    if (e) e.preventDefault();\n" +
         "    var kc = parseInt(btn.dataset.kc);\n" +
@@ -1415,12 +1442,9 @@ function generateVirtualKeyboard(layout) {
         "    }));\n" +
         "}\n";
 
-    return { html: vkbHtml, js: vkbJs + sharedJs };
+    return { html: kbHtml, js: kbJs };
 }
 
-// ============================================================
-//  HTML Template Generation (port of generate_html)
-// ============================================================
 
 function generateOutputHtml(opts) {
     // opts: { title, exeName, rootDir, jsdosJs, wdosboxJsB64, wasmB64, gameB64, gameSizeKb, dosboxConfB64, keyboardLayout, accentColor }
@@ -1436,7 +1460,7 @@ function generateOutputHtml(opts) {
         '<meta name="apple-mobile-web-app-capable" content="yes">\n' +
         '<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">\n' +
         '<meta name="theme-color" content="#000000">\n' +
-        '<title>' + title + ' \\u2014 DOS</title>\n' +
+        '<title>' + title + ' — DOS</title>\n' +
         '<style>\n' +
         '* { margin: 0; padding: 0; box-sizing: border-box; }\n' +
         'html, body {\n' +
@@ -1633,27 +1657,35 @@ function generateOutputHtml(opts) {
         '}\n' +
         '#vkb {\n' +
         '    position: fixed;\n' +
-        '    bottom: 50px; left: 50%;\n' +
+        '    bottom: 52px; left: 50%;\n' +
         '    transform: translateX(-50%);\n' +
-        '    z-index: 99;\n' +
+        '    z-index: 98;\n' +
         '    display: none;\n' +
-        '    flex-wrap: wrap;\n' +
-        '    justify-content: center;\n' +
-        '    gap: 4px;\n' +
-        '    padding: 8px;\n' +
+        '    flex-direction: column;\n' +
+        '    align-items: center;\n' +
+        '    gap: 3px;\n' +
+        '    padding: 6px;\n' +
         '    background: rgba(0,0,0,0.88);\n' +
-        '    border-radius: 12px;\n' +
+        '    border-radius: 10px;\n' +
         '    backdrop-filter: blur(8px);\n' +
-        '    max-width: 98vw;\n' +
+        '    max-width: 96vw;\n' +
+        '    max-height: 35vh;\n' +
+        '    overflow-y: auto;\n' +
         '}\n' +
         '#vkb.show { display: flex; }\n' +
+        '.vkb-row {\n' +
+        '    display: flex;\n' +
+        '    justify-content: center;\n' +
+        '    gap: 3px;\n' +
+        '    width: 100%;\n' +
+        '}\n' +
         '#vkb button {\n' +
-        '    min-width: 40px; height: 40px;\n' +
+        '    min-width: 32px; height: 32px;\n' +
         '    background: rgba(255,255,255,0.12);\n' +
         '    color: #fff;\n' +
         '    border: 1px solid rgba(255,255,255,0.15);\n' +
         '    border-radius: 6px;\n' +
-        '    font-size: 0.8rem;\n' +
+        '    font-size: 0.7rem;\n' +
         '    font-family: monospace;\n' +
         '    cursor: pointer;\n' +
         '    display: flex; align-items: center; justify-content: center;\n' +
@@ -1661,12 +1693,12 @@ function generateOutputHtml(opts) {
         '    touch-action: none;\n' +
         '}\n' +
         '#vkb button:active { background: rgba(255,255,255,0.3); }\n' +
-        '#vkb button.wide { min-width: 64px; }\n' +
-        '#vkb button.space { min-width: 100px; }\n' +
+        '#vkb button.wide { min-width: 50px; }\n' +
+        '#vkb button.space { min-width: 80px; }\n' +
         '@media (max-width: 600px) {\n' +
         '    .gp-btn { width: 48px; height: 48px; font-size: 0.7rem; }\n' +
-        '    #vkb button { min-width: 36px; height: 36px; font-size: 0.7rem; }\n' +
-        '    #vkb button.wide { min-width: 54px; }\n' +
+        '    #vkb button { min-width: 28px; height: 28px; font-size: 0.65rem; }\n' +
+        '    #vkb button.wide { min-width: 44px; }\n' +
         '}\n' +
         '#error-screen {\n' +
         '    display: none;\n' +
@@ -1695,15 +1727,15 @@ function generateOutputHtml(opts) {
 
     // Loading screen
     html += '<div id="loading">\n' +
-        '    <h1>\\uD83D\\uDDA5\\uFE0F ' + title + '</h1>\n' +
-        '    <div class="subtitle">DOS \\u2022 js-dos ' + JSDOS_VERSION + '</div>\n' +
+        '    <h1>🖥️ ' + title + '</h1>\n' +
+        '    <div class="subtitle">DOS • js-dos ' + JSDOS_VERSION + '</div>\n' +
         '    <div id="progress-bar"><div id="progress-fill"></div></div>\n' +
         '    <div id="loading-status">Initializing...</div>\n' +
         '</div>\n\n';
 
     // Error screen
     html += '<div id="error-screen">\n' +
-        '    <h2>\\u26A0\\uFE0F Emulator Error</h2>\n' +
+        '    <h2>⚠️ Emulator Error</h2>\n' +
         '    <pre id="error-detail"></pre>\n' +
         '    <p style="margin-top:1rem;color:#999;font-size:0.8rem">\n' +
         '        Try refreshing the page or using a different browser (Chrome/Edge recommended).\n' +
@@ -1717,12 +1749,12 @@ function generateOutputHtml(opts) {
 
     // Controls overlay
     html += '<div id="controls">\n' +
-        '    <button id="btn-fs" onclick="toggleFullscreen()" title="Fullscreen">\\u26F6</button>\n' +
-        '    <button id="btn-vkb" onclick="toggleVKB()" title="Virtual Keyboard">\\u2328\\uFE0F</button>\n' +
-        '    <button id="btn-mute" onclick="toggleMute()" title="Mute/Unmute">\\uD83D\\uDD0A</button>\n' +
-        '    <button id="btn-pause" onclick="togglePause()" title="Pause/Resume">\\u23F8\\uFE0F</button>\n' +
+        '    <button id="btn-fs" onclick="toggleFullscreen()" title="Fullscreen">⛶</button>\n' +
+        '    <button id="btn-vkb" onclick="toggleVKB()" title="Virtual Keyboard">⌨️</button>\n' +
+        '    <button id="btn-mute" onclick="toggleMute()" title="Mute/Unmute">🔊</button>\n' +
+        '    <button id="btn-pause" onclick="togglePause()" title="Pause/Resume">⏸️</button>\n' +
         '</div>\n' +
-        '<button id="toggle-ctrl" onclick="document.getElementById(\'controls\').classList.toggle(\'hidden\')" title="Toggle Controls">\\uD83C\\uDFAE</button>\n\n';
+        '<button id="toggle-ctrl" onclick="document.getElementById(\'controls\').classList.toggle(\'hidden\')" title="Toggle Controls">🎮</button>\n\n';
 
     // Virtual keyboard/gamepad
     html += vkb.html + '\n\n';
@@ -1861,7 +1893,7 @@ function generateOutputHtml(opts) {
         'function toggleMute() {\n' +
         '    isMuted = !isMuted;\n' +
         '    var btn = document.getElementById("btn-mute");\n' +
-        '    btn.textContent = isMuted ? "\\uD83D\\uDD07" : "\\uD83D\\uDD0A";\n' +
+        '    btn.textContent = isMuted ? "🔇" : "🔊";\n' +
         '    if (window.Module && window.Module.SDL2 && window.Module.SDL2.audioContext) {\n' +
         '        if (isMuted) window.Module.SDL2.audioContext.suspend();\n' +
         '        else window.Module.SDL2.audioContext.resume();\n' +
@@ -1870,37 +1902,53 @@ function generateOutputHtml(opts) {
         'function togglePause() {\n' +
         '    isPaused = !isPaused;\n' +
         '    var btn = document.getElementById("btn-pause");\n' +
-        '    btn.textContent = isPaused ? "\\u25B6\\uFE0F" : "\\u23F8\\uFE0F";\n' +
+        '    btn.textContent = isPaused ? "▶️" : "⏸️";\n' +
         '    if (window._ci) {\n' +
         '        if (isPaused) window._ci.exit();\n' +
         '    }\n' +
         '}\n\n' +
+        'var _defaultMode = "' + vkb.defaultMode + '";\n\n' +
         'function toggleVKB() {\n' +
         '    var gp = document.getElementById("gamepad");\n' +
         '    var vkb = document.getElementById("vkb");\n' +
-        '    var target = gp || vkb;\n' +
-        '    if (!target) return;\n' +
-        '    target.classList.toggle("show");\n' +
         '    var btn = document.getElementById("btn-vkb");\n' +
-        '    if (btn) btn.classList.toggle("active", target.classList.contains("show"));\n' +
+        '    var gpShown = gp && gp.classList.contains("show");\n' +
+        '    var vkbShown = vkb && vkb.classList.contains("show");\n' +
+        '    if (gpShown) {\n' +
+        '        gp.classList.remove("show");\n' +
+        '        if (vkb) vkb.classList.add("show");\n' +
+        '        if (btn) btn.classList.add("active");\n' +
+        '    } else if (vkbShown) {\n' +
+        '        if (vkb) vkb.classList.remove("show");\n' +
+        '        if (btn) btn.classList.remove("active");\n' +
+        '    } else {\n' +
+        '        if (gp) { gp.classList.add("show"); }\n' +
+        '        else if (vkb) { vkb.classList.add("show"); }\n' +
+        '        if (btn) btn.classList.add("active");\n' +
+        '    }\n' +
         '}\n\n' +
         '(function() {\n' +
         '    var isTouchDevice = ("ontouchstart" in window) || (navigator.maxTouchPoints > 0);\n' +
         '    if (isTouchDevice) {\n' +
+        '        function _autoShow() {\n' +
+        '            var target = (_defaultMode === "keyboard")\n' +
+        '                ? document.getElementById("vkb")\n' +
+        '                : document.getElementById("gamepad");\n' +
+        '            if (!target) target = document.getElementById("gamepad") || document.getElementById("vkb");\n' +
+        '            if (target && !target.classList.contains("show")) {\n' +
+        '                target.classList.add("show");\n' +
+        '                var btn = document.getElementById("btn-vkb");\n' +
+        '                if (btn) btn.classList.add("active");\n' +
+        '            }\n' +
+        '        }\n' +
         '        var checkReady = setInterval(function() {\n' +
         '            var loading = document.getElementById("loading");\n' +
         '            if (loading && loading.style.display === "none") {\n' +
         '                clearInterval(checkReady);\n' +
-        '                toggleVKB();\n' +
+        '                _autoShow();\n' +
         '            }\n' +
         '        }, 500);\n' +
-        '        setTimeout(function() {\n' +
-        '            clearInterval(checkReady);\n' +
-        '            var gp = document.getElementById("gamepad");\n' +
-        '            var vkb = document.getElementById("vkb");\n' +
-        '            var target = gp || vkb;\n' +
-        '            if (target && !target.classList.contains("show")) toggleVKB();\n' +
-        '        }, 10000);\n' +
+        '        setTimeout(function() { clearInterval(checkReady); _autoShow(); }, 10000);\n' +
         '    }\n' +
         '})()\n\n';
 
