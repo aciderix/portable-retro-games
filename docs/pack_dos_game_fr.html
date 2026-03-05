@@ -1,0 +1,2256 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🖥️ DOS Game Packer — Créez des jeux DOS autonomes</title>
+<style>
+/* ============================================================
+   CSS Reset & Base
+   ============================================================ */
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  --bg: #0a0a0a;
+  --bg-card: #111118;
+  --bg-card-hover: #16161f;
+  --border: #1e1e2e;
+  --border-accent: #2a2a3e;
+  --text: #e0e0e0;
+  --text-dim: #888;
+  --text-dimmer: #555;
+  --accent: #FF4444;
+  --accent-orange: #ff8800;
+  --success: #44cc66;
+  --error: #ff4466;
+  --warning: #ffaa33;
+  --radius: 12px;
+  --radius-sm: 8px;
+}
+
+html { scroll-behavior: smooth; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', sans-serif;
+  min-height: 100vh;
+  line-height: 1.6;
+  overflow-x: hidden;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 8px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: #2a2a3e; border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: #3a3a4e; }
+
+/* ============================================================
+   Layout
+   ============================================================ */
+.container {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem 4rem;
+}
+
+/* Top Navigation */
+.top-nav {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+}
+.top-nav a {
+  color: var(--text-dim);
+  text-decoration: none;
+  font-size: 0.88rem;
+  font-weight: 600;
+  padding: 0.4rem 0.8rem;
+  border-radius: var(--radius-sm);
+  transition: all 0.2s;
+}
+.top-nav a:hover { color: var(--text); background: rgba(255,255,255,0.04); }
+.top-nav a.active {
+  color: var(--accent);
+  background: rgba(255,68,68,0.08);
+  border: 1px solid rgba(255,68,68,0.2);
+}
+.top-nav .lang-switch {
+  margin-left: auto;
+  display: flex;
+  gap: 0.3rem;
+}
+.top-nav .lang-switch a {
+  font-size: 1.1rem;
+  padding: 0.3rem 0.5rem;
+}
+
+/* Header */
+.header {
+  text-align: center;
+  margin-bottom: 2.5rem;
+  position: relative;
+}
+.header::after {
+  content: '';
+  display: block;
+  width: 80px;
+  height: 3px;
+  background: linear-gradient(90deg, var(--accent), var(--accent-orange));
+  margin: 1.2rem auto 0;
+  border-radius: 2px;
+}
+.logo {
+  font-size: 2.2rem;
+  font-weight: 800;
+  background: linear-gradient(135deg, var(--accent), var(--accent-orange));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  letter-spacing: -0.5px;
+}
+.subtitle {
+  color: var(--text-dim);
+  font-size: 0.95rem;
+  margin-top: 0.3rem;
+}
+
+/* Navigation Tabs */
+.tabs {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 2rem;
+  background: var(--bg-card);
+  border-radius: var(--radius);
+  padding: 4px;
+  border: 1px solid var(--border);
+}
+.tab-btn {
+  flex: 1;
+  padding: 0.7rem 1rem;
+  border: none;
+  background: transparent;
+  color: var(--text-dim);
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+  transition: all 0.25s ease;
+}
+.tab-btn:hover { color: var(--text); background: rgba(255,255,255,0.03); }
+.tab-btn.active {
+  background: linear-gradient(135deg, var(--accent), var(--accent-orange));
+  color: #fff;
+  box-shadow: 0 2px 12px rgba(255,68,68,0.25);
+}
+
+/* Tab Content */
+.tab-content { display: none; }
+.tab-content.active { display: block; animation: fadeIn 0.3s ease; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+/* ============================================================
+   Card / Section
+   ============================================================ */
+.card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1.5rem;
+  margin-bottom: 1.25rem;
+  transition: border-color 0.2s;
+}
+.card:hover { border-color: var(--border-accent); }
+.card-title {
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1.2px;
+  color: var(--text-dim);
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.card-title .icon { font-size: 1rem; }
+
+/* ============================================================
+   Drop Zone
+   ============================================================ */
+.dropzone {
+  border: 2px dashed #2a2a3e;
+  border-radius: var(--radius);
+  padding: 3rem 2rem;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+.dropzone::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at center, rgba(255,68,68,0.03) 0%, transparent 70%);
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+.dropzone:hover, .dropzone.dragover {
+  border-color: var(--accent);
+  background: rgba(255,68,68,0.03);
+}
+.dropzone:hover::before, .dropzone.dragover::before { opacity: 1; }
+.dropzone.has-file {
+  border-color: var(--success);
+  border-style: solid;
+  background: rgba(68,204,102,0.03);
+}
+.dropzone-icon {
+  font-size: 3rem;
+  margin-bottom: 0.8rem;
+  display: block;
+}
+.dropzone-text {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 0.3rem;
+}
+.dropzone-hint {
+  font-size: 0.82rem;
+  color: var(--text-dim);
+}
+.dropzone-btn {
+  display: inline-block;
+  margin-top: 1rem;
+  padding: 0.5rem 1.5rem;
+  border: 1px solid var(--border-accent);
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text);
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.dropzone-btn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+/* File Info */
+.file-info {
+  display: none;
+  margin-top: 1rem;
+  padding: 1rem;
+  background: rgba(255,255,255,0.02);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+}
+.file-info.visible { display: block; animation: fadeIn 0.3s ease; }
+.file-info-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.3rem 0;
+  font-size: 0.88rem;
+}
+.file-info-label { color: var(--text-dim); }
+.file-info-value { color: var(--text); font-weight: 500; }
+.badge {
+  display: inline-block;
+  padding: 0.15rem 0.6rem;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+.badge-success { background: rgba(68,204,102,0.15); color: var(--success); }
+.badge-warning { background: rgba(255,170,51,0.15); color: var(--warning); }
+.badge-error { background: rgba(255,68,102,0.15); color: var(--error); }
+
+/* ============================================================
+   Form Controls
+   ============================================================ */
+.form-group { margin-bottom: 1rem; }
+.form-group:last-child { margin-bottom: 0; }
+.form-label {
+  display: block;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text-dim);
+  margin-bottom: 0.4rem;
+}
+.form-hint {
+  font-size: 0.75rem;
+  color: var(--text-dimmer);
+  margin-top: 0.2rem;
+}
+.form-input, .form-select {
+  width: 100%;
+  padding: 0.65rem 0.9rem;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text);
+  font-size: 0.9rem;
+  font-family: inherit;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  outline: none;
+}
+.form-input:focus, .form-select:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(255,68,68,0.1);
+}
+.form-select { cursor: pointer; appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath d='M6 8L1 3h10z' fill='%23888'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.9rem center;
+  padding-right: 2.5rem;
+}
+.form-select option { background: #1a1a2e; color: var(--text); }
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+@media (max-width: 520px) { .form-row { grid-template-columns: 1fr; } }
+
+/* Color picker row */
+.color-row {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+}
+.color-picker {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 40px;
+  height: 40px;
+  border: 2px solid var(--border);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  background: transparent;
+  padding: 0;
+}
+.color-picker::-webkit-color-swatch-wrapper { padding: 2px; }
+.color-picker::-webkit-color-swatch { border: none; border-radius: 4px; }
+.color-picker::-moz-color-swatch { border: none; border-radius: 4px; }
+.color-hex {
+  font-family: 'SF Mono', 'Fira Code', monospace;
+  font-size: 0.9rem;
+  color: var(--text);
+  font-weight: 600;
+}
+
+/* ============================================================
+   Generate Button
+   ============================================================ */
+.generate-btn {
+  width: 100%;
+  padding: 1rem;
+  border: none;
+  border-radius: var(--radius);
+  background: linear-gradient(135deg, var(--accent), var(--accent-orange));
+  color: #fff;
+  font-size: 1.05rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 20px rgba(255,68,68,0.25);
+  position: relative;
+  overflow: hidden;
+}
+.generate-btn::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(255,255,255,0.1), transparent);
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+.generate-btn:hover:not(:disabled)::before { opacity: 1; }
+.generate-btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 25px rgba(255,68,68,0.35);
+}
+.generate-btn:active:not(:disabled) { transform: translateY(0); }
+.generate-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+/* ============================================================
+   Progress Section
+   ============================================================ */
+.progress-section {
+  display: none;
+  margin-top: 1.25rem;
+}
+.progress-section.visible { display: block; animation: fadeIn 0.3s ease; }
+.progress-bar-track {
+  width: 100%;
+  height: 8px;
+  background: #1a1a2e;
+  border-radius: 4px;
+  overflow: hidden;
+  margin-bottom: 0.8rem;
+}
+.progress-bar-fill {
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, var(--accent), var(--accent-orange));
+  border-radius: 4px;
+  transition: width 0.4s ease;
+}
+.progress-steps { list-style: none; }
+.progress-step {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.4rem 0;
+  font-size: 0.85rem;
+  color: var(--text-dim);
+  transition: color 0.3s;
+}
+.progress-step.active { color: var(--text); }
+.progress-step.done { color: var(--success); }
+.progress-step.error { color: var(--error); }
+.step-icon { width: 1.2rem; text-align: center; font-size: 0.9rem; }
+
+/* ============================================================
+   Download Button
+   ============================================================ */
+.download-section {
+  display: none;
+  margin-top: 1.25rem;
+  text-align: center;
+}
+.download-section.visible { display: block; animation: fadeIn 0.4s ease; }
+.download-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 1rem 2.5rem;
+  border: none;
+  border-radius: var(--radius);
+  background: linear-gradient(135deg, var(--success), #33aa55);
+  color: #fff;
+  font-size: 1.1rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 20px rgba(68,204,102,0.25);
+}
+.download-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 25px rgba(68,204,102,0.35);
+}
+.download-info {
+  margin-top: 0.8rem;
+  font-size: 0.82rem;
+  color: var(--text-dim);
+}
+
+/* ============================================================
+   Error Banner
+   ============================================================ */
+.error-banner {
+  display: none;
+  margin-top: 1rem;
+  padding: 1rem;
+  background: rgba(255,68,102,0.08);
+  border: 1px solid rgba(255,68,102,0.2);
+  border-radius: var(--radius-sm);
+  color: var(--error);
+  font-size: 0.88rem;
+}
+.error-banner.visible { display: block; animation: fadeIn 0.3s ease; }
+
+/* ============================================================
+   Options Reference Tab
+   ============================================================ */
+.ref-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+}
+.ref-table th {
+  text-align: left;
+  padding: 0.6rem 0.8rem;
+  color: var(--accent);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  border-bottom: 1px solid var(--border);
+}
+.ref-table td {
+  padding: 0.6rem 0.8rem;
+  color: var(--text);
+  border-bottom: 1px solid var(--border);
+  vertical-align: top;
+}
+.ref-table tr:hover td { background: rgba(255,255,255,0.02); }
+.ref-table code {
+  background: rgba(255,255,255,0.06);
+  padding: 0.1rem 0.4rem;
+  border-radius: 4px;
+  font-size: 0.82rem;
+  color: var(--accent-orange);
+}
+
+/* ============================================================
+   Footer
+   ============================================================ */
+.footer {
+  text-align: center;
+  padding: 2rem 0 1rem;
+  font-size: 0.78rem;
+  color: var(--text-dimmer);
+}
+.footer a { color: var(--text-dim); text-decoration: none; }
+.footer a:hover { color: var(--accent); }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <!-- Top Navigation -->
+  <div class="top-nav">
+    <a href="pack_game_fr.html">🕹️ Retro Game Packer</a>
+    <a href="pack_dos_game_fr.html" class="active">🖥️ DOS Packer</a>
+    <div class="lang-switch">
+      <a href="pack_dos_game_fr.html" class="active" title="Français">🇫🇷</a>
+      <a href="pack_dos_game_en.html" title="English">🇬🇧</a>
+    </div>
+  </div>
+
+  <!-- Header -->
+  <div class="header">
+    <div class="logo">🖥️ DOS Game Packer</div>
+    <div class="subtitle">Créez des jeux DOS autonomes et jouables hors-ligne</div>
+  </div>
+
+  <!-- Tabs -->
+  <div class="tabs">
+    <button class="tab-btn active" data-tab="packer">⚡ Packer</button>
+    <button class="tab-btn" data-tab="options">📋 DOSBox Options</button>
+    <button class="tab-btn" data-tab="about">ℹ️ À propos</button>
+  </div>
+
+  <!-- ============================================================
+       TAB: Packer
+       ============================================================ -->
+  <div id="tab-packer" class="tab-content active">
+
+    <!-- Step 1: ZIP File -->
+    <div class="card">
+      <div class="card-title"><span class="icon">📦</span> Fichier ZIP du jeu DOS</div>
+      <div class="dropzone" id="dropzone">
+        <span class="dropzone-icon">📁</span>
+        <div class="dropzone-text">Glissez votre jeu DOS (.zip) ici</div>
+        <div class="dropzone-hint">ou cliquez pour parcourir vos fichiers</div>
+        <button class="dropzone-btn" type="button">Choisir un fichier</button>
+        <input type="file" id="zip-input" accept=".zip" hidden>
+      </div>
+      <div class="file-info" id="file-info">
+        <div class="file-info-row">
+          <span class="file-info-label">Fichier</span>
+          <span class="file-info-value" id="info-name">—</span>
+        </div>
+        <div class="file-info-row">
+          <span class="file-info-label">Taille</span>
+          <span class="file-info-value" id="info-size">—</span>
+        </div>
+        <div class="file-info-row">
+          <span class="file-info-label">Fichiers dans le ZIP</span>
+          <span class="file-info-value" id="info-count">—</span>
+        </div>
+        <div class="file-info-row">
+          <span class="file-info-label">Exécutable détecté</span>
+          <span class="file-info-value" id="info-exe">—</span>
+        </div>
+        <div class="file-info-row">
+          <span class="file-info-label">Répertoire racine</span>
+          <span class="file-info-value" id="info-root">—</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Step 2: Options -->
+    <div class="card" id="options-card" style="display:none;">
+      <div class="card-title"><span class="icon">⚙️</span> Options</div>
+
+      <div class="form-group">
+        <label class="form-label" for="exe-select">Exécutable principal</label>
+        <select class="form-select" id="exe-select">
+          <option value="">— Auto-détection —</option>
+        </select>
+        <div class="form-hint">Choisissez l'exécutable de lancement du jeu (.exe, .com, .bat)</div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="title-input">Titre du jeu</label>
+        <input type="text" class="form-input" id="title-input" placeholder="Rempli automatiquement depuis le nom du fichier">
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label" for="cycles-select">Cycles CPU</label>
+          <select class="form-select" id="cycles-select">
+            <option value="auto" selected>auto — ajustement automatique</option>
+            <option value="max">max — vitesse maximale</option>
+            <option value="1000">1000 — très lent (8088)</option>
+            <option value="3000">3000 — lent (286)</option>
+            <option value="5000">5000 — moyen (386)</option>
+            <option value="10000">10000 — rapide (486 lent)</option>
+            <option value="20000">20000 — rapide (486)</option>
+            <option value="50000">50000 — très rapide (Pentium)</option>
+            <option value="100000">100000 — ultra rapide</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="memory-select">Mémoire (MB)</label>
+          <select class="form-select" id="memory-select">
+            <option value="4">4 MB</option>
+            <option value="8">8 MB</option>
+            <option value="16" selected>16 MB</option>
+            <option value="32">32 MB</option>
+            <option value="64">64 MB</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label" for="sound-select">Carte son</label>
+          <select class="form-select" id="sound-select">
+            <option value="sb16" selected>Sound Blaster 16</option>
+            <option value="sb1">Sound Blaster 1.0</option>
+            <option value="sb2">Sound Blaster 2.0</option>
+            <option value="sbpro1">Sound Blaster Pro 1</option>
+            <option value="sbpro2">Sound Blaster Pro 2</option>
+            <option value="none">Aucune</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="keyboard-select">Clavier mobile</label>
+          <select class="form-select" id="keyboard-select">
+            <option value="gamepad" selected>🎮 Gamepad — D-pad + boutons action</option>
+            <option value="gamepad-prince">🤺 Gamepad Prince — D-pad + Épée/Saut</option>
+            <option value="default">⌨️ Défaut — Clavier complet compact</option>
+            <option value="minimal">🔤 Minimal — Flèches + Esc/Enter/Space</option>
+            <option value="arrows">🏹 Flèches — Flèches étendues + touches utiles</option>
+            <option value="adventure">📖 Aventure — QWERTY complet pour jeux textuels</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Couleur d'accentuation</label>
+          <div class="color-row">
+            <input type="color" class="color-picker" id="color-input" value="#00aaff">
+            <span class="color-hex" id="color-hex">#00aaff</span>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="output-input">Nom du fichier de sortie</label>
+          <input type="text" class="form-input" id="output-input" placeholder="jeu.html">
+        </div>
+      </div>
+    </div>
+
+    <!-- Generate -->
+    <button class="generate-btn" id="generate-btn" disabled>🚀 Générer le fichier HTML</button>
+
+    <!-- Progress -->
+    <div class="progress-section" id="progress-section">
+      <div class="progress-bar-track">
+        <div class="progress-bar-fill" id="progress-fill"></div>
+      </div>
+      <ul class="progress-steps" id="progress-steps">
+        <li class="progress-step" data-step="zip"><span class="step-icon">⏳</span> Lecture du fichier ZIP...</li>
+        <li class="progress-step" data-step="analyze"><span class="step-icon">⏳</span> Analyse des exécutables DOS...</li>
+        <li class="progress-step" data-step="engine"><span class="step-icon">⏳</span> Récupération du moteur js-dos...</li>
+        <li class="progress-step" data-step="config"><span class="step-icon">⏳</span> Génération de la config DOSBox...</li>
+        <li class="progress-step" data-step="build"><span class="step-icon">⏳</span> Assemblage du HTML offline...</li>
+        <li class="progress-step" data-step="done"><span class="step-icon">⏳</span> Terminé !</li>
+      </ul>
+    </div>
+
+    <!-- Download -->
+    <div class="download-section" id="download-section">
+      <button class="download-btn" id="download-btn">💾 Télécharger</button>
+      <div class="download-info" id="download-info"></div>
+    </div>
+
+    <!-- Error -->
+    <div class="error-banner" id="error-banner"></div>
+  </div>
+
+  <!-- ============================================================
+       TAB: DOSBox Options Reference
+       ============================================================ -->
+  <div id="tab-options" class="tab-content">
+    <div class="card">
+      <div class="card-title"><span class="icon">🔧</span> Cycles CPU</div>
+      <table class="ref-table">
+        <thead><tr><th>Valeur</th><th>Description</th><th>Usage recommandé</th></tr></thead>
+        <tbody>
+          <tr><td><code>auto</code></td><td>Ajustement automatique de la vitesse</td><td>La plupart des jeux — bon choix par défaut</td></tr>
+          <tr><td><code>max</code></td><td>Vitesse CPU maximale</td><td>Jeux rapides (DOOM, Duke3D, etc.)</td></tr>
+          <tr><td><code>1000</code></td><td>Très lent — équivalent 8088</td><td>Jeux très anciens (début années 80)</td></tr>
+          <tr><td><code>3000</code></td><td>Lent — équivalent 286</td><td>Jeux 286 (fin années 80)</td></tr>
+          <tr><td><code>5000</code></td><td>Moyen — équivalent 386</td><td>Jeux 386 (début années 90)</td></tr>
+          <tr><td><code>10000-20000</code></td><td>Rapide — équivalent 486</td><td>Jeux 486 (milieu années 90)</td></tr>
+          <tr><td><code>50000+</code></td><td>Très rapide — équivalent Pentium</td><td>Jeux tardifs, benchmarks</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><span class="icon">💾</span> Mémoire</div>
+      <table class="ref-table">
+        <thead><tr><th>Taille</th><th>Description</th></tr></thead>
+        <tbody>
+          <tr><td><code>4 MB</code></td><td>Minimum — jeux très simples</td></tr>
+          <tr><td><code>8 MB</code></td><td>Convient à la plupart des jeux standards</td></tr>
+          <tr><td><code>16 MB</code></td><td>Recommandé — bon compromis (défaut)</td></tr>
+          <tr><td><code>32 MB</code></td><td>Pour les jeux exigeants en mémoire</td></tr>
+          <tr><td><code>64 MB</code></td><td>Maximum — jeux très gourmands</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><span class="icon">🔊</span> Cartes son</div>
+      <table class="ref-table">
+        <thead><tr><th>Carte</th><th>Description</th></tr></thead>
+        <tbody>
+          <tr><td><code>sb16</code></td><td>Sound Blaster 16 — la plus compatible (défaut)</td></tr>
+          <tr><td><code>sbpro2</code></td><td>Sound Blaster Pro 2 — pour jeux plus anciens</td></tr>
+          <tr><td><code>sbpro1</code></td><td>Sound Blaster Pro 1</td></tr>
+          <tr><td><code>sb2</code></td><td>Sound Blaster 2.0 — compatibilité basique</td></tr>
+          <tr><td><code>sb1</code></td><td>Sound Blaster 1.0 — jeux très anciens</td></tr>
+          <tr><td><code>none</code></td><td>Aucune carte son — désactive l'audio</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><span class="icon">📱</span> Dispositions clavier mobile</div>
+      <table class="ref-table">
+        <thead><tr><th>Layout</th><th>Description</th><th>Idéal pour</th></tr></thead>
+        <tbody>
+          <tr><td><code>gamepad</code></td><td>D-pad + 4 boutons (Space/Enter/Ctrl/Esc) + barre système</td><td>Jeux d'action, plateformes</td></tr>
+          <tr><td><code>gamepad-prince</code></td><td>D-pad + boutons Prince of Persia (Shift/Space/Up/Esc)</td><td>Prince of Persia, jeux similaires</td></tr>
+          <tr><td><code>default</code></td><td>Clavier complet compact avec touches essentielles</td><td>Usage général</td></tr>
+          <tr><td><code>minimal</code></td><td>Flèches + Esc/Enter/Space/Y/N uniquement</td><td>Jeux simples, menus</td></tr>
+          <tr><td><code>arrows</code></td><td>Flèches étendues + touches fonction + chiffres</td><td>Jeux de tir, stratégie simple</td></tr>
+          <tr><td><code>adventure</code></td><td>Clavier QWERTY complet</td><td>Jeux d'aventure textuels, simulations</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><span class="icon">💡</span> Conseils par type de jeu</div>
+      <table class="ref-table">
+        <thead><tr><th>Type de jeu</th><th>Réglages recommandés</th></tr></thead>
+        <tbody>
+          <tr><td>FPS (DOOM, Duke3D...)</td><td><code>cycles=max</code>, <code>memory=16-32</code>, <code>gamepad</code></td></tr>
+          <tr><td>Plates-formes (Prince, Keen...)</td><td><code>cycles=auto</code>, <code>memory=16</code>, <code>gamepad</code> ou <code>gamepad-prince</code></td></tr>
+          <tr><td>Aventure (Monkey Island...)</td><td><code>cycles=auto</code>, <code>memory=16</code>, <code>adventure</code></td></tr>
+          <tr><td>Stratégie (SimCity, Civilization...)</td><td><code>cycles=auto</code>, <code>memory=32</code>, <code>default</code></td></tr>
+          <tr><td>Jeux anciens (pré-1990)</td><td><code>cycles=3000-5000</code>, <code>memory=4-8</code>, <code>minimal</code></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       TAB: About
+       ============================================================ -->
+  <div id="tab-about" class="tab-content">
+    <div class="card">
+      <div class="card-title"><span class="icon">ℹ️</span> À propos</div>
+      <p style="margin-bottom:1rem; font-size:0.92rem; line-height:1.7;">
+        <strong>DOS Game Packer</strong> transforme un jeu DOS (fichier ZIP) en un fichier HTML unique, autonome et jouable directement dans le navigateur — même sans connexion Internet.
+      </p>
+      <p style="margin-bottom:1rem; font-size:0.92rem; line-height:1.7;">
+        Le fichier HTML généré contient tout ce qu'il faut : le moteur d'émulation DOSBox (via js-dos), les fichiers du jeu, la configuration, et un clavier virtuel pour mobile. Il suffit de double-cliquer sur le fichier pour jouer !
+      </p>
+      <p style="font-size:0.92rem; line-height:1.7;">
+        <strong>Fonctionnalités :</strong>
+      </p>
+      <ul style="margin:0.5rem 0 1rem 1.5rem; font-size:0.88rem; line-height:1.8; color:var(--text-dim);">
+        <li>✅ 100% hors-ligne — aucun serveur requis</li>
+        <li>✅ Détection automatique de l'exécutable</li>
+        <li>✅ Configuration DOSBox complète</li>
+        <li>✅ 6 dispositions de clavier/gamepad virtuel pour mobile</li>
+        <li>✅ Fonctionne avec le protocole <code style="color:var(--accent-orange)">file://</code></li>
+        <li>✅ Compatible Chrome, Firefox, Edge, Safari</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><span class="icon">🏗️</span> Technologies</div>
+      <ul style="margin:0 0 0 1.5rem; font-size:0.88rem; line-height:1.8; color:var(--text-dim);">
+        <li><strong style="color:var(--text)">js-dos 6.22</strong> — Émulateur DOSBox en WebAssembly (asyncify, mono-thread)</li>
+        <li><strong style="color:var(--text)">JSZip 3.x</strong> — Lecture des fichiers ZIP côté client</li>
+        <li><strong style="color:var(--text)">Portable Retro Games</strong> — Projet open-source</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><span class="icon">🔗</span> Liens</div>
+      <ul style="margin:0 0 0 1.5rem; font-size:0.88rem; line-height:1.8;">
+        <li><a href="https://github.com/nicmusic-retroframe/portable-retro-games" target="_blank" style="color:var(--accent)">🐙 GitHub — Portable Retro Games</a></li>
+        <li><a href="https://js-dos.com/" target="_blank" style="color:var(--accent)">🎮 js-dos — DOS emulator for web</a></li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><span class="icon">🔒</span> Confidentialité</div>
+      <p style="font-size:0.88rem; line-height:1.7; color:var(--text-dim);">
+        Toute la génération se fait <strong style="color:var(--text)">localement dans votre navigateur</strong>. Aucun fichier n'est envoyé à un serveur. Les seules requêtes réseau sont pour télécharger le moteur js-dos depuis le CDN (ou le miroir local). Le fichier HTML généré est 100% autonome.
+      </p>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <div class="footer">
+    Propulsé par <a href="https://js-dos.com/" target="_blank">js-dos 6.22</a>,
+    <a href="https://stuk.github.io/jszip/" target="_blank">JSZip</a> &amp;
+    <a href="https://github.com/aciderix/portable-retro-games" target="_blank">Portable Retro Games</a>
+  </div>
+</div>
+
+<!-- JSZip from CDN -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+
+<script>
+// ============================================================
+//  Constants
+// ============================================================
+
+const JSDOS_VERSION = "6.22";
+const JSDOS_CDN_BASE = "https://js-dos.com/6.22/current/";
+const JSDOS_LOCAL_MIRROR = "data/jsdos/";
+const JSDOS_FILES = ["js-dos.js", "wdosbox.js", "wdosbox.wasm.js"];
+
+// DOS executable extensions
+const DOS_EXE_EXTENSIONS = ['.exe', '.com', '.bat'];
+
+// Known game executables
+const KNOWN_GAME_EXES = [
+    'DOOM.EXE', 'DOOM2.EXE', 'DUKE3D.EXE', 'WOLF3D.EXE',
+    'PRINCE.EXE', 'DIGGER.COM', 'KEEN1.EXE', 'KEEN4.EXE',
+    'MONKEY.EXE', 'MONKEY2.EXE', 'LOOM.EXE', 'INDY.EXE',
+    'DOTT.EXE', 'SAMNMAX.EXE', 'TENTACLE.EXE',
+    'SIMCITY.EXE', 'SC2000.EXE', 'LEMMINGS.EXE',
+    'ALLEYCAT.EXE', 'DAVE.EXE', 'GORILLA.BAS',
+    'GAME.EXE', 'PLAY.EXE', 'START.EXE', 'RUN.EXE',
+    'MAIN.EXE', 'GO.BAT', 'PLAY.BAT', 'START.BAT', 'RUN.BAT',
+    'INSTALL.EXE', 'SETUP.EXE',
+];
+
+// ============================================================
+//  Utility: ArrayBuffer to Base64 (chunked)
+// ============================================================
+function arrayBufferToBase64(buffer) {
+    var bytes = new Uint8Array(buffer);
+    var chunks = [];
+    for (var i = 0; i < bytes.length; i += 8192) {
+        chunks.push(String.fromCharCode.apply(null, bytes.subarray(i, Math.min(i + 8192, bytes.length))));
+    }
+    return btoa(chunks.join(''));
+}
+
+function formatSize(bytes) {
+    if (bytes < 1024) return bytes + ' o';
+    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' Ko';
+    return (bytes / (1024 * 1024)).toFixed(1) + ' Mo';
+}
+
+function htmlEscape(text) {
+    return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+function cleanTitle(filename) {
+    var dotIdx = filename.lastIndexOf('.');
+    var name = dotIdx !== -1 ? filename.substring(0, dotIdx) : filename;
+    name = name.replace(/[_-]/g, ' ');
+    if (name === name.toLowerCase()) {
+        name = name.replace(/\b\w/g, function(c) { return c.toUpperCase(); });
+    }
+    return name;
+}
+
+// ============================================================
+//  ZIP Analysis (port of analyze_zip)
+// ============================================================
+async function analyzeZip(file) {
+    var zip = await JSZip.loadAsync(file);
+    var info = {
+        files: [],
+        executables: [],
+        totalSize: 0,
+        fileCount: 0,
+        hasSubdirs: false,
+        rootDir: null,
+    };
+
+    var names = Object.keys(zip.files);
+    info.fileCount = names.length;
+
+    // Detect root directory
+    var dirs = new Set();
+    names.forEach(function(name) {
+        var parts = name.replace(/\\/g, '/').split('/');
+        if (parts.length > 1 && parts[0]) {
+            dirs.add(parts[0]);
+        }
+    });
+
+    if (dirs.size === 1) {
+        var rootCandidate = Array.from(dirs)[0];
+        var allInRoot = names.every(function(n) {
+            var norm = n.replace(/\\/g, '/');
+            if (!norm.replace(/\/$/, '')) return true;
+            return norm.startsWith(rootCandidate + '/') || norm === rootCandidate + '/';
+        });
+        if (allInRoot) {
+            info.rootDir = rootCandidate;
+            info.hasSubdirs = true;
+        }
+    }
+
+    // Enumerate files
+    zip.forEach(function(relativePath, zipEntry) {
+        if (zipEntry.dir) return;
+        var name = relativePath.replace(/\\/g, '/');
+        var basename = name.split('/').pop().toUpperCase();
+        var extIdx = basename.lastIndexOf('.');
+        var ext = extIdx !== -1 ? basename.substring(extIdx) : '';
+        var size = zipEntry._data ? (zipEntry._data.uncompressedSize || 0) : 0;
+        info.totalSize += size;
+
+        var fileInfo = {
+            path: name,
+            basename: basename,
+            ext: ext,
+            size: size,
+        };
+        info.files.push(fileInfo);
+
+        if (DOS_EXE_EXTENSIONS.indexOf(ext.toLowerCase()) !== -1) {
+            fileInfo.priority = exePriority(basename);
+            info.executables.push(fileInfo);
+        }
+    });
+
+    // Sort executables by priority
+    info.executables.sort(function(a, b) {
+        return (a.priority || 999) - (b.priority || 999);
+    });
+
+    return info;
+}
+
+// ============================================================
+//  Executable Priority (port of _exe_priority)
+// ============================================================
+function exePriority(basename) {
+    var upper = basename.toUpperCase();
+
+    // Known game executables
+    if (KNOWN_GAME_EXES.map(function(k) { return k.toUpperCase(); }).indexOf(upper) !== -1) {
+        return 10;
+    }
+
+    // Skip installers/setup
+    var skipList = ['INSTALL.EXE', 'SETUP.EXE', 'INSTALL.COM', 'SETUP.COM',
+                    'SETSOUND.EXE', 'SNDSETUP.EXE', 'CONFIG.EXE'];
+    if (skipList.indexOf(upper) !== -1) {
+        return 900;
+    }
+
+    // GAME/PLAY/START/RUN/MAIN/GO get high priority
+    var dotIdx = upper.lastIndexOf('.');
+    var name = dotIdx !== -1 ? upper.substring(0, dotIdx) : upper;
+    if (['GAME', 'PLAY', 'START', 'RUN', 'MAIN', 'GO'].indexOf(name) !== -1) {
+        return 20;
+    }
+
+    // .BAT files
+    if (upper.endsWith('.BAT')) return 50;
+    // .EXE files
+    if (upper.endsWith('.EXE')) return 100;
+    // .COM files
+    if (upper.endsWith('.COM')) return 150;
+
+    return 500;
+}
+
+// ============================================================
+//  Executable Detection (port of detect_executable)
+// ============================================================
+function detectExecutable(zipInfo) {
+    if (!zipInfo.executables.length) return null;
+    return zipInfo.executables[0].basename;
+}
+
+// ============================================================
+//  DOSBox Config Generation (port of generate_dosbox_conf)
+// ============================================================
+function generateDosboxConf(exeName, cycles, memory, sound) {
+    cycles = cycles || 'auto';
+    memory = memory || 16;
+    sound = sound || 'sb16';
+
+    return '[sdl]\n' +
+        'fullscreen=false\n' +
+        'autolock=true\n' +
+        'sensitivity=100\n' +
+        'waitonerror=true\n' +
+        '\n' +
+        '[dosbox]\n' +
+        'machine=svga_s3\n' +
+        'memsize=' + memory + '\n' +
+        '\n' +
+        '[cpu]\n' +
+        'core=auto\n' +
+        'cputype=auto\n' +
+        'cycles=' + cycles + '\n' +
+        '\n' +
+        '[mixer]\n' +
+        'nosound=false\n' +
+        'rate=44100\n' +
+        'blocksize=1024\n' +
+        'prebuffer=20\n' +
+        '\n' +
+        '[sblaster]\n' +
+        'sbtype=' + sound + '\n' +
+        'sbbase=220\n' +
+        'irq=7\n' +
+        'dma=1\n' +
+        'hdma=5\n' +
+        'sbmixer=true\n' +
+        'oplmode=auto\n' +
+        'oplemu=default\n' +
+        'oplrate=44100\n' +
+        '\n' +
+        '[gus]\n' +
+        'gus=false\n' +
+        '\n' +
+        '[speaker]\n' +
+        'pcspeaker=true\n' +
+        'pcrate=44100\n' +
+        'tandy=auto\n' +
+        'tandyrate=44100\n' +
+        '\n' +
+        '[joystick]\n' +
+        'joysticktype=auto\n' +
+        'timed=true\n' +
+        'autofire=false\n' +
+        'swap34=false\n' +
+        'buttonwrap=false\n' +
+        '\n' +
+        '[serial]\n' +
+        'serial1=dummy\n' +
+        'serial2=dummy\n' +
+        'serial3=disabled\n' +
+        'serial4=disabled\n' +
+        '\n' +
+        '[dos]\n' +
+        'xms=true\n' +
+        'ems=true\n' +
+        'umb=true\n' +
+        '\n' +
+        '[ipx]\n' +
+        'ipx=false\n';
+}
+
+// ============================================================
+//  Asset Fetching — local mirror first, CDN fallback
+// ============================================================
+var assetCache = {};
+
+async function fetchAsset(filename, asText) {
+    if (assetCache[filename]) return assetCache[filename];
+
+    // Try local mirror first
+    var localUrl = JSDOS_LOCAL_MIRROR + filename;
+    try {
+        var resp = await fetch(localUrl);
+        if (resp.ok) {
+            console.log('📦 Local:', localUrl);
+            var data = asText ? await resp.text() : await resp.arrayBuffer();
+            assetCache[filename] = data;
+            return data;
+        }
+    } catch(e) { /* local not available */ }
+
+    // Fallback to CDN
+    var cdnUrl = JSDOS_CDN_BASE + filename;
+    console.log('🌐 CDN:', cdnUrl);
+    var resp = await fetch(cdnUrl);
+    if (!resp.ok) throw new Error('Échec du téléchargement de ' + filename + ' (HTTP ' + resp.status + ')');
+    var data = asText ? await resp.text() : await resp.arrayBuffer();
+    assetCache[filename] = data;
+    return data;
+}
+
+// ============================================================
+//  Virtual Keyboard Generation (port of _generate_virtual_keyboard)
+// ============================================================
+
+// js-dos 6.22 key codes
+var JSDOS_KEYCODES = {
+    'Esc': 27, 'F1': 112, 'F2': 113, 'F3': 114, 'F4': 115,
+    'F5': 116, 'F6': 117, 'F7': 118, 'F8': 119, 'F9': 120, 'F10': 121,
+    '1': 49, '2': 50, '3': 51, '4': 52, '5': 53,
+    '6': 54, '7': 55, '8': 56, '9': 57, '0': 48,
+    'Q': 81, 'W': 87, 'E': 69, 'R': 82, 'T': 84,
+    'Y': 89, 'U': 85, 'I': 73, 'O': 79, 'P': 80,
+    'A': 65, 'S': 83, 'D': 68, 'F': 70, 'G': 71,
+    'H': 72, 'J': 74, 'K': 75, 'L': 76,
+    'Z': 90, 'X': 88, 'C': 67, 'V': 86, 'B': 66,
+    'N': 78, 'M': 77,
+    'Enter': 13, 'Space': 32, 'Backspace': 8, 'Tab': 9,
+    'Shift': 16, 'Ctrl': 17, 'Alt': 18,
+    'Up': 38, 'Down': 40, 'Left': 37, 'Right': 39,
+};
+
+function generateVirtualKeyboard(layout) {
+    layout = layout || 'gamepad';
+
+    // ---- Shared key helpers (used by both gamepad and keyboard JS) ----
+    var sharedJs = "\n" +
+        "function _keyToCode(key) {\n" +
+        "    var map = {\n" +
+        "        'Esc':'Escape','Enter':'Enter','Space':'Space','Backspace':'Backspace',\n" +
+        "        'Tab':'Tab','Shift':'ShiftLeft','Ctrl':'ControlLeft','Alt':'AltLeft',\n" +
+        "        'Up':'ArrowUp','Down':'ArrowDown','Left':'ArrowLeft','Right':'ArrowRight',\n" +
+        "        'F1':'F1','F2':'F2','F3':'F3','F4':'F4','F5':'F5','F6':'F6',\n" +
+        "        'F7':'F7','F8':'F8','F9':'F9','F10':'F10'\n" +
+        "    };\n" +
+        "    if (map[key]) return map[key];\n" +
+        "    if (key.length === 1 && key >= '0' && key <= '9') return 'Digit' + key;\n" +
+        "    if (key.length === 1) return 'Key' + key.toUpperCase();\n" +
+        "    return key;\n" +
+        "}\n\n" +
+        "function _keyToEventKey(key) {\n" +
+        "    var map = {\n" +
+        "        'Esc':'Escape','Enter':'Enter','Space':' ','Backspace':'Backspace',\n" +
+        "        'Tab':'Tab','Shift':'Shift','Ctrl':'Control','Alt':'Alt',\n" +
+        "        'Up':'ArrowUp','Down':'ArrowDown','Left':'ArrowLeft','Right':'ArrowRight'\n" +
+        "    };\n" +
+        "    if (map[key]) return map[key];\n" +
+        "    return key;\n" +
+        "}\n";
+
+    // ---- GAMEPAD LAYOUTS ----
+    if (layout.indexOf('gamepad') === 0) {
+        var btnMap, sysKeys;
+        if (layout === 'gamepad-prince') {
+            btnMap = {
+                'A': [16, 'Shift'],
+                'B': [32, 'Space'],
+                'X': [38, 'Up'],
+                'Y': [27, 'Esc'],
+            };
+            sysKeys = ['Ctrl', 'F1', 'F2', 'Space'];
+        } else {
+            btnMap = {
+                'A': [32, 'Space'],
+                'B': [13, 'Enter'],
+                'X': [17, 'Ctrl'],
+                'Y': [27, 'Esc'],
+            };
+            sysKeys = ['F1', 'F2', 'F3', 'Shift', 'Tab', '1', '2', '3'];
+        }
+
+        // System bar buttons
+        var sysBtnsHtml = '';
+        sysKeys.forEach(function(sk) {
+            var kc = JSDOS_KEYCODES[sk] || (sk.length === 1 ? sk.charCodeAt(0) : 0);
+            var label = sk;
+            if (sk === 'Space') label = '\\u2423';
+            else if (sk === 'Shift') label = '\\u21E7';
+            else if (sk === 'Tab') label = '\\u21E5';
+            sysBtnsHtml += '<button data-kc="' + kc + '" data-key="' + sk + '" ' +
+                'ontouchstart="gpSysDown(this,event)" ' +
+                'ontouchend="gpSysUp(this,event)">' + label + '</button>\n        ';
+        });
+
+        // Action buttons
+        var actBtnsHtml = '';
+        ['a','b','x','y'].forEach(function(pos) {
+            var label = pos.toUpperCase();
+            var info = btnMap[label];
+            actBtnsHtml += '<div class="gp-btn btn-' + pos + '" data-kc="' + info[0] + '" ' +
+                'data-key="' + info[1] + '" data-label="' + label + '" ' +
+                'ontouchstart="gpBtnDown(this,event)" ' +
+                'ontouchend="gpBtnUp(this,event)">' + label + '</div>\n    ';
+        });
+
+        var vkbHtml = '<div id="gamepad">\n' +
+            '    <div id="gp-dpad"\n' +
+            '         ontouchstart="gpDpadTouch(event)"\n' +
+            '         ontouchmove="gpDpadTouch(event)"\n' +
+            '         ontouchend="gpDpadRelease(event)"\n' +
+            '         ontouchcancel="gpDpadRelease(event)">\n' +
+            '        <div class="dp-arrow dp-up" id="dp-up">\\u25B2</div>\n' +
+            '        <div class="dp-arrow dp-down" id="dp-down">\\u25BC</div>\n' +
+            '        <div class="dp-arrow dp-left" id="dp-left">\\u25C4</div>\n' +
+            '        <div class="dp-arrow dp-right" id="dp-right">\\u25BA</div>\n' +
+            '        <div class="dp-center"></div>\n' +
+            '    </div>\n' +
+            '    <div id="gp-actions">\n    ' + actBtnsHtml + '</div>\n' +
+            '    <div id="gp-sysbar">\n        ' + sysBtnsHtml + '</div>\n' +
+            '</div>';
+
+        var vkbJs = "\n" +
+            "var _gpCanvas = null;\n" +
+            "function _gpGetCanvas() {\n" +
+            "    if (!_gpCanvas) _gpCanvas = document.getElementById('jsdos');\n" +
+            "    return _gpCanvas;\n" +
+            "}\n" +
+            "function _gpKeyDown(kc, keyName) {\n" +
+            "    var c = _gpGetCanvas(); if (!c) return;\n" +
+            "    c.dispatchEvent(new KeyboardEvent('keydown', {\n" +
+            "        keyCode: kc, which: kc, code: _keyToCode(keyName),\n" +
+            "        key: _keyToEventKey(keyName), bubbles: true, cancelable: true\n" +
+            "    }));\n" +
+            "}\n" +
+            "function _gpKeyUp(kc, keyName) {\n" +
+            "    var c = _gpGetCanvas(); if (!c) return;\n" +
+            "    c.dispatchEvent(new KeyboardEvent('keyup', {\n" +
+            "        keyCode: kc, which: kc, code: _keyToCode(keyName),\n" +
+            "        key: _keyToEventKey(keyName), bubbles: true, cancelable: true\n" +
+            "    }));\n" +
+            "}\n" +
+            "function _gpVibrate(ms) {\n" +
+            "    if (navigator.vibrate) navigator.vibrate(ms || 12);\n" +
+            "}\n\n" +
+            "var _dpActive = { up: false, down: false, left: false, right: false };\n" +
+            "var _dpKC = { up: [38, 'Up'], down: [40, 'Down'], left: [37, 'Left'], right: [39, 'Right'] };\n\n" +
+            "function gpDpadTouch(e) {\n" +
+            "    e.preventDefault();\n" +
+            "    var dpad = document.getElementById('gp-dpad');\n" +
+            "    var rect = dpad.getBoundingClientRect();\n" +
+            "    var cx = rect.left + rect.width / 2;\n" +
+            "    var cy = rect.top + rect.height / 2;\n" +
+            "    var touch = e.touches[0];\n" +
+            "    var dx = touch.clientX - cx;\n" +
+            "    var dy = touch.clientY - cy;\n" +
+            "    var dist = Math.sqrt(dx * dx + dy * dy);\n" +
+            "    var radius = rect.width / 2;\n" +
+            "    var newState = { up: false, down: false, left: false, right: false };\n" +
+            "    if (dist > radius * 0.15) {\n" +
+            "        var angle = Math.atan2(dy, dx) * (180 / Math.PI);\n" +
+            "        if (angle >= -67.5 && angle < -22.5)  { newState.up = true; newState.right = true; }\n" +
+            "        else if (angle >= -112.5 && angle < -67.5) { newState.up = true; }\n" +
+            "        else if (angle >= -157.5 && angle < -112.5) { newState.up = true; newState.left = true; }\n" +
+            "        else if (angle >= 157.5 || angle < -157.5) { newState.left = true; }\n" +
+            "        else if (angle >= 112.5 && angle < 157.5) { newState.down = true; newState.left = true; }\n" +
+            "        else if (angle >= 67.5 && angle < 112.5) { newState.down = true; }\n" +
+            "        else if (angle >= 22.5 && angle < 67.5) { newState.down = true; newState.right = true; }\n" +
+            "        else { newState.right = true; }\n" +
+            "    }\n" +
+            "    var dirs = ['up', 'down', 'left', 'right'];\n" +
+            "    var changed = false;\n" +
+            "    for (var i = 0; i < dirs.length; i++) {\n" +
+            "        var d = dirs[i];\n" +
+            "        if (newState[d] && !_dpActive[d]) {\n" +
+            "            _gpKeyDown(_dpKC[d][0], _dpKC[d][1]);\n" +
+            "            document.getElementById('dp-' + d).classList.add('active');\n" +
+            "            changed = true;\n" +
+            "        } else if (!newState[d] && _dpActive[d]) {\n" +
+            "            _gpKeyUp(_dpKC[d][0], _dpKC[d][1]);\n" +
+            "            document.getElementById('dp-' + d).classList.remove('active');\n" +
+            "            changed = true;\n" +
+            "        }\n" +
+            "    }\n" +
+            "    if (changed) _gpVibrate(8);\n" +
+            "    _dpActive = newState;\n" +
+            "}\n\n" +
+            "function gpDpadRelease(e) {\n" +
+            "    e.preventDefault();\n" +
+            "    var dirs = ['up', 'down', 'left', 'right'];\n" +
+            "    for (var i = 0; i < dirs.length; i++) {\n" +
+            "        var d = dirs[i];\n" +
+            "        if (_dpActive[d]) {\n" +
+            "            _gpKeyUp(_dpKC[d][0], _dpKC[d][1]);\n" +
+            "            document.getElementById('dp-' + d).classList.remove('active');\n" +
+            "        }\n" +
+            "    }\n" +
+            "    _dpActive = { up: false, down: false, left: false, right: false };\n" +
+            "}\n\n" +
+            "function gpBtnDown(btn, e) {\n" +
+            "    e.preventDefault();\n" +
+            "    var kc = parseInt(btn.dataset.kc);\n" +
+            "    var key = btn.dataset.key;\n" +
+            "    btn.classList.add('active');\n" +
+            "    _gpKeyDown(kc, key);\n" +
+            "    _gpVibrate(15);\n" +
+            "}\n" +
+            "function gpBtnUp(btn, e) {\n" +
+            "    e.preventDefault();\n" +
+            "    var kc = parseInt(btn.dataset.kc);\n" +
+            "    var key = btn.dataset.key;\n" +
+            "    btn.classList.remove('active');\n" +
+            "    _gpKeyUp(kc, key);\n" +
+            "}\n\n" +
+            "function gpSysDown(btn, e) {\n" +
+            "    e.preventDefault();\n" +
+            "    var kc = parseInt(btn.dataset.kc);\n" +
+            "    var key = btn.dataset.key;\n" +
+            "    btn.classList.add('active');\n" +
+            "    _gpKeyDown(kc, key);\n" +
+            "}\n" +
+            "function gpSysUp(btn, e) {\n" +
+            "    e.preventDefault();\n" +
+            "    var kc = parseInt(btn.dataset.kc);\n" +
+            "    var key = btn.dataset.key;\n" +
+            "    btn.classList.remove('active');\n" +
+            "    _gpKeyUp(kc, key);\n" +
+            "}\n";
+
+        return { html: vkbHtml, js: vkbJs + sharedJs };
+    }
+
+    // ---- KEYBOARD LAYOUTS ----
+    var rows;
+    if (layout === 'minimal') {
+        rows = [
+            ['Esc', 'Up', 'Enter', 'Space'],
+            ['Left', 'Down', 'Right', 'Y', 'N'],
+        ];
+    } else if (layout === 'arrows') {
+        rows = [
+            ['Esc', 'F1', 'F2', 'F3', 'F4', 'F5'],
+            ['1', '2', '3', '4', '5', 'Enter'],
+            ['Up', 'Y', 'N', 'Space'],
+            ['Left', 'Down', 'Right', 'Ctrl', 'Alt'],
+        ];
+    } else if (layout === 'adventure') {
+        rows = [
+            ['Esc', 'F1', 'F2', 'F3', 'F4', 'F5', 'F6'],
+            ['1', '2', '3', '4', '5', '6', '7', '8', '9', '0'],
+            ['Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P'],
+            ['A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L', 'Enter'],
+            ['Z', 'X', 'C', 'V', 'B', 'N', 'M', 'Backspace'],
+            ['Shift', 'Space', 'Ctrl', 'Alt', 'Tab'],
+        ];
+    } else {
+        // default
+        rows = [
+            ['Esc', 'F1', 'F2', 'F3', 'F4', 'F5'],
+            ['1', '2', '3', '4', '5', '6', '7', '8', '9', '0'],
+            ['Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P'],
+            ['A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L', 'Enter'],
+            ['Shift', 'Z', 'X', 'C', 'V', 'B', 'N', 'M', 'Backspace'],
+            ['Ctrl', 'Alt', 'Left', 'Up', 'Down', 'Right', 'Space', 'Tab'],
+        ];
+    }
+
+    var buttonsHtml = [];
+    rows.forEach(function(row) {
+        row.forEach(function(key) {
+            var kc = JSDOS_KEYCODES[key] || (key.length === 1 ? key.charCodeAt(0) : 0);
+            var cssClass = '';
+            if (key === 'Space') cssClass = ' class="space"';
+            else if (['Enter','Backspace','Shift','Ctrl','Alt','Tab'].indexOf(key) !== -1) cssClass = ' class="wide"';
+
+            var label = key;
+            if (key === 'Space') label = '\u2423';
+            else if (key === 'Backspace') label = '\u232B';
+            else if (key === 'Enter') label = '\u21B5';
+            else if (key === 'Up') label = '\u25B2';
+            else if (key === 'Down') label = '\u25BC';
+            else if (key === 'Left') label = '\u25C4';
+            else if (key === 'Right') label = '\u25BA';
+            else if (key === 'Tab') label = '\u21E5';
+            else if (key === 'Shift') label = '\u21E7';
+
+            buttonsHtml.push('<button' + cssClass + ' data-kc="' + kc + '" data-key="' + key + '" ' +
+                'ontouchstart="vkbDown(this,event)" ontouchend="vkbUp(this,event)">' +
+                label + '</button>');
+        });
+    });
+
+    var vkbHtml = '<div id="vkb">\n    ' + buttonsHtml.join('\n    ') + '\n</div>';
+
+    var vkbJs = "\n" +
+        "function vkbDown(btn, e) {\n" +
+        "    if (e) e.preventDefault();\n" +
+        "    var kc = parseInt(btn.dataset.kc);\n" +
+        "    var key = btn.dataset.key;\n" +
+        "    if (!kc && !key) return;\n" +
+        "    btn.style.background = 'rgba(0,150,255,0.4)';\n" +
+        "    var canvas = document.getElementById('jsdos');\n" +
+        "    if (!canvas) return;\n" +
+        "    canvas.dispatchEvent(new KeyboardEvent('keydown', {\n" +
+        "        keyCode: kc, which: kc, code: _keyToCode(key),\n" +
+        "        key: _keyToEventKey(key), bubbles: true, cancelable: true\n" +
+        "    }));\n" +
+        "}\n\n" +
+        "function vkbUp(btn, e) {\n" +
+        "    if (e) e.preventDefault();\n" +
+        "    var kc = parseInt(btn.dataset.kc);\n" +
+        "    var key = btn.dataset.key;\n" +
+        "    if (!kc && !key) return;\n" +
+        "    btn.style.background = '';\n" +
+        "    var canvas = document.getElementById('jsdos');\n" +
+        "    if (!canvas) return;\n" +
+        "    canvas.dispatchEvent(new KeyboardEvent('keyup', {\n" +
+        "        keyCode: kc, which: kc, code: _keyToCode(key),\n" +
+        "        key: _keyToEventKey(key), bubbles: true, cancelable: true\n" +
+        "    }));\n" +
+        "}\n";
+
+    return { html: vkbHtml, js: vkbJs + sharedJs };
+}
+
+// ============================================================
+//  HTML Template Generation (port of generate_html)
+// ============================================================
+
+function generateOutputHtml(opts) {
+    // opts: { title, exeName, rootDir, jsdosJs, wdosboxJsB64, wasmB64, gameB64, gameSizeKb, dosboxConfB64, keyboardLayout, accentColor }
+
+    var vkb = generateVirtualKeyboard(opts.keyboardLayout);
+    var accentColor = opts.accentColor || '#00aaff';
+    var title = htmlEscape(opts.title);
+
+    // Build the complete self-contained HTML
+    var html = '<!DOCTYPE html>\n<html lang="en">\n<head>\n' +
+        '<meta charset="utf-8">\n' +
+        '<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no, viewport-fit=cover">\n' +
+        '<meta name="apple-mobile-web-app-capable" content="yes">\n' +
+        '<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">\n' +
+        '<meta name="theme-color" content="#000000">\n' +
+        '<title>' + title + ' \\u2014 DOS</title>\n' +
+        '<style>\n' +
+        '* { margin: 0; padding: 0; box-sizing: border-box; }\n' +
+        'html, body {\n' +
+        '    width: 100%; height: 100%;\n' +
+        '    background: #000;\n' +
+        '    color: #ccc;\n' +
+        '    font-family: -apple-system, BlinkMacSystemFont, \'Segoe UI\', Roboto, sans-serif;\n' +
+        '    overflow: hidden;\n' +
+        '    touch-action: none;\n' +
+        '    -webkit-user-select: none;\n' +
+        '    user-select: none;\n' +
+        '}\n' +
+        '#loading {\n' +
+        '    position: fixed; inset: 0;\n' +
+        '    display: flex; flex-direction: column;\n' +
+        '    align-items: center; justify-content: center;\n' +
+        '    background: #000;\n' +
+        '    z-index: 9999;\n' +
+        '    transition: opacity 0.5s;\n' +
+        '}\n' +
+        '#loading.fade { opacity: 0; pointer-events: none; }\n' +
+        '#loading h1 {\n' +
+        '    font-size: 1.5rem; color: #fff;\n' +
+        '    margin-bottom: 1rem;\n' +
+        '    text-align: center;\n' +
+        '    padding: 0 1rem;\n' +
+        '}\n' +
+        '#loading .subtitle {\n' +
+        '    font-size: 0.85rem; color: #888;\n' +
+        '    margin-bottom: 1.5rem;\n' +
+        '}\n' +
+        '#progress-bar {\n' +
+        '    width: 280px; max-width: 80%;\n' +
+        '    height: 6px; background: #222;\n' +
+        '    border-radius: 3px; overflow: hidden;\n' +
+        '}\n' +
+        '#progress-fill {\n' +
+        '    height: 100%; width: 0%;\n' +
+        '    background: linear-gradient(90deg, ' + accentColor + ', ' + lightenColor(accentColor) + ');\n' +
+        '    border-radius: 3px;\n' +
+        '    transition: width 0.3s;\n' +
+        '}\n' +
+        '#loading-status {\n' +
+        '    margin-top: 0.8rem;\n' +
+        '    font-size: 0.75rem; color: #666;\n' +
+        '}\n' +
+        '#canvas-wrap {\n' +
+        '    position: fixed; inset: 0;\n' +
+        '    display: flex; align-items: center; justify-content: center;\n' +
+        '    background: #000;\n' +
+        '}\n' +
+        '#canvas-wrap canvas {\n' +
+        '    max-width: 100%; max-height: 100%;\n' +
+        '    image-rendering: pixelated;\n' +
+        '    image-rendering: crisp-edges;\n' +
+        '    cursor: default;\n' +
+        '}\n' +
+        '#controls {\n' +
+        '    position: fixed;\n' +
+        '    bottom: 8px; left: 50%;\n' +
+        '    transform: translateX(-50%);\n' +
+        '    z-index: 100;\n' +
+        '    display: flex; align-items: center; gap: 8px;\n' +
+        '    background: rgba(0,0,0,0.75);\n' +
+        '    padding: 6px 14px;\n' +
+        '    border-radius: 20px;\n' +
+        '    backdrop-filter: blur(8px);\n' +
+        '    -webkit-backdrop-filter: blur(8px);\n' +
+        '    transition: opacity 0.3s;\n' +
+        '}\n' +
+        '#controls.hidden { opacity: 0; pointer-events: none; }\n' +
+        '#controls button {\n' +
+        '    background: rgba(255,255,255,0.1);\n' +
+        '    color: #fff;\n' +
+        '    border: 1px solid rgba(255,255,255,0.2);\n' +
+        '    border-radius: 6px;\n' +
+        '    font-size: 0.8rem;\n' +
+        '    padding: 5px 10px;\n' +
+        '    cursor: pointer;\n' +
+        '    white-space: nowrap;\n' +
+        '}\n' +
+        '#controls button:active { background: rgba(255,255,255,0.25); }\n' +
+        '#controls button.active { background: rgba(0,150,255,0.4); border-color: rgba(0,150,255,0.6); }\n' +
+        '#toggle-ctrl {\n' +
+        '    position: fixed; bottom: 8px; right: 8px;\n' +
+        '    z-index: 101;\n' +
+        '    background: rgba(0,0,0,0.5);\n' +
+        '    color: rgba(255,255,255,0.6);\n' +
+        '    border: none; border-radius: 50%;\n' +
+        '    width: 36px; height: 36px;\n' +
+        '    font-size: 1.1rem;\n' +
+        '    cursor: pointer;\n' +
+        '    display: flex; align-items: center; justify-content: center;\n' +
+        '}\n' +
+        // Gamepad CSS
+        '#gamepad {\n' +
+        '    position: fixed; inset: 0; z-index: 99;\n' +
+        '    pointer-events: none;\n' +
+        '    display: none;\n' +
+        '}\n' +
+        '#gamepad.show { display: block; }\n' +
+        '#gp-dpad {\n' +
+        '    position: absolute;\n' +
+        '    bottom: 25px; left: 12px;\n' +
+        '    width: clamp(120px, 28vw, 170px);\n' +
+        '    height: clamp(120px, 28vw, 170px);\n' +
+        '    pointer-events: auto;\n' +
+        '    touch-action: none;\n' +
+        '    border-radius: 50%;\n' +
+        '    background: radial-gradient(circle, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.08) 100%);\n' +
+        '    border: 2px solid rgba(255,255,255,0.1);\n' +
+        '}\n' +
+        '.dp-arrow {\n' +
+        '    position: absolute; display: flex;\n' +
+        '    align-items: center; justify-content: center;\n' +
+        '    color: rgba(255,255,255,0.35);\n' +
+        '    font-size: 1.6rem;\n' +
+        '    transition: color 0.08s, transform 0.08s;\n' +
+        '    pointer-events: none;\n' +
+        '}\n' +
+        '.dp-arrow.active { color: rgba(0,170,255,0.9); transform: scale(1.2); }\n' +
+        '.dp-up    { top: 6px; left: 50%; transform: translateX(-50%); }\n' +
+        '.dp-down  { bottom: 6px; left: 50%; transform: translateX(-50%); }\n' +
+        '.dp-left  { left: 6px; top: 50%; transform: translateY(-50%); }\n' +
+        '.dp-right { right: 6px; top: 50%; transform: translateY(-50%); }\n' +
+        '.dp-up.active    { transform: translateX(-50%) scale(1.2); }\n' +
+        '.dp-down.active  { transform: translateX(-50%) scale(1.2); }\n' +
+        '.dp-left.active  { transform: translateY(-50%) scale(1.2); }\n' +
+        '.dp-right.active { transform: translateY(-50%) scale(1.2); }\n' +
+        '.dp-center {\n' +
+        '    position: absolute; top: 50%; left: 50%;\n' +
+        '    width: 18px; height: 18px;\n' +
+        '    transform: translate(-50%, -50%);\n' +
+        '    border-radius: 50%;\n' +
+        '    background: rgba(255,255,255,0.12);\n' +
+        '    border: 1px solid rgba(255,255,255,0.18);\n' +
+        '    pointer-events: none;\n' +
+        '}\n' +
+        '#gp-actions {\n' +
+        '    position: absolute;\n' +
+        '    bottom: 25px; right: 12px;\n' +
+        '    width: clamp(120px, 28vw, 160px);\n' +
+        '    height: clamp(120px, 28vw, 160px);\n' +
+        '    pointer-events: auto;\n' +
+        '    touch-action: none;\n' +
+        '}\n' +
+        '.gp-btn {\n' +
+        '    position: absolute;\n' +
+        '    width: 52px; height: 52px;\n' +
+        '    border-radius: 50%;\n' +
+        '    background: rgba(255,255,255,0.10);\n' +
+        '    color: rgba(255,255,255,0.55);\n' +
+        '    border: 2px solid rgba(255,255,255,0.15);\n' +
+        '    font-size: 0.75rem; font-weight: 700;\n' +
+        '    font-family: -apple-system, BlinkMacSystemFont, sans-serif;\n' +
+        '    display: flex; align-items: center; justify-content: center;\n' +
+        '    pointer-events: auto; touch-action: none;\n' +
+        '    transition: background 0.08s, border-color 0.08s, color 0.08s;\n' +
+        '    -webkit-user-select: none; user-select: none;\n' +
+        '}\n' +
+        '.gp-btn.active {\n' +
+        '    background: rgba(0,150,255,0.45);\n' +
+        '    border-color: rgba(0,170,255,0.7);\n' +
+        '    color: #fff;\n' +
+        '}\n' +
+        '.gp-btn.btn-a { bottom: 0; left: 50%; transform: translateX(-50%); }\n' +
+        '.gp-btn.btn-b { left: 0; top: 50%; transform: translateY(-50%); }\n' +
+        '.gp-btn.btn-x { right: 0; top: 50%; transform: translateY(-50%); }\n' +
+        '.gp-btn.btn-y { top: 0; left: 50%; transform: translateX(-50%); }\n' +
+        '#gp-sysbar {\n' +
+        '    position: absolute;\n' +
+        '    bottom: 6px; left: 50%;\n' +
+        '    transform: translateX(-50%);\n' +
+        '    display: flex; gap: 5px;\n' +
+        '    pointer-events: auto; touch-action: none;\n' +
+        '    background: rgba(0,0,0,0.5);\n' +
+        '    border-radius: 12px; padding: 3px 6px;\n' +
+        '}\n' +
+        '#gp-sysbar button {\n' +
+        '    min-width: 32px; height: 28px;\n' +
+        '    background: rgba(255,255,255,0.08);\n' +
+        '    color: rgba(255,255,255,0.45);\n' +
+        '    border: 1px solid rgba(255,255,255,0.1);\n' +
+        '    border-radius: 5px;\n' +
+        '    font-size: 0.6rem; font-family: monospace;\n' +
+        '    display: flex; align-items: center; justify-content: center;\n' +
+        '    -webkit-user-select: none; user-select: none;\n' +
+        '    touch-action: none;\n' +
+        '}\n' +
+        '#gp-sysbar button:active,\n' +
+        '#gp-sysbar button.active {\n' +
+        '    background: rgba(0,150,255,0.35);\n' +
+        '    color: #fff;\n' +
+        '}\n' +
+        '#vkb {\n' +
+        '    position: fixed;\n' +
+        '    bottom: 50px; left: 50%;\n' +
+        '    transform: translateX(-50%);\n' +
+        '    z-index: 99;\n' +
+        '    display: none;\n' +
+        '    flex-wrap: wrap;\n' +
+        '    justify-content: center;\n' +
+        '    gap: 4px;\n' +
+        '    padding: 8px;\n' +
+        '    background: rgba(0,0,0,0.88);\n' +
+        '    border-radius: 12px;\n' +
+        '    backdrop-filter: blur(8px);\n' +
+        '    max-width: 98vw;\n' +
+        '}\n' +
+        '#vkb.show { display: flex; }\n' +
+        '#vkb button {\n' +
+        '    min-width: 40px; height: 40px;\n' +
+        '    background: rgba(255,255,255,0.12);\n' +
+        '    color: #fff;\n' +
+        '    border: 1px solid rgba(255,255,255,0.15);\n' +
+        '    border-radius: 6px;\n' +
+        '    font-size: 0.8rem;\n' +
+        '    font-family: monospace;\n' +
+        '    cursor: pointer;\n' +
+        '    display: flex; align-items: center; justify-content: center;\n' +
+        '    -webkit-user-select: none; user-select: none;\n' +
+        '    touch-action: none;\n' +
+        '}\n' +
+        '#vkb button:active { background: rgba(255,255,255,0.3); }\n' +
+        '#vkb button.wide { min-width: 64px; }\n' +
+        '#vkb button.space { min-width: 100px; }\n' +
+        '@media (max-width: 600px) {\n' +
+        '    .gp-btn { width: 48px; height: 48px; font-size: 0.7rem; }\n' +
+        '    #vkb button { min-width: 36px; height: 36px; font-size: 0.7rem; }\n' +
+        '    #vkb button.wide { min-width: 54px; }\n' +
+        '}\n' +
+        '#error-screen {\n' +
+        '    display: none;\n' +
+        '    position: fixed; inset: 0;\n' +
+        '    background: #1a0000;\n' +
+        '    color: #ff6666;\n' +
+        '    padding: 2rem;\n' +
+        '    z-index: 10000;\n' +
+        '    text-align: center;\n' +
+        '    justify-content: center;\n' +
+        '    align-items: center;\n' +
+        '    flex-direction: column;\n' +
+        '}\n' +
+        '#error-screen h2 { margin-bottom: 1rem; }\n' +
+        '#error-screen pre {\n' +
+        '    background: #220000;\n' +
+        '    padding: 1rem;\n' +
+        '    border-radius: 8px;\n' +
+        '    max-width: 90%;\n' +
+        '    overflow: auto;\n' +
+        '    font-size: 0.8rem;\n' +
+        '    text-align: left;\n' +
+        '}\n' +
+        '</style>\n' +
+        '</head>\n<body>\n\n';
+
+    // Loading screen
+    html += '<div id="loading">\n' +
+        '    <h1>\\uD83D\\uDDA5\\uFE0F ' + title + '</h1>\n' +
+        '    <div class="subtitle">DOS \\u2022 js-dos ' + JSDOS_VERSION + '</div>\n' +
+        '    <div id="progress-bar"><div id="progress-fill"></div></div>\n' +
+        '    <div id="loading-status">Initializing...</div>\n' +
+        '</div>\n\n';
+
+    // Error screen
+    html += '<div id="error-screen">\n' +
+        '    <h2>\\u26A0\\uFE0F Emulator Error</h2>\n' +
+        '    <pre id="error-detail"></pre>\n' +
+        '    <p style="margin-top:1rem;color:#999;font-size:0.8rem">\n' +
+        '        Try refreshing the page or using a different browser (Chrome/Edge recommended).\n' +
+        '    </p>\n' +
+        '</div>\n\n';
+
+    // Canvas
+    html += '<div id="canvas-wrap">\n' +
+        '    <canvas id="jsdos" tabindex="0"></canvas>\n' +
+        '</div>\n\n';
+
+    // Controls overlay
+    html += '<div id="controls">\n' +
+        '    <button id="btn-fs" onclick="toggleFullscreen()" title="Fullscreen">\\u26F6</button>\n' +
+        '    <button id="btn-vkb" onclick="toggleVKB()" title="Virtual Keyboard">\\u2328\\uFE0F</button>\n' +
+        '    <button id="btn-mute" onclick="toggleMute()" title="Mute/Unmute">\\uD83D\\uDD0A</button>\n' +
+        '    <button id="btn-pause" onclick="togglePause()" title="Pause/Resume">\\u23F8\\uFE0F</button>\n' +
+        '</div>\n' +
+        '<button id="toggle-ctrl" onclick="document.getElementById(\'controls\').classList.toggle(\'hidden\')" title="Toggle Controls">\\uD83C\\uDFAE</button>\n\n';
+
+    // Virtual keyboard/gamepad
+    html += vkb.html + '\n\n';
+
+    // js-dos library (inline)
+    html += '<scr' + 'ipt>\n' + opts.jsdosJs + '\n</' + 'script>\n\n';
+
+    // Boot sequence
+    html += '<scr' + 'ipt>\n';
+    html += 'var GAME_TITLE = ' + JSON.stringify(opts.title) + ';\n';
+    html += 'var EXE_NAME = ' + JSON.stringify(opts.exeName) + ';\n';
+    html += 'var ROOT_DIR = ' + JSON.stringify(opts.rootDir || '') + ';\n\n';
+    html += 'var WASM_B64 = "' + opts.wasmB64 + '";\n';
+    html += 'var WDOSBOX_JS_B64 = "' + opts.wdosboxJsB64 + '";\n';
+    html += 'var GAME_B64 = "' + opts.gameB64 + '";\n';
+    html += 'var DOSBOX_CONF_B64 = "' + opts.dosboxConfB64 + '";\n\n';
+
+    // UI helpers
+    html += 'function setProgress(pct, msg) {\n' +
+        '    var fill = document.getElementById("progress-fill");\n' +
+        '    var status = document.getElementById("loading-status");\n' +
+        '    if (fill) fill.style.width = pct + "%";\n' +
+        '    if (status) status.textContent = msg;\n' +
+        '}\n\n';
+
+    html += 'function showError(msg) {\n' +
+        '    var screen = document.getElementById("error-screen");\n' +
+        '    var detail = document.getElementById("error-detail");\n' +
+        '    if (detail) detail.textContent = msg;\n' +
+        '    if (screen) screen.style.display = "flex";\n' +
+        '    var loading = document.getElementById("loading");\n' +
+        '    if (loading) loading.style.display = "none";\n' +
+        '}\n\n';
+
+    html += 'function hideLoading() {\n' +
+        '    var el = document.getElementById("loading");\n' +
+        '    if (el) {\n' +
+        '        el.classList.add("fade");\n' +
+        '        setTimeout(function() { el.style.display = "none"; }, 600);\n' +
+        '    }\n' +
+        '}\n\n';
+
+    html += 'function b64toBytes(b64) {\n' +
+        '    var raw = atob(b64);\n' +
+        '    var len = raw.length;\n' +
+        '    var arr = new Uint8Array(len);\n' +
+        '    for (var i = 0; i < len; i++) arr[i] = raw.charCodeAt(i);\n' +
+        '    return arr;\n' +
+        '}\n\n';
+
+    // Main boot sequence
+    html += '(async function() {\n' +
+        '    try {\n' +
+        '        setProgress(10, "Decoding WASM engine...");\n' +
+        '        var wasmBytes = b64toBytes(WASM_B64);\n' +
+        '        WASM_B64 = null;\n' +
+        '        console.log("WASM decoded:", wasmBytes.length, "bytes");\n\n' +
+        '        setProgress(25, "Compiling WebAssembly...");\n' +
+        '        var wasmModule = await WebAssembly.compile(wasmBytes.buffer);\n' +
+        '        wasmBytes = null;\n' +
+        '        console.log("WASM compiled");\n\n' +
+        '        setProgress(35, "Setting up emulator...");\n' +
+        '        window.exports = window.exports || {};\n' +
+        '        window.exports.instantiateWasm = function(info, receiveInstance) {\n' +
+        '            WebAssembly.instantiate(wasmModule, info).then(function(instance) {\n' +
+        '                receiveInstance(instance, wasmModule);\n' +
+        '            });\n' +
+        '        };\n\n' +
+        '        setProgress(45, "Loading DOSBox engine...");\n' +
+        '        var wdosboxJsCode = new TextDecoder().decode(b64toBytes(WDOSBOX_JS_B64));\n' +
+        '        WDOSBOX_JS_B64 = null;\n' +
+        '        eval.call(window, wdosboxJsCode);\n' +
+        '        wdosboxJsCode = null;\n' +
+        '        console.log("WDOSBOX loaded, exports.WDOSBOX:", typeof window.exports.WDOSBOX);\n\n' +
+        '        setProgress(60, "Decoding game data (' + opts.gameSizeKb + ' KB)...");\n' +
+        '        var gameBytes = b64toBytes(GAME_B64);\n' +
+        '        GAME_B64 = null;\n' +
+        '        var gameBlob = new Blob([gameBytes], { type: "application/zip" });\n' +
+        '        var gameUrl = URL.createObjectURL(gameBlob);\n' +
+        '        gameBytes = null;\n' +
+        '        console.log("Game blob URL ready");\n\n' +
+        '        var confText = new TextDecoder().decode(b64toBytes(DOSBOX_CONF_B64));\n' +
+        '        DOSBOX_CONF_B64 = null;\n\n' +
+        '        setProgress(75, "Starting DOSBox...");\n' +
+        '        var canvas = document.getElementById("jsdos");\n' +
+        '        canvas.focus();\n\n' +
+        '        Dos(canvas).ready(function(fs, main) {\n' +
+        '            setProgress(85, "Extracting game files...");\n' +
+        '            fs.createFile("/dosbox.conf", confText);\n' +
+        '            console.log("dosbox.conf written");\n\n' +
+        '            fs.extract(gameUrl).then(function() {\n' +
+        '                setProgress(95, "Launching " + EXE_NAME + "...");\n' +
+        '                URL.revokeObjectURL(gameUrl);\n' +
+        '                console.log("Game extracted, launching:", EXE_NAME);\n\n' +
+        '                var args = ["-conf", "/dosbox.conf",\n' +
+        '                            "-c", "mount c /",\n' +
+        '                            "-c", "c:"];\n' +
+        '                if (ROOT_DIR) {\n' +
+        '                    args.push("-c", "cd " + ROOT_DIR);\n' +
+        '                }\n' +
+        '                args.push("-c", "cls");\n' +
+        '                args.push("-c", EXE_NAME);\n' +
+        '                console.log("DOSBox args:", args);\n\n' +
+        '                main(args).then(function(ci) {\n' +
+        '                    hideLoading();\n' +
+        '                    console.log("DOSBox running!");\n' +
+        '                    window._ci = ci;\n' +
+        '                    canvas.focus();\n' +
+        '                    canvas.addEventListener("click", function() { canvas.focus(); });\n' +
+        '                }).catch(function(err) {\n' +
+        '                    console.error("Main launch error:", err);\n' +
+        '                    hideLoading();\n' +
+        '                });\n' +
+        '            }).catch(function(err) {\n' +
+        '                showError("Failed to extract game files:\\n" + err);\n' +
+        '            });\n' +
+        '        });\n\n' +
+        '    } catch(err) {\n' +
+        '        console.error("Boot error:", err);\n' +
+        '        showError("Emulator initialization failed:\\n" + err.message + "\\n\\n" + err.stack);\n' +
+        '    }\n' +
+        '})();\n\n';
+
+    // Controls
+    html += 'var isMuted = false;\n' +
+        'var isPaused = false;\n\n' +
+        'function toggleFullscreen() {\n' +
+        '    if (!document.fullscreenElement) {\n' +
+        '        (document.documentElement.requestFullscreen ||\n' +
+        '         document.documentElement.webkitRequestFullscreen ||\n' +
+        '         function(){}).call(document.documentElement);\n' +
+        '    } else {\n' +
+        '        (document.exitFullscreen || document.webkitExitFullscreen || function(){}).call(document);\n' +
+        '    }\n' +
+        '}\n\n' +
+        'function toggleMute() {\n' +
+        '    isMuted = !isMuted;\n' +
+        '    var btn = document.getElementById("btn-mute");\n' +
+        '    btn.textContent = isMuted ? "\\uD83D\\uDD07" : "\\uD83D\\uDD0A";\n' +
+        '    if (window.Module && window.Module.SDL2 && window.Module.SDL2.audioContext) {\n' +
+        '        if (isMuted) window.Module.SDL2.audioContext.suspend();\n' +
+        '        else window.Module.SDL2.audioContext.resume();\n' +
+        '    }\n' +
+        '}\n\n' +
+        'function togglePause() {\n' +
+        '    isPaused = !isPaused;\n' +
+        '    var btn = document.getElementById("btn-pause");\n' +
+        '    btn.textContent = isPaused ? "\\u25B6\\uFE0F" : "\\u23F8\\uFE0F";\n' +
+        '    if (window._ci) {\n' +
+        '        if (isPaused) window._ci.exit();\n' +
+        '    }\n' +
+        '}\n\n' +
+        'function toggleVKB() {\n' +
+        '    var gp = document.getElementById("gamepad");\n' +
+        '    var vkb = document.getElementById("vkb");\n' +
+        '    var target = gp || vkb;\n' +
+        '    if (!target) return;\n' +
+        '    target.classList.toggle("show");\n' +
+        '    var btn = document.getElementById("btn-vkb");\n' +
+        '    if (btn) btn.classList.toggle("active", target.classList.contains("show"));\n' +
+        '}\n\n' +
+        '(function() {\n' +
+        '    var isTouchDevice = ("ontouchstart" in window) || (navigator.maxTouchPoints > 0);\n' +
+        '    if (isTouchDevice) {\n' +
+        '        var checkReady = setInterval(function() {\n' +
+        '            var loading = document.getElementById("loading");\n' +
+        '            if (loading && loading.style.display === "none") {\n' +
+        '                clearInterval(checkReady);\n' +
+        '                toggleVKB();\n' +
+        '            }\n' +
+        '        }, 500);\n' +
+        '        setTimeout(function() {\n' +
+        '            clearInterval(checkReady);\n' +
+        '            var gp = document.getElementById("gamepad");\n' +
+        '            var vkb = document.getElementById("vkb");\n' +
+        '            var target = gp || vkb;\n' +
+        '            if (target && !target.classList.contains("show")) toggleVKB();\n' +
+        '        }, 10000);\n' +
+        '    }\n' +
+        '})()\n\n';
+
+    // Virtual keyboard/gamepad JS
+    html += vkb.js + '\n';
+
+    html += '</' + 'script>\n</body>\n</html>';
+
+    return html;
+}
+
+// Helper to lighten a color slightly for gradients
+function lightenColor(hex) {
+    hex = hex.replace('#', '');
+    var r = parseInt(hex.substring(0, 2), 16);
+    var g = parseInt(hex.substring(2, 4), 16);
+    var b = parseInt(hex.substring(4, 6), 16);
+    r = Math.min(255, r + 60);
+    g = Math.min(255, g + 60);
+    b = Math.min(255, b + 60);
+    return '#' + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
+}
+
+// ============================================================
+//  DOM References
+// ============================================================
+const $ = id => document.getElementById(id);
+const dropzone = $('dropzone');
+const zipInput = $('zip-input');
+const fileInfoEl = $('file-info');
+const optionsCard = $('options-card');
+const exeSelect = $('exe-select');
+const titleInput = $('title-input');
+const cyclesSelect = $('cycles-select');
+const memorySelect = $('memory-select');
+const soundSelect = $('sound-select');
+const keyboardSelect = $('keyboard-select');
+const colorInput = $('color-input');
+const colorHex = $('color-hex');
+const outputInput = $('output-input');
+const generateBtn = $('generate-btn');
+const progressSection = $('progress-section');
+const progressFill = $('progress-fill');
+const progressSteps = $('progress-steps');
+const downloadSection = $('download-section');
+const downloadBtn = $('download-btn');
+const downloadInfo = $('download-info');
+const errorBanner = $('error-banner');
+
+let selectedFile = null;
+let currentZipInfo = null;
+let generatedBlobUrl = null;
+let generatedFilename = '';
+
+// ============================================================
+//  Tab Navigation
+// ============================================================
+document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+        btn.classList.add('active');
+        $('tab-' + btn.dataset.tab).classList.add('active');
+    });
+});
+
+// ============================================================
+//  File Selection (Drag & Drop + Click)
+// ============================================================
+dropzone.addEventListener('click', () => zipInput.click());
+dropzone.querySelector('.dropzone-btn').addEventListener('click', e => {
+    e.stopPropagation();
+    zipInput.click();
+});
+
+dropzone.addEventListener('dragover', e => { e.preventDefault(); dropzone.classList.add('dragover'); });
+dropzone.addEventListener('dragleave', () => dropzone.classList.remove('dragover'));
+dropzone.addEventListener('drop', e => {
+    e.preventDefault();
+    dropzone.classList.remove('dragover');
+    if (e.dataTransfer.files.length > 0) {
+        var file = e.dataTransfer.files[0];
+        if (file.name.toLowerCase().endsWith('.zip')) {
+            handleFile(file);
+        } else {
+            showError('Seuls les fichiers .zip sont acceptés.');
+        }
+    }
+});
+zipInput.addEventListener('change', () => {
+    if (zipInput.files.length > 0) handleFile(zipInput.files[0]);
+});
+
+async function handleFile(file) {
+    selectedFile = file;
+    hideError();
+    hideDownload();
+
+    // Update drop zone appearance
+    dropzone.classList.add('has-file');
+    dropzone.querySelector('.dropzone-icon').textContent = '✅';
+    dropzone.querySelector('.dropzone-text').textContent = file.name;
+    dropzone.querySelector('.dropzone-hint').textContent = formatSize(file.size);
+    dropzone.querySelector('.dropzone-btn').textContent = 'Changer de fichier';
+
+    // Analyze ZIP
+    try {
+        currentZipInfo = await analyzeZip(file);
+
+        // Show file info
+        $('info-name').textContent = file.name;
+        $('info-size').textContent = formatSize(file.size);
+        $('info-count').textContent = currentZipInfo.fileCount + ' fichiers';
+
+        // Detected executable
+        var detectedExe = detectExecutable(currentZipInfo);
+        if (detectedExe) {
+            $('info-exe').innerHTML = '<span class="badge badge-success">' + detectedExe + '</span>';
+        } else {
+            $('info-exe').innerHTML = '<span class="badge badge-warning">Non détecté — choisissez manuellement</span>';
+        }
+
+        // Root directory
+        if (currentZipInfo.rootDir) {
+            $('info-root').textContent = currentZipInfo.rootDir + '/';
+        } else {
+            $('info-root').textContent = '— (racine)';
+        }
+
+        fileInfoEl.classList.add('visible');
+
+        // Populate executable dropdown
+        exeSelect.innerHTML = '<option value="">— Auto-détection —</option>';
+        currentZipInfo.executables.forEach(function(exe) {
+            var opt = document.createElement('option');
+            opt.value = exe.basename;
+            opt.textContent = exe.path + ' (' + formatSize(exe.size) + ')';
+            if (exe === currentZipInfo.executables[0]) {
+                opt.textContent += ' ★';
+            }
+            exeSelect.appendChild(opt);
+        });
+        // Add manual input option
+        var manualOpt = document.createElement('option');
+        manualOpt.value = '__manual__';
+        manualOpt.textContent = '✏️ Saisir manuellement...';
+        exeSelect.appendChild(manualOpt);
+
+        // Auto-fill title
+        titleInput.value = cleanTitle(file.name);
+
+        // Auto-fill output
+        var baseName = file.name.lastIndexOf('.') !== -1 ? file.name.substring(0, file.name.lastIndexOf('.')) : file.name;
+        outputInput.value = baseName + '.html';
+
+        // Show options card
+        optionsCard.style.display = '';
+
+        // Enable generate button
+        generateBtn.disabled = false;
+
+    } catch(err) {
+        console.error('ZIP analysis error:', err);
+        showError('Erreur lors de l\'analyse du ZIP : ' + err.message);
+        fileInfoEl.classList.remove('visible');
+        optionsCard.style.display = 'none';
+        generateBtn.disabled = true;
+    }
+}
+
+// Manual exe input handling
+exeSelect.addEventListener('change', function() {
+    if (exeSelect.value === '__manual__') {
+        var input = prompt('Nom de l\'exécutable DOS (ex: GAME.EXE) :');
+        if (input && input.trim()) {
+            var opt = document.createElement('option');
+            opt.value = input.trim().toUpperCase();
+            opt.textContent = input.trim().toUpperCase() + ' (manuel)';
+            exeSelect.insertBefore(opt, exeSelect.lastChild);
+            exeSelect.value = opt.value;
+        } else {
+            exeSelect.value = '';
+        }
+    }
+});
+
+// ============================================================
+//  Color Picker
+// ============================================================
+colorInput.addEventListener('input', () => {
+    colorHex.textContent = colorInput.value.toUpperCase();
+});
+
+// ============================================================
+//  Progress & Error Helpers
+// ============================================================
+function setStep(stepName, state) {
+    var step = progressSteps.querySelector('[data-step="' + stepName + '"]');
+    if (!step) return;
+    step.className = 'progress-step ' + state;
+    var icon = step.querySelector('.step-icon');
+    if (state === 'active') icon.textContent = '⏳';
+    else if (state === 'done') icon.textContent = '✅';
+    else if (state === 'error') icon.textContent = '❌';
+}
+function setProgress(pct) {
+    progressFill.style.width = pct + '%';
+}
+function showError(msg) {
+    errorBanner.textContent = msg;
+    errorBanner.classList.add('visible');
+}
+function hideError() { errorBanner.classList.remove('visible'); }
+function hideDownload() {
+    downloadSection.classList.remove('visible');
+    if (generatedBlobUrl) { URL.revokeObjectURL(generatedBlobUrl); generatedBlobUrl = null; }
+}
+function resetProgress() {
+    progressSteps.querySelectorAll('.progress-step').forEach(s => {
+        s.className = 'progress-step';
+        s.querySelector('.step-icon').textContent = '⏳';
+    });
+    setProgress(0);
+}
+
+// ============================================================
+//  GENERATE
+// ============================================================
+generateBtn.addEventListener('click', async () => {
+    if (!selectedFile || !currentZipInfo) return;
+    hideError();
+    hideDownload();
+    resetProgress();
+    progressSection.classList.add('visible');
+    generateBtn.disabled = true;
+
+    try {
+        // Step 1: Read ZIP file
+        setStep('zip', 'active');
+        setProgress(5);
+        var gameBuffer = await selectedFile.arrayBuffer();
+        var gameB64 = arrayBufferToBase64(gameBuffer);
+        var gameSizeKb = Math.round(gameBuffer.byteLength / 1024);
+        setStep('zip', 'done');
+        setProgress(15);
+
+        // Step 2: Analyze executables
+        setStep('analyze', 'active');
+        var exeName = exeSelect.value;
+        if (!exeName || exeName === '__manual__') {
+            exeName = detectExecutable(currentZipInfo);
+        }
+        if (!exeName) {
+            throw new Error('Aucun exécutable trouvé. Veuillez en sélectionner un manuellement.');
+        }
+        var title = titleInput.value.trim() || cleanTitle(selectedFile.name);
+        var cycles = cyclesSelect.value;
+        var memory = parseInt(memorySelect.value);
+        var sound = soundSelect.value;
+        var keyboardLayout = keyboardSelect.value;
+        var accentColor = colorInput.value;
+        var outputName = outputInput.value.trim() || (selectedFile.name.replace(/\.[^.]+$/, '') + '.html');
+        setStep('analyze', 'done');
+        setProgress(25);
+
+        // Step 3: Fetch js-dos engine
+        setStep('engine', 'active');
+        var jsdosJs = await fetchAsset('js-dos.js', true);
+        setProgress(35);
+        var wdosboxJs = await fetchAsset('wdosbox.js', false);
+        setProgress(45);
+        var wdosboxWasm = await fetchAsset('wdosbox.wasm.js', false);
+        setProgress(55);
+        var wdosboxJsB64 = arrayBufferToBase64(wdosboxJs instanceof ArrayBuffer ? wdosboxJs : wdosboxJs);
+        var wasmB64 = arrayBufferToBase64(wdosboxWasm instanceof ArrayBuffer ? wdosboxWasm : wdosboxWasm);
+        setStep('engine', 'done');
+        setProgress(60);
+
+        // Step 4: Generate DOSBox config
+        setStep('config', 'active');
+        var dosboxConf = generateDosboxConf(exeName, cycles, memory, sound);
+        // Encode config to base64
+        var confBytes = new TextEncoder().encode(dosboxConf);
+        var dosboxConfB64 = arrayBufferToBase64(confBytes.buffer);
+        setStep('config', 'done');
+        setProgress(70);
+
+        // Step 5: Assemble HTML
+        setStep('build', 'active');
+        var html = generateOutputHtml({
+            title: title,
+            exeName: exeName,
+            rootDir: currentZipInfo.rootDir || '',
+            jsdosJs: jsdosJs,
+            wdosboxJsB64: wdosboxJsB64,
+            wasmB64: wasmB64,
+            gameB64: gameB64,
+            gameSizeKb: gameSizeKb,
+            dosboxConfB64: dosboxConfB64,
+            keyboardLayout: keyboardLayout,
+            accentColor: accentColor,
+        });
+
+        // Free memory
+        gameB64 = null;
+        wasmB64 = null;
+        wdosboxJsB64 = null;
+
+        setStep('build', 'done');
+        setProgress(90);
+
+        // Step 6: Create download
+        setStep('done', 'done');
+        setProgress(100);
+
+        var blob = new Blob([html], { type: 'text/html;charset=utf-8' });
+        html = null; // free memory
+        if (generatedBlobUrl) URL.revokeObjectURL(generatedBlobUrl);
+        generatedBlobUrl = URL.createObjectURL(blob);
+        generatedFilename = outputName;
+
+        downloadBtn.textContent = '💾 Télécharger ' + outputName;
+        downloadInfo.textContent = 'DOS • ' + title + ' • ' + formatSize(blob.size) + ' • 🛡️ 100% hors-ligne • js-dos ' + JSDOS_VERSION;
+        downloadSection.classList.add('visible');
+
+    } catch(err) {
+        console.error(err);
+        progressSteps.querySelectorAll('.progress-step.active').forEach(s => {
+            s.className = 'progress-step error';
+            s.querySelector('.step-icon').textContent = '❌';
+        });
+        showError('❌ Erreur : ' + err.message);
+    } finally {
+        generateBtn.disabled = false;
+    }
+});
+
+// ============================================================
+//  Download
+// ============================================================
+downloadBtn.addEventListener('click', () => {
+    if (!generatedBlobUrl) return;
+    var a = document.createElement('a');
+    a.href = generatedBlobUrl;
+    a.download = generatedFilename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+});
+</script>
+
+</body>
+</html>
