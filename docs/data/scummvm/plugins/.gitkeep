@@ -1,0 +1,3 @@
+# Engine plugins (.so files) go here.
+# Run download_scummvm_assets.py --plugins-only to fetch them.
+# These are ignored by .gitignore (*.so rule) due to their size (~320 MB).
