@@ -41,9 +41,9 @@ Retro games are disappearing. Hardware fails. Websites go offline. Flash died. J
 
 ## 🖥️ Supported Platforms
 
-### 🌐 Universal Packer — 41 Console, Computer & Arcade Systems
+### 🌐 Universal Packer — 42 Console, Computer & Arcade Systems
 
-The **Universal Packer** (`packers/universal/pack_game.py`) supports **41 retro systems** with a single script, zero pip dependencies:
+The **Universal Packer** (`packers/universal/pack_game.py`) supports **42 retro systems** with a single script, zero pip dependencies:
 
 | Category | Systems |
 |----------|---------|
