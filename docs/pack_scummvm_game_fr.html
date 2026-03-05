@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="fr">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -347,12 +347,12 @@ a:hover { text-decoration: underline; }
 <!-- ── Navigation Bar ── -->
 <!-- Top Navigation -->
 <div class="top-nav">
-    <a href="pack_game_en.html">🕹️ Retro Game Packer</a>
-    <a href="pack_dos_game_en.html">🖥️ DOS Packer</a>
-    <a href="pack_scummvm_game_en.html" class="active">🎮 ScummVM Packer</a>
+    <a href="pack_game_fr.html">🕹️ Retro Game Packer</a>
+    <a href="pack_dos_game_fr.html">🖥️ DOS Packer</a>
+    <a href="pack_scummvm_game_fr.html" class="active">🎮 ScummVM Packer</a>
     <div class="lang-switch">
-      <a href="pack_scummvm_game_fr.html" title="Français">🇫🇷</a>
-      <a href="pack_scummvm_game_en.html" class="active" title="English">🇬🇧</a>
+      <a href="pack_scummvm_game_fr.html" class="active" title="Français">🇫🇷</a>
+      <a href="pack_scummvm_game_en.html" title="English">🇬🇧</a>
     </div>
 </div>
 
@@ -360,14 +360,14 @@ a:hover { text-decoration: underline; }
 <div class="container">
     <div class="hero">
         <h1><span class="emoji">🎮</span> ScummVM Packer</h1>
-        <p>Pack classic point-and-click adventure games into a single offline HTML file powered by ScummVM WASM.</p>
+        <p>Empaquetez vos jeux d’aventure point-and-click classiques dans un fichier HTML autonome propulsé par ScummVM WASM.</p>
     </div>
 
     <!-- Tabs -->
     <div class="tabs">
         <button class="tab-btn active" data-tab="packer">⚡ Packer</button>
-        <button class="tab-btn" data-tab="engines">📋 Engines</button>
-        <button class="tab-btn" data-tab="about">ℹ️ About</button>
+        <button class="tab-btn" data-tab="engines">📋 Moteurs</button>
+        <button class="tab-btn" data-tab="about">ℹ️ À propos</button>
     </div>
 
     <!-- ═══════ Tab: Packer ═══════ -->
@@ -375,20 +375,20 @@ a:hover { text-decoration: underline; }
 
         <!-- Step 1: Game Files -->
         <div class="card">
-            <h2><span class="step-num">1</span> Game Files</h2>
+            <h2><span class="step-num">1</span> Fichiers du jeu</h2>
             <div class="dropzone" id="dropzone">
                 <div class="icon">📂</div>
-                <div class="label">Drop a game folder here or click to browse</div>
-                <div class="sublabel">Select the folder containing your ScummVM game files</div>
+                <div class="label">Déposez un dossier de jeu ici ou cliquez pour parcourir</div>
+                <div class="sublabel">Sélectionnez le dossier contenant les fichiers de votre jeu ScummVM</div>
                 <input type="file" id="folder-input" webkitdirectory multiple>
             </div>
             <div class="file-info" id="file-info">
                 <div class="meta">
-                    <div class="meta-item"><span class="lbl">Files:</span> <span class="val" id="fi-count">0</span></div>
-                    <div class="meta-item"><span class="lbl">Size:</span> <span class="val" id="fi-size">0 KB</span></div>
-                    <div class="meta-item"><span class="lbl">Engine:</span> <span class="val" id="fi-engine">—</span></div>
+                    <div class="meta-item"><span class="lbl">Fichiers :</span> <span class="val" id="fi-count">0</span></div>
+                    <div class="meta-item"><span class="lbl">Taille :</span> <span class="val" id="fi-size">0 KB</span></div>
+                    <div class="meta-item"><span class="lbl">Moteur :</span> <span class="val" id="fi-engine">—</span></div>
                 </div>
-                <button class="file-list-toggle" id="file-list-toggle">Show file list ▾</button>
+                <button class="file-list-toggle" id="file-list-toggle">Voir la liste des fichiers ▾</button>
                 <div class="file-list" id="file-list"></div>
             </div>
         </div>
@@ -398,10 +398,10 @@ a:hover { text-decoration: underline; }
             <h2><span class="step-num">2</span> Options</h2>
             <div class="option-row">
                 <div class="option-group">
-                    <label for="engine-select">Engine</label>
+                    <label for="engine-select">Moteur</label>
                     <select id="engine-select">
-                        <option value="auto">🔍 Auto-detect</option>
-                        <optgroup label="── Popular / Classic ──">
+                        <option value="auto">🔍 Auto-détection</option>
+                        <optgroup label="── Populaires / Classiques ──">
                             <option value="scumm">scumm – SCUMM (LucasArts)</option>
                             <option value="sci">sci – Sierra SCI</option>
                             <option value="agi">agi – Sierra AGI</option>
@@ -432,7 +432,7 @@ a:hover { text-decoration: underline; }
                             <option value="ags">ags – Adventure Game Studio</option>
                             <option value="director">director – Macromedia Director</option>
                         </optgroup>
-                        <optgroup label="── Other Engines ──">
+                        <optgroup label="── Autres moteurs ──">
                             <option value="access">access – Access</option>
                             <option value="adl">adl – ADL</option>
                             <option value="asylum">asylum – Asylum</option>
@@ -508,45 +508,45 @@ a:hover { text-decoration: underline; }
             </div>
             <div class="option-row">
                 <div class="option-group">
-                    <label for="game-title">Game Title</label>
-                    <input type="text" id="game-title" placeholder="e.g. Day of the Tentacle">
+                    <label for="game-title">Titre du jeu</label>
+                    <input type="text" id="game-title" placeholder="ex. Day of the Tentacle">
                 </div>
                 <div class="option-group">
-                    <label for="output-filename">Output Filename</label>
-                    <input type="text" id="output-filename" placeholder="e.g. day-of-the-tentacle.html">
+                    <label for="output-filename">Nom du fichier</label>
+                    <input type="text" id="output-filename" placeholder="ex. day-of-the-tentacle.html">
                 </div>
             </div>
         </div>
 
         <!-- Step 3: Generate -->
         <div class="card">
-            <h2><span class="step-num">3</span> Generate</h2>
-            <button class="generate-btn" id="generate-btn" disabled>🎮 Generate Standalone HTML</button>
+            <h2><span class="step-num">3</span> Générer</h2>
+            <button class="generate-btn" id="generate-btn" disabled>🎮 Générer le fichier HTML</button>
 
             <div class="progress-section" id="progress-section">
                 <div class="progress-bar-outer"><div class="progress-bar-inner" id="progress-bar"></div></div>
                 <ul class="progress-steps" id="progress-steps">
-                    <li id="ps-1"><span class="icon">⏳</span> Reading game files...</li>
-                    <li id="ps-2"><span class="icon">⏳</span> Fetching ScummVM WASM core (~37 MB)...</li>
-                    <li id="ps-3"><span class="icon">⏳</span> Fetching ScummVM JS engine (~9 MB)...</li>
-                    <li id="ps-4"><span class="icon">⏳</span> Fetching engine plugin...</li>
-                    <li id="ps-5"><span class="icon">⏳</span> Fetching engine data files...</li>
-                    <li id="ps-6"><span class="icon">⏳</span> Compressing game files...</li>
-                    <li id="ps-7"><span class="icon">⏳</span> Assembling HTML file...</li>
-                    <li id="ps-8"><span class="icon">⏳</span> Done! 🎮 100% offline</li>
+                    <li id="ps-1"><span class="icon">⏳</span> Lecture des fichiers du jeu...</li>
+                    <li id="ps-2"><span class="icon">⏳</span> Téléchargement du core ScummVM WASM (~37 Mo)...</li>
+                    <li id="ps-3"><span class="icon">⏳</span> Téléchargement du moteur JS ScummVM (~9 Mo)...</li>
+                    <li id="ps-4"><span class="icon">⏳</span> Téléchargement du plugin moteur...</li>
+                    <li id="ps-5"><span class="icon">⏳</span> Téléchargement des fichiers de données...</li>
+                    <li id="ps-6"><span class="icon">⏳</span> Compression des fichiers du jeu...</li>
+                    <li id="ps-7"><span class="icon">⏳</span> Assemblage du fichier HTML...</li>
+                    <li id="ps-8"><span class="icon">⏳</span> Terminé ! 🎮 100% hors-ligne</li>
                 </ul>
             </div>
 
             <div class="download-section" id="download-section">
                 <div class="download-card">
-                    <h3>✅ Game packed successfully!</h3>
+                    <h3>✅ Jeu empaqueté avec succès !</h3>
                     <div class="dl-meta">
                         <span>🎮 <span id="dl-engine">—</span></span>
                         <span>📝 <span id="dl-title">—</span></span>
                         <span>📦 <span id="dl-size">—</span></span>
                     </div>
-                    <a class="download-btn" id="download-btn" download>⬇️ Download HTML File</a>
-                    <div class="offline-badge">✈️ 100% offline — no internet needed to play</div>
+                    <a class="download-btn" id="download-btn" download>⬇️ Télécharger le fichier HTML</a>
+                    <div class="offline-badge">✈️ 100% hors-ligne — aucune connexion internet nécessaire</div>
                 </div>
             </div>
         </div>
@@ -555,9 +555,9 @@ a:hover { text-decoration: underline; }
     <!-- ═══════ Tab: Engines ═══════ -->
     <div id="tab-engines" class="tab-content">
         <div class="card">
-            <h2>📋 ScummVM Engines</h2>
-            <p style="color:var(--text-dim);font-size:0.9em;margin-bottom:14px;">ScummVM supports 115+ game engines. Below are the most commonly used ones. Each engine has a plugin file (<code>lib&lt;engine&gt;.so</code>) loaded at runtime.</p>
-            <input type="text" class="engine-search" id="engine-search" placeholder="🔍 Search engines...">
+            <h2>📋 Moteurs ScummVM</h2>
+            <p style="color:var(--text-dim);font-size:0.9em;margin-bottom:14px;">ScummVM prend en charge plus de 115 moteurs de jeu. Voici les plus courants. Chaque moteur possède un plugin (<code>lib&lt;engine&gt;.so</code>) chargé au démarrage.</p>
+            <input type="text" class="engine-search" id="engine-search" placeholder="🔍 Rechercher un moteur...">
             <div id="engine-list"></div>
         </div>
     </div>
@@ -566,36 +566,36 @@ a:hover { text-decoration: underline; }
     <div id="tab-about" class="tab-content">
         <div class="card">
             <div class="about-section">
-                <h3>🎮 What is ScummVM Packer?</h3>
-                <p>ScummVM Packer lets you package classic point-and-click adventure games into a <strong>single, self-contained HTML file</strong> that runs entirely in the browser. No server, no installation — just open the file and play.</p>
+                <h3>🎮 Qu’est-ce que ScummVM Packer ?</h3>
+                <p>ScummVM Packer vous permet d’empaqueter des jeux d’aventure point-and-click classiques dans un <strong>unique fichier HTML autonome</strong> qui s’exécute entièrement dans le navigateur. Pas de serveur, pas d’installation — ouvrez le fichier et jouez.</p>
             </div>
             <div class="about-section">
-                <h3>⚙️ How It Works</h3>
+                <h3>⚙️ Comment ça fonctionne</h3>
                 <ul>
-                    <li>Your game files are compressed and embedded inside the HTML.</li>
-                    <li>The ScummVM WASM core, JavaScript engine, and the correct engine plugin are fetched and embedded.</li>
-                    <li>Common data files (themes, fonts, engine-specific data) are also included.</li>
-                    <li>When you open the generated file, everything decompresses in-browser and ScummVM boots your game instantly.</li>
+                    <li>Vos fichiers de jeu sont compressés et intégrés dans le HTML.</li>
+                    <li>Le core ScummVM WASM, le moteur JavaScript et le plugin du moteur correspondant sont récupérés et intégrés.</li>
+                    <li>Les fichiers de données communs (thèmes, polices, données spécifiques au moteur) sont également inclus.</li>
+                    <li>Quand vous ouvrez le fichier généré, tout se décompresse dans le navigateur et ScummVM lance votre jeu instantanément.</li>
                 </ul>
             </div>
             <div class="about-section">
                 <h3>🛠️ Technologies</h3>
                 <ul>
-                    <li><strong>ScummVM WASM</strong> — compiled to WebAssembly from <a href="https://scummvm.kuendig.io/" target="_blank">scummvm.kuendig.io</a></li>
-                    <li><strong>CompressionStream API</strong> — native browser gzip for fast, efficient compression</li>
-                    <li><strong>Emscripten FS</strong> — virtual filesystem to mount game files at runtime</li>
+                    <li><strong>ScummVM WASM</strong> — compilé en WebAssembly depuis <a href="https://scummvm.kuendig.io/" target="_blank">scummvm.kuendig.io</a></li>
+                    <li><strong>CompressionStream API</strong> — compression gzip native du navigateur, rapide et efficace</li>
+                    <li><strong>Emscripten FS</strong> — système de fichiers virtuel pour monter les fichiers de jeu</li>
                 </ul>
             </div>
             <div class="about-section">
-                <h3>🔒 Privacy</h3>
-                <p>All processing happens <strong>locally in your browser</strong>. Your game files are never uploaded anywhere. The only network requests fetch the ScummVM engine binaries (WASM, JS, plugins, data files) — and those are cached in memory for subsequent packs.</p>
+                <h3>🔒 Confidentialité</h3>
+                <p>Tout le traitement s’effectue <strong>localement dans votre navigateur</strong>. Vos fichiers de jeu ne sont jamais envoyés nulle part. Les seules requêtes réseau récupèrent les binaires ScummVM (WASM, JS, plugins, fichiers de données) — et ceux-ci sont mis en cache pour les prochaines générations.</p>
             </div>
             <div class="about-section">
-                <h3>🔗 Links</h3>
+                <h3>🔗 Liens</h3>
                 <ul>
-                    <li><a href="https://github.com/nicokimmel/scummvm-web" target="_blank">ScummVM WASM on GitHub</a></li>
-                    <li><a href="https://www.scummvm.org/" target="_blank">ScummVM Official Site</a></li>
-                    <li><a href="https://scummvm.kuendig.io/" target="_blank">ScummVM WASM Demo</a></li>
+                    <li><a href="https://github.com/nicokimmel/scummvm-web" target="_blank">ScummVM WASM sur GitHub</a></li>
+                    <li><a href="https://www.scummvm.org/" target="_blank">Site officiel de ScummVM</a></li>
+                    <li><a href="https://scummvm.kuendig.io/" target="_blank">Démo ScummVM WASM</a></li>
                 </ul>
             </div>
         </div>
@@ -978,7 +978,7 @@ function updateFileInfo() {
             // Keep auto selected, detection is used at generation time
         }
     } else {
-        engineEl.textContent = 'Unknown (select manually)';
+        engineEl.textContent = 'Inconnu (s\u00e9lectionnez manuellement)';
         engineEl.className = 'val unknown';
     }
 
@@ -1014,7 +1014,7 @@ document.getElementById('file-list-toggle').addEventListener('click', () => {
     const list = document.getElementById('file-list');
     const btn = document.getElementById('file-list-toggle');
     const visible = list.classList.toggle('visible');
-    btn.textContent = visible ? 'Hide file list ▴' : 'Show file list ▾';
+    btn.textContent = visible ? 'Masquer la liste ▴' : 'Voir la liste ▾';
 });
 
 // ══════════════════════════════
@@ -1083,7 +1083,7 @@ async function fetchBinary(localPath, cdnPath) {
     } catch(e) { /* ignore */ }
     // Fallback to CDN
     const resp = await fetch(SCUMMVM_CDN + cdnPath);
-    if (!resp.ok) throw new Error('Failed to fetch ' + cdnPath + ' (HTTP ' + resp.status + ')');
+    if (!resp.ok) throw new Error('\u00c9chec du t\u00e9l\u00e9chargement de ' + cdnPath + ' (HTTP ' + resp.status + ')');
     return await resp.arrayBuffer();
 }
 
@@ -1118,7 +1118,7 @@ function setStepError(n, msg) {
 // ══════════════════════════════
 const _CS = '<' + '/script>';
 const HTML_TEMPLATE = `<!DOCTYPE html>
-<html lang="en">
+<html lang="fr">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
@@ -1146,10 +1146,10 @@ const HTML_TEMPLATE = `<!DOCTYPE html>
     <div id="loading">
         <h1>🎮 {{GAME_TITLE}}</h1>
         <div class="progress-bar"><div class="progress-fill" id="progress"></div></div>
-        <div class="status" id="status">Initializing...</div>
+        <div class="status" id="status">Initialisation...</div>
         <div class="detail" id="detail"></div>
     </div>
-    <div id="error"><h1>❌ Error</h1><pre id="error-text"></pre></div>
+    <div id="error"><h1>❌ Erreur</h1><pre id="error-text"></pre></div>
     <canvas id="canvas" oncontextmenu="event.preventDefault()" tabindex="-1"></canvas>
 
     <!-- Embedded compressed data -->
@@ -1197,21 +1197,21 @@ const HTML_TEMPLATE = `<!DOCTYPE html>
 
     async function boot() {
         try {
-            setStatus('Decompressing ScummVM core...');
+            setStatus('D\u00e9compression du core ScummVM...');
             setProgress(5);
             const wasmB64 = document.getElementById('wasm-data').textContent.trim();
             const wasmData = await decompressB64(wasmB64);
             setDetail('WASM: ' + (wasmData.length / 1024 / 1024).toFixed(1) + ' MB');
             setProgress(30);
 
-            setStatus('Loading engine plugin...');
+            setStatus('Chargement du plugin moteur...');
             const pluginEl = document.getElementById('plugin-data');
             const pluginName = pluginEl.dataset.name;
             const pluginData = await decompressB64(pluginEl.textContent.trim());
             setDetail('Plugin: ' + pluginName + ' (' + (pluginData.length / 1024).toFixed(0) + ' KB)');
             setProgress(40);
 
-            setStatus('Loading engine data...');
+            setStatus('Chargement des donn\u00e9es moteur...');
             const engineDataJson = JSON.parse(document.getElementById('engine-data-files').textContent);
             const engineDataFiles = {};
             for (const [name, b64] of Object.entries(engineDataJson)) {
@@ -1220,7 +1220,7 @@ const HTML_TEMPLATE = `<!DOCTYPE html>
             }
             setProgress(50);
 
-            setStatus('Decompressing game files...');
+            setStatus('D\u00e9compression des fichiers du jeu...');
             const gameFilesJson = JSON.parse(document.getElementById('game-files').textContent);
             const gameFileNames = Object.keys(gameFilesJson);
             const gameFiles = {};
@@ -1250,7 +1250,7 @@ const HTML_TEMPLATE = `<!DOCTYPE html>
             const pluginIndex = {};
             pluginIndex[pluginName] = pluginData.length;
 
-            setStatus('Configuring ScummVM...');
+            setStatus('Configuration de ScummVM...');
             const originalFetch = window.fetch;
             window.fetch = function(url, options) {
                 const urlStr = (typeof url === 'string') ? url : url.url || url.toString();
@@ -1267,7 +1267,7 @@ const HTML_TEMPLATE = `<!DOCTYPE html>
             };
             setProgress(75);
 
-            setStatus('Setting up ScummVM...');
+            setStatus('Initialisation de ScummVM...');
             window.Module = {
                 canvas: document.getElementById('canvas'),
                 wasmBinary: wasmData.buffer,
@@ -1300,7 +1300,7 @@ const HTML_TEMPLATE = `<!DOCTYPE html>
             };
             setProgress(80);
 
-            setStatus('Starting ScummVM...');
+            setStatus('Lancement de ScummVM...');
             const jsB64 = document.getElementById('js-data').textContent.trim();
             const jsBytes = await decompressB64(jsB64);
             const jsText = new TextDecoder().decode(jsBytes);
@@ -1309,7 +1309,7 @@ const HTML_TEMPLATE = `<!DOCTYPE html>
             script.textContent = jsText;
             document.body.appendChild(script);
             setProgress(100);
-            setStatus('ScummVM is starting...');
+            setStatus('ScummVM d\u00e9marre...');
             setTimeout(function() {
                 const loading = document.getElementById('loading');
                 if (loading.style.display !== 'none') {
@@ -1319,7 +1319,7 @@ const HTML_TEMPLATE = `<!DOCTYPE html>
                 }
             }, 10000);
         } catch (err) {
-            showError('Failed to start game:\\n\\n' + err.message + '\\n\\n' + err.stack);
+            showError('\u00c9chec du lancement du jeu\u00a0:\\n\\n' + err.message + '\\n\\n' + err.stack);
         }
     }
     window.addEventListener('DOMContentLoaded', boot);
@@ -1338,7 +1338,7 @@ async function generate() {
 
     const genBtn = document.getElementById('generate-btn');
     genBtn.disabled = true;
-    genBtn.textContent = '⏳ Generating...';
+    genBtn.textContent = '⏳ Génération...';
 
     const progressSection = document.getElementById('progress-section');
     const downloadSection = document.getElementById('download-section');
@@ -1347,9 +1347,9 @@ async function generate() {
 
     // Check CompressionStream support
     if (typeof CompressionStream === 'undefined') {
-        setStepError(1, 'Your browser does not support CompressionStream. Please use Chrome, Edge, or Firefox 113+.');
+        setStepError(1, 'Votre navigateur ne prend pas en charge CompressionStream. Utilisez Chrome, Edge ou Firefox 113+.');
         generating = false;
-        genBtn.textContent = '🎮 Generate Standalone HTML';
+        genBtn.textContent = '🎮 Générer le fichier HTML';
         updateGenerateButton();
         return;
     }
@@ -1358,15 +1358,15 @@ async function generate() {
     const engineSel = document.getElementById('engine-select').value;
     const engine = (engineSel === 'auto') ? detectedEngine : engineSel;
     if (!engine) {
-        setStepError(1, 'Could not detect engine. Please select one manually.');
+        setStepError(1, 'Impossible de d\u00e9tecter le moteur. Veuillez en s\u00e9lectionner un manuellement.');
         generating = false;
-        genBtn.textContent = '🎮 Generate Standalone HTML';
+        genBtn.textContent = '🎮 Générer le fichier HTML';
         updateGenerateButton();
         return;
     }
 
-    const gameTitle = document.getElementById('game-title').value || 'ScummVM Game';
-    const outputFilename = document.getElementById('output-filename').value || 'scummvm-game.html';
+    const gameTitle = document.getElementById('game-title').value || 'Jeu ScummVM';
+    const outputFilename = document.getElementById('output-filename').value || 'jeu-scummvm.html';
     const pluginName = 'lib' + engine + '.so';
 
     let currentStep = 1;
@@ -1419,7 +1419,7 @@ async function generate() {
         } else {
             // Plugins are CDN only
             const resp = await fetch(SCUMMVM_CDN + 'data/plugins/' + pluginName);
-            if (!resp.ok) throw new Error('Failed to fetch plugin ' + pluginName + ' (HTTP ' + resp.status + ')');
+            if (!resp.ok) throw new Error('\u00c9chec du t\u00e9l\u00e9chargement du plugin ' + pluginName + ' (HTTP ' + resp.status + ')');
             pluginBuf = await resp.arrayBuffer();
             assetCache.plugins[engine] = pluginBuf;
         }
@@ -1513,7 +1513,7 @@ async function generate() {
     }
 
     generating = false;
-    genBtn.textContent = '🎮 Generate Standalone HTML';
+    genBtn.textContent = '🎮 Générer le fichier HTML';
     updateGenerateButton();
 }
 

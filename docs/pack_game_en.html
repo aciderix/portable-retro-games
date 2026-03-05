@@ -480,53 +480,53 @@ body {
 .footer a { color: var(--text-dim); text-decoration: none; }
 .footer a:hover { color: var(--accent); }
 
-/* Navigation bar */
-.nav-bar {
+/* Top Navigation */
+.top-nav {
   display: flex;
-  align-items: center;
   justify-content: center;
-  gap: 0.5rem;
-  padding: 0.6rem 1rem;
-  background: rgba(255,255,255,0.03);
-  border-bottom: 1px solid rgba(255,255,255,0.06);
-  margin-bottom: 0;
+  align-items: center;
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
   flex-wrap: wrap;
 }
-.nav-bar a, .nav-bar span {
+.top-nav a {
   color: var(--text-dim);
   text-decoration: none;
-  font-size: 0.85rem;
-  padding: 0.35rem 0.75rem;
-  border-radius: 6px;
-  transition: background 0.2s, color 0.2s;
-  white-space: nowrap;
-}
-.nav-bar a:hover {
-  background: rgba(255,255,255,0.06);
-  color: var(--text);
-}
-.nav-bar .nav-active {
-  background: rgba(255,255,255,0.08);
-  color: var(--accent);
+  font-size: 0.88rem;
   font-weight: 600;
+  padding: 0.4rem 0.8rem;
+  border-radius: 6px;
+  transition: all 0.2s;
 }
-.nav-sep {
-  color: rgba(255,255,255,0.15);
-  font-size: 0.7rem;
-  padding: 0 0.2rem !important;
+.top-nav a:hover { color: var(--text); background: rgba(255,255,255,0.04); }
+.top-nav a.active {
+  color: var(--accent);
+  background: rgba(255,68,68,0.08);
+  border: 1px solid rgba(255,68,68,0.2);
+}
+.top-nav .lang-switch {
+  margin-left: auto;
+  display: flex;
+  gap: 0.3rem;
+}
+.top-nav .lang-switch a {
+  font-size: 1.1rem;
+  padding: 0.3rem 0.5rem;
 }
 </style>
 </head>
 <body>
 
 <div class="container">
-  <!-- Navigation -->
-  <div class="nav-bar">
-    <span class="nav-active">🕹️ Retro Packer</span>
-    <span class="nav-sep">│</span>
+  <!-- Top Navigation -->
+  <div class="top-nav">
+    <a href="pack_game_en.html" class="active">🕹️ Retro Game Packer</a>
     <a href="pack_dos_game_en.html">🖥️ DOS Packer</a>
-    <span class="nav-sep">│</span>
-    <a href="pack_game_fr.html">🇫🇷 Français</a>
+    <a href="pack_scummvm_game_en.html">🎮 ScummVM Packer</a>
+    <div class="lang-switch">
+      <a href="pack_game_fr.html" title="Français">🇫🇷</a>
+      <a href="pack_game_en.html" class="active" title="English">🇬🇧</a>
+    </div>
   </div>
 
   <!-- Header -->
