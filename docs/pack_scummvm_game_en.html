@@ -1006,6 +1006,8 @@ function formatBytes(bytes) {
 // ══════════════════════════════
 function detectEngine(filenames) {
     const lower = filenames.map(f => {
+        // Decode URL-encoded paths (e.g., Android SAF URIs)
+        try { f = decodeURIComponent(f); } catch(e) {}
         const parts = f.split('/');
         return parts[parts.length - 1].toLowerCase();
     });
@@ -1103,12 +1105,25 @@ function processDroppedFiles(fileEntries) {
 
 function processFileList(files) {
     gameFiles = {};
-    // webkitRelativePath: "FolderName/subdir/file.dat" — strip root folder
-    const paths = files.map(f => f.webkitRelativePath);
-    const prefix = getCommonPrefix(paths);
-    for (const f of files) {
-        const rel = prefix ? f.webkitRelativePath.substring(prefix.length) : f.webkitRelativePath;
-        if (rel) gameFiles[rel] = f;
+    // On mobile (Android SAF), webkitRelativePath may be URL-encoded like:
+    // "primary%3ADownload%2Flure/document/primary%3ADownload%2Flure%2FDisk1.vga"
+    // Detect this and fall back to file.name for clean keys
+    const firstPath = files.length > 0 ? files[0].webkitRelativePath : '';
+    const isSAF = firstPath.includes('%2F') || firstPath.includes('%3A');
+
+    if (isSAF) {
+        // Mobile SAF: use file.name directly (the real filename)
+        for (const f of files) {
+            if (f.name) gameFiles[f.name] = f;
+        }
+    } else {
+        // Normal desktop: use webkitRelativePath with prefix stripping
+        const paths = files.map(f => f.webkitRelativePath);
+        const prefix = getCommonPrefix(paths);
+        for (const f of files) {
+            const rel = prefix ? f.webkitRelativePath.substring(prefix.length) : f.webkitRelativePath;
+            if (rel) gameFiles[rel] = f;
+        }
     }
     updateFileInfo();
 }
