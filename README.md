@@ -41,27 +41,27 @@ Retro games are disappearing. Hardware fails. Websites go offline. Flash died. J
 
 ## 🖥️ Supported Platforms
 
-### 🌐 Universal Packer — 42 Console, Computer & Arcade Systems
+### 🌐 Universal Packer — 41 Console, Computer & Arcade Systems
 
-The **Universal Packer** (`packers/universal/pack_game.py`) supports **42 retro systems** with a single script, zero pip dependencies:
+The **Universal Packer** (`packers/universal/pack_game.py`) supports **41 retro systems** with a single script, zero pip dependencies:
 
-| Category | Systems |
-|----------|---------|
-| 🎮 **Nintendo** | NES, SNES, Game Boy, Game Boy Color, GBA, N64, Nintendo DS, Virtual Boy |
-| 🎮 **Sega** | Genesis/Mega Drive, Master System, Game Gear, Sega 32X, Sega CD |
-| 🎮 **Atari** | 2600, 5200, 7800, Lynx, Jaguar |
-| 🎮 **Sony** | PlayStation |
-| 🎮 **NEC** | PC Engine / TurboGrafx-16, PC-FX |
-| 🎮 **SNK** | Neo Geo Pocket / Color |
-| 🎮 **Bandai** | WonderSwan / Color |
-| 🎮 **Coleco** | ColecoVision |
-| 💻 **Commodore** | C64, C128, VIC-20, PET, Plus/4, Amiga |
-| 💻 **PC / DOS** | MS-DOS (DOSBox) |
-| 💻 **Sinclair** | ZX Spectrum, ZX81 |
-| 💻 **Amstrad** | CPC |
-| 🕹️ **Arcade** | CPS1, CPS2, FBNeo, MAME 2003+ |
-| 🔫 **id Software** | DOOM (PrBoom) |
-| 🎮 **Other** | 3DO, Philips CD-i, Sega Saturn |
+| Category | Systems | Count |
+|----------|---------|-------|
+| 🎮 **Nintendo** | NES / Famicom, Super Nintendo, Game Boy, Game Boy Color, Game Boy Advance, Nintendo 64, Nintendo DS, Virtual Boy | 8 |
+| 🎮 **Sega** | Genesis / Mega Drive, Master System, Game Gear, Sega 32X, Sega CD / Mega CD, Sega Saturn | 6 |
+| 🎮 **Atari** | 2600, 5200, 7800, Lynx, Jaguar | 5 |
+| 🎮 **Sony** | PlayStation | 1 |
+| 🎮 **NEC** | PC Engine / TurboGrafx-16, PC-FX | 2 |
+| 🎮 **SNK** | Neo Geo Pocket / Color | 1 |
+| 🎮 **Bandai** | WonderSwan / Color | 1 |
+| 🎮 **Coleco** | ColecoVision | 1 |
+| 💻 **Commodore** | C64, C128, VIC-20, PET, Plus/4, Amiga | 6 |
+| 💻 **Sinclair** | ZX Spectrum, ZX81 | 2 |
+| 💻 **Amstrad** | CPC | 1 |
+| 🕹️ **Arcade** | CPS1, CPS2, FBNeo, MAME 2003+ | 4 |
+| 🔫 **id Software** | DOOM (PrBoom) | 1 |
+| 🎮 **Other** | 3DO Interactive, Philips CD-i | 2 |
+| | **Total** | **41** |
 
 > Powered by [EmulatorJS](https://emulatorjs.org/) — cores are auto-downloaded and cached locally. A `cores.zip` bundle is included for full offline use.
 
@@ -584,23 +584,23 @@ Chaque fichier HTML généré embarque :
 
 Un seul script Python, zéro dépendance pip, auto-détection du système :
 
-| Catégorie | Systèmes |
-|-----------|----------|
-| 🎮 Nintendo | NES, SNES, Game Boy, GBC, GBA, N64, DS, Virtual Boy |
-| 🎮 Sega | Genesis, Master System, Game Gear, 32X, Sega CD |
-| 🎮 Atari | 2600, 5200, 7800, Lynx, Jaguar |
-| 🎮 Sony | PlayStation |
-| 🎮 NEC | PC Engine / TurboGrafx-16, PC-FX |
-| 🎮 SNK | Neo Geo Pocket / Color |
-| 🎮 Bandai | WonderSwan / Color |
-| 🎮 Coleco | ColecoVision |
-| 💻 Commodore | C64, C128, VIC-20, PET, Plus/4, Amiga |
-| 💻 Sinclair | ZX Spectrum, ZX81 |
-| 💻 Amstrad | CPC |
-| 💻 **PC / DOS** | MS-DOS (DOSBox) |
-| 🕹️ Arcade | CPS1, CPS2, FBNeo, MAME 2003+ |
-| 🔫 id Software | DOOM (PrBoom) |
-| 🎮 Autres | 3DO, Philips CD-i, Sega Saturn |
+| Catégorie | Systèmes | Nb |
+|-----------|----------|-----|
+| 🎮 **Nintendo** | NES / Famicom, Super Nintendo, Game Boy, Game Boy Color, Game Boy Advance, Nintendo 64, Nintendo DS, Virtual Boy | 8 |
+| 🎮 **Sega** | Genesis / Mega Drive, Master System, Game Gear, Sega 32X, Sega CD / Mega CD, Sega Saturn | 6 |
+| 🎮 **Atari** | 2600, 5200, 7800, Lynx, Jaguar | 5 |
+| 🎮 **Sony** | PlayStation | 1 |
+| 🎮 **NEC** | PC Engine / TurboGrafx-16, PC-FX | 2 |
+| 🎮 **SNK** | Neo Geo Pocket / Color | 1 |
+| 🎮 **Bandai** | WonderSwan / Color | 1 |
+| 🎮 **Coleco** | ColecoVision | 1 |
+| 💻 **Commodore** | C64, C128, VIC-20, PET, Plus/4, Amiga | 6 |
+| 💻 **Sinclair** | ZX Spectrum, ZX81 | 2 |
+| 💻 **Amstrad** | CPC | 1 |
+| 🕹️ **Arcade** | CPS1, CPS2, FBNeo, MAME 2003+ | 4 |
+| 🔫 **id Software** | DOOM (PrBoom) | 1 |
+| 🎮 **Autres** | 3DO Interactive, Philips CD-i | 2 |
+| | **Total** | **41** |
 
 #### 🔧 Packers spécialisés — Fonctions avancées
 
