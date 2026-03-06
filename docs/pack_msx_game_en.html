@@ -549,6 +549,17 @@ body {
           <option value="MEGARAM">MegaRAM</option>
         </select>
       </div>
+      <div class="form-group">
+        <label class="form-label" for="rom-format">ROM format (mapper)</label>
+        <select class="form-select" id="rom-format">
+          <option value="">Auto-detect</option>
+          <option value="Normal">Normal</option>
+          <option value="ASCII8">ASCII 8K</option>
+          <option value="ASCII16">ASCII 16K</option>
+          <option value="Konami">Konami</option>
+          <option value="KonamiSCC">Konami SCC</option>
+        </select>
+      </div>
     </div>
   </div>
 
@@ -792,12 +803,18 @@ async function extractGameFromZip(file) {
             
             // Get the correct media parameter for this file type
             var typeInfo = FILE_TYPE_MAP[fileExt];
+            // Detect ROM format for cartridge files
+            var romFormat = null;
+            if (fileExt === '.rom' || fileExt === '.mx1' || fileExt === '.mx2') {
+                romFormat = detectRomFormat(gameData);
+            }
             return {
                 base64: base64,
                 fileName: fileName,
                 extension: fileExt,
                 mediaParam: typeInfo ? typeInfo.param : 'AUTODETECT_URL',
-                defaultMachine: typeInfo ? typeInfo.defaultMachine : 'MSX2P'
+                defaultMachine: typeInfo ? typeInfo.defaultMachine : 'MSX2P',
+                romFormat: romFormat
             };
         }
         
@@ -906,6 +923,22 @@ function handleFiles(fileList) {
         selectedFiles = [];
         isMultiDisk = false;
         detectedType = typeInfo;
+
+        // Auto-detect ROM format for cartridge files
+        var fileExt = getFileExtension(file.name);
+        if (fileExt === '.rom' || fileExt === '.mx1' || fileExt === '.mx2') {
+          var reader2 = new FileReader();
+          reader2.onload = function(e2) {
+            var bytes = new Uint8Array(e2.target.result);
+            var fmt = detectRomFormat(bytes);
+            if (fmt) {
+              document.getElementById('rom-format').value = fmt;
+            }
+          };
+          reader2.readAsArrayBuffer(file);
+        } else {
+          document.getElementById('rom-format').value = '';
+        }
 
         // Update dropzone
         dropzone.classList.add('has-file');
@@ -1066,10 +1099,26 @@ async function fetchWmsxEngine() {
 }
 
 // ============================================================
+//  ROM Format Detection
+// ============================================================
+function detectRomFormat(data) {
+  // Check first 64 bytes for mapper hints
+  if (data.length < 32) return null;
+  var header = '';
+  for (var i = 0; i < Math.min(64, data.length); i++) {
+    header += String.fromCharCode(data[i]);
+  }
+  if (header.indexOf('ASCII16') !== -1) return 'ASCII16';
+  if (header.indexOf('ASCII8') !== -1) return 'ASCII8';
+  return null;
+}
+
+// ============================================================
 //  HTML Generation
 // ============================================================
 function buildGameHtml(title, base64Data, mediaParam, machineType, soundPreset, wmsxJs) {
     var escapedTitle = htmlEscape(title);
+    var romFormat = document.getElementById('rom-format').value;
 
     var presetsLine = '';
     if (soundPreset) {
@@ -1097,6 +1146,7 @@ function buildGameHtml(title, base64Data, mediaParam, machineType, soundPreset, 
         '<script>\n' +
         'WMSX.' + mediaParam + ' = "data:application/octet-stream;base64,' + base64Data + '";\n' +
         'WMSX.MACHINE = "' + machineType + '";\n' +
+        (romFormat ? 'WMSX.CARTRIDGE1_FORMAT = "' + romFormat + '";\n' : '') +
         (soundPreset && SOUND_PRESETS[soundPreset] ? 'WMSX.PRESETS = "' + SOUND_PRESETS[soundPreset] + '";\n' : '') +
         'WMSX.SCREEN_FULLSCREEN_MODE = -1;\n' +
         'WMSX.MEDIA_CHANGE_DISABLED = true;\n' +
@@ -1288,6 +1338,10 @@ generateBtn.addEventListener('click', async function() {
                 // Update machine if user hasn't changed it
                 if (machineSelect.value === 'MSX2P') {
                     machineSelect.value = zipResult.defaultMachine;
+                }
+                // Auto-detect ROM format from ZIP
+                if (zipResult.romFormat) {
+                    document.getElementById('rom-format').value = zipResult.romFormat;
                 }
             } else {
                 base64Data = await readFileAsBase64(selectedFile);
