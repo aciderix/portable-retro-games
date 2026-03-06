@@ -1267,6 +1267,27 @@ async function fetchBinary(localPath, cdnPath) {
     return await resp.arrayBuffer();
 }
 
+async function fetchPluginBinary(pluginName) {
+    // Try local gzipped version first (much smaller download)
+    try {
+        const resp = await fetch(LOCAL_MIRROR + 'plugins/' + pluginName + '.gz');
+        if (resp.ok) {
+            const ds = new DecompressionStream('gzip');
+            const decompressed = resp.body.pipeThrough(ds);
+            return await new Response(decompressed).arrayBuffer();
+        }
+    } catch(e) { /* ignore */ }
+    // Fallback: try local uncompressed
+    try {
+        const resp = await fetch(LOCAL_MIRROR + 'plugins/' + pluginName);
+        if (resp.ok) return await resp.arrayBuffer();
+    } catch(e) { /* ignore */ }
+    // Fallback: CDN uncompressed
+    const resp = await fetch(SCUMMVM_CDN + 'data/plugins/' + pluginName);
+    if (!resp.ok) throw new Error('\u00c9chec du t\u00e9l\u00e9chargement du plugin ' + pluginName + ' (HTTP ' + resp.status + ')');
+    return await resp.arrayBuffer();
+}
+
 // ══════════════════════════════
 //  Progress Helpers
 // ══════════════════════════════
@@ -1597,10 +1618,7 @@ async function generate() {
         if (assetCache.plugins[engine]) {
             pluginBuf = assetCache.plugins[engine];
         } else {
-            // Plugins are CDN only
-            const resp = await fetch(SCUMMVM_CDN + 'data/plugins/' + pluginName);
-            if (!resp.ok) throw new Error('\u00c9chec du t\u00e9l\u00e9chargement du plugin ' + pluginName + ' (HTTP ' + resp.status + ')');
-            pluginBuf = await resp.arrayBuffer();
+            pluginBuf = await fetchPluginBinary(pluginName);
             assetCache.plugins[engine] = pluginBuf;
         }
         setStepDone(4);
