@@ -6,7 +6,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![Offline Ready](https://img.shields.io/badge/Offline-Ready-brightgreen?logo=wifi-off)](#)
 [![Mobile Friendly](https://img.shields.io/badge/Mobile-Friendly-orange?logo=smartphone)](#)
-[![Platforms](https://img.shields.io/badge/Platforms-42%20Systems-purple)](#supported-platforms)
+[![Platforms](https://img.shields.io/badge/Platforms-45%20Systems-purple)](#supported-platforms)
 [![Live Demo](https://img.shields.io/badge/Live%20Demo-Play%20Now!-ff6600?logo=netlify&logoColor=white)](https://jimmy-willburne.netlify.app/)
 [![Web Packer](https://img.shields.io/badge/Web%20Packer-Try%20Online!-blueviolet?logo=html5&logoColor=white)](https://aciderix.github.io/portable-retro-games/pack_game_en.html)
 
