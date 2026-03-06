@@ -548,7 +548,7 @@ body {
         <div class="dropzone-text">Glissez un dossier de jeu ici</div>
         <div class="dropzone-hint">ou cliquez pour parcourir vos fichiers</div>
         <button class="dropzone-btn" type="button">Choisir un dossier</button>
-        <input type="file" id="folder-input" webkitdirectory multiple>
+        <input type="file" id="folder-input" webkitdirectory multiple hidden>
       </div>
             <div class="file-info" id="file-info">
         <div class="file-info-row"><span class="label">Fichiers</span> <span class="value" id="fi-count">0</span></div>
@@ -1028,6 +1028,13 @@ function detectEngine(filenames) {
 const dropzone = document.getElementById('dropzone');
 const folderInput = document.getElementById('folder-input');
 const fileInfo = document.getElementById('file-info');
+
+// Click on dropzone or button opens file explorer
+dropzone.addEventListener('click', () => folderInput.click());
+dropzone.querySelector('.dropzone-btn').addEventListener('click', e => {
+    e.stopPropagation();
+    folderInput.click();
+});
 
 // Handle folder input
 folderInput.addEventListener('change', () => {
