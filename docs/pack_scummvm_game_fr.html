@@ -5,32 +5,53 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>ScummVM Packer – Standalone HTML Game Generator</title>
 <style>
-:root {
-    --bg: #0a0a0a;
-    --bg-card: #111118;
-    --border: #1e1e2e;
-    --border-accent: #2a2a3e;
-    --text: #e0e0e0;
-    --text-dim: #888;
-    --text-dimmer: #555;
-    --accent: #FF4444;
-    --accent-orange: #ff8800;
-    --success: #44cc66;
-    --error: #ff4466;
-    --warning: #ffaa33;
-    --radius: 12px;
-    --radius-sm: 8px;
-}
+/* ============================================================
+   CSS Reset & Base
+   ============================================================ */
 *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
-body {
-    background: var(--bg);
-    color: var(--text);
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
-    line-height: 1.6;
-    min-height: 100vh;
+
+:root {
+  --bg: #0a0a0a;
+  --bg-card: #111118;
+  --bg-card-hover: #16161f;
+  --border: #1e1e2e;
+  --border-accent: #2a2a3e;
+  --text: #e0e0e0;
+  --text-dim: #888;
+  --text-dimmer: #555;
+  --accent: #FF4444;
+  --accent-orange: #ff8800;
+  --success: #44cc66;
+  --error: #ff4466;
+  --warning: #ffaa33;
+  --radius: 12px;
+  --radius-sm: 8px;
 }
-a { color: var(--accent); text-decoration: none; }
-a:hover { text-decoration: underline; }
+
+html { scroll-behavior: smooth; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', sans-serif;
+  min-height: 100vh;
+  line-height: 1.6;
+  overflow-x: hidden;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 8px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: #2a2a3e; border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: #3a3a4e; }
+
+/* ============================================================
+   Layout
+   ============================================================ */
+.container {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem 4rem;
+}
 
 /* Top Navigation */
 .top-nav {
@@ -47,7 +68,7 @@ a:hover { text-decoration: underline; }
   font-size: 0.88rem;
   font-weight: 600;
   padding: 0.4rem 0.8rem;
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   transition: all 0.2s;
 }
 .top-nav a:hover { color: var(--text); background: rgba(255,255,255,0.04); }
@@ -66,287 +87,435 @@ a:hover { text-decoration: underline; }
   padding: 0.3rem 0.5rem;
 }
 
-/* ── Container ── */
-.container { max-width: 900px; margin: 0 auto; padding: 32px 20px 60px; }
-.hero { text-align: center; padding: 40px 0 24px; }
-.hero h1 { font-size: 2em; margin-bottom: 8px; }
-.hero h1 .emoji { font-size: 1.1em; }
-.hero p { color: var(--text-dim); font-size: 1.05em; max-width: 600px; margin: 0 auto; }
+/* Header */
+.header {
+  text-align: center;
+  margin-bottom: 2.5rem;
+  position: relative;
+}
+.header::after {
+  content: '';
+  display: block;
+  width: 80px;
+  height: 3px;
+  background: linear-gradient(90deg, var(--accent), var(--accent-orange));
+  margin: 1.2rem auto 0;
+  border-radius: 2px;
+}
+.logo {
+  font-size: 2.2rem;
+  font-weight: 800;
+  background: linear-gradient(135deg, var(--accent), var(--accent-orange));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  letter-spacing: -0.5px;
+}
+.subtitle {
+  color: var(--text-dim);
+  font-size: 0.95rem;
+  margin-top: 0.3rem;
+}
 
-/* ── Tabs ── */
-.tabs { display: flex; gap: 4px; margin-bottom: 24px; border-bottom: 1px solid var(--border); }
+/* Navigation Tabs */
+.tabs {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 2rem;
+  background: var(--bg-card);
+  border-radius: var(--radius);
+  padding: 4px;
+  border: 1px solid var(--border);
+}
 .tab-btn {
-    padding: 10px 20px;
-    background: none;
-    border: none;
-    color: var(--text-dim);
-    font-size: 0.95em;
-    cursor: pointer;
-    border-bottom: 2px solid transparent;
-    transition: color .2s, border-color .2s;
-    font-family: inherit;
+  flex: 1;
+  padding: 0.7rem 1rem;
+  border: none;
+  background: transparent;
+  color: var(--text-dim);
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+  transition: all 0.25s ease;
 }
-.tab-btn:hover { color: var(--text); }
-.tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); font-weight: 600; }
+.tab-btn:hover { color: var(--text); background: rgba(255,255,255,0.03); }
+.tab-btn.active {
+  background: linear-gradient(135deg, var(--accent), var(--accent-orange));
+  color: #fff;
+  box-shadow: 0 2px 12px rgba(255,68,68,0.25);
+}
+
+/* Tab Content */
 .tab-content { display: none; }
-.tab-content.active { display: block; }
+.tab-content.active { display: block; animation: fadeIn 0.3s ease; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
 
-/* ── Cards ── */
+/* ============================================================
+   Card / Section
+   ============================================================ */
 .card {
-    background: var(--bg-card);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 24px;
-    margin-bottom: 20px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1.5rem;
+  margin-bottom: 1.25rem;
+  transition: border-color 0.2s;
 }
-.card h2 { font-size: 1.15em; margin-bottom: 14px; display: flex; align-items: center; gap: 8px; }
-.card h2 .step-num {
-    display: inline-flex; align-items: center; justify-content: center;
-    width: 28px; height: 28px; border-radius: 50%;
-    background: var(--accent); color: #fff; font-size: 0.8em; font-weight: 700;
+.card:hover { border-color: var(--border-accent); }
+.card-title {
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1.2px;
+  color: var(--text-dim);
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 }
+.card-title .icon { font-size: 1rem; }
 
-/* ── Dropzone ── */
+/* ============================================================
+   Drop Zone
+   ============================================================ */
 .dropzone {
-    border: 2px dashed var(--border-accent);
-    border-radius: var(--radius);
-    padding: 40px 20px;
-    text-align: center;
-    cursor: pointer;
-    transition: border-color .2s, background .2s;
-    position: relative;
+  border: 2px dashed #2a2a3e;
+  border-radius: var(--radius);
+  padding: 3rem 2rem;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+.dropzone::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at center, rgba(255,68,68,0.03) 0%, transparent 70%);
+  opacity: 0;
+  transition: opacity 0.3s;
 }
 .dropzone:hover, .dropzone.dragover {
-    border-color: var(--accent);
-    background: rgba(255,68,68,.04);
+  border-color: var(--accent);
+  background: rgba(255,68,68,0.03);
 }
-.dropzone .icon { font-size: 2.5em; margin-bottom: 10px; }
-.dropzone .label { font-size: 1.05em; color: var(--text); margin-bottom: 4px; }
-.dropzone .sublabel { font-size: 0.85em; color: var(--text-dim); }
-.dropzone input[type="file"] {
-    position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%;
+.dropzone:hover::before, .dropzone.dragover::before { opacity: 1; }
+.dropzone.has-file {
+  border-color: var(--success);
+  border-style: solid;
+  background: rgba(68,204,102,0.03);
+}
+.dropzone-icon {
+  font-size: 3rem;
+  margin-bottom: 0.8rem;
+  display: block;
+}
+.dropzone-text {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 0.3rem;
+}
+.dropzone-hint {
+  font-size: 0.82rem;
+  color: var(--text-dim);
+}
+.dropzone-btn {
+  display: inline-block;
+  margin-top: 1rem;
+  padding: 0.5rem 1.5rem;
+  border: 1px solid var(--border-accent);
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text);
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.dropzone-btn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
 }
 
-/* ── File info ── */
+/* ============================================================
+   File Info
+   ============================================================ */
 .file-info {
-    display: none;
-    margin-top: 16px;
-    padding: 16px;
-    background: rgba(255,255,255,.02);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-sm);
+  display: none;
+  margin-top: 1rem;
+  padding: 1rem;
+  background: rgba(255,255,255,0.02);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
 }
 .file-info.visible { display: block; }
-.file-info .meta { display: flex; flex-wrap: wrap; gap: 16px; margin-bottom: 10px; }
-.file-info .meta-item { font-size: 0.9em; }
-.file-info .meta-item .lbl { color: var(--text-dim); margin-right: 4px; }
-.file-info .meta-item .val { color: var(--text); font-weight: 600; }
-.file-info .meta-item .val.detected { color: var(--success); }
-.file-info .meta-item .val.unknown { color: var(--warning); }
+.file-info-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.4rem 0;
+  font-size: 0.88rem;
+  border-bottom: 1px solid rgba(255,255,255,0.03);
+}
+.file-info-row:last-child { border-bottom: none; }
+.file-info-row .label { color: var(--text-dim); }
+.file-info-row .value { color: var(--text); font-weight: 600; }
+.file-info-row .value.detected { color: var(--success); }
+.file-info-row .value.unknown { color: var(--warning); }
 
 .file-list-toggle {
-    background: none; border: none; color: var(--accent); cursor: pointer;
-    font-size: 0.85em; margin-top: 6px; font-family: inherit;
+  background: none; border: none; color: var(--accent); cursor: pointer;
+  font-size: 0.85rem; margin-top: 0.5rem; font-family: inherit;
 }
 .file-list {
-    display: none;
-    margin-top: 8px;
-    max-height: 200px;
-    overflow-y: auto;
-    font-size: 0.82em;
-    color: var(--text-dim);
-    font-family: 'Courier New', monospace;
-    line-height: 1.7;
-    padding: 8px;
-    background: rgba(0,0,0,.3);
-    border-radius: var(--radius-sm);
+  display: none;
+  margin-top: 0.5rem;
+  max-height: 200px;
+  overflow-y: auto;
+  font-size: 0.82rem;
+  color: var(--text-dim);
+  font-family: 'Courier New', monospace;
+  line-height: 1.7;
+  padding: 0.5rem;
+  background: rgba(0,0,0,0.3);
+  border-radius: var(--radius-sm);
 }
 .file-list.visible { display: block; }
 
-/* ── Options ── */
-.option-row {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 16px;
-    margin-bottom: 14px;
+/* ============================================================
+   Form Controls
+   ============================================================ */
+.form-group {
+  margin-bottom: 1rem;
 }
-.option-group { flex: 1; min-width: 200px; }
-.option-group label {
-    display: block;
-    font-size: 0.85em;
-    color: var(--text-dim);
-    margin-bottom: 6px;
+.form-group:last-child { margin-bottom: 0; }
+.form-label {
+  display: block;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text-dim);
+  margin-bottom: 0.4rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
-.option-group select,
-.option-group input[type="text"] {
-    width: 100%;
-    padding: 10px 12px;
-    background: var(--bg);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-sm);
-    color: var(--text);
-    font-size: 0.95em;
-    font-family: inherit;
-    outline: none;
-    transition: border-color .2s;
+.form-hint {
+  font-size: 0.78rem;
+  color: var(--text-dimmer);
+  margin-top: 0.3rem;
 }
-.option-group select:focus,
-.option-group input[type="text"]:focus { border-color: var(--accent); }
-.option-group select option { background: var(--bg-card); color: var(--text); }
-.option-group select optgroup { color: var(--text-dim); font-style: normal; }
+.form-select,
+.form-input {
+  width: 100%;
+  padding: 0.65rem 0.85rem;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text);
+  font-size: 0.9rem;
+  font-family: inherit;
+  outline: none;
+  transition: border-color 0.2s;
+}
+.form-select:focus,
+.form-input:focus { border-color: var(--accent); }
+.form-select option { background: var(--bg-card); color: var(--text); }
+.form-select optgroup { color: var(--text-dim); font-style: normal; }
+.form-row {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+.form-row .form-group { flex: 1; margin-bottom: 0; }
 
-/* ── Generate Button ── */
+/* ============================================================
+   Generate Button
+   ============================================================ */
 .generate-btn {
-    display: block;
-    width: 100%;
-    padding: 14px;
-    font-size: 1.1em;
-    font-weight: 700;
-    color: #fff;
-    background: linear-gradient(135deg, var(--accent), var(--accent-orange));
-    border: none;
-    border-radius: var(--radius);
-    cursor: pointer;
-    font-family: inherit;
-    transition: opacity .2s, transform .1s;
+  display: block;
+  width: 100%;
+  padding: 0.9rem 1.5rem;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #fff;
+  background: linear-gradient(135deg, var(--accent), var(--accent-orange));
+  border: none;
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin-top: 1.5rem;
+  font-family: inherit;
 }
-.generate-btn:hover:not(:disabled) { opacity: .9; }
-.generate-btn:active:not(:disabled) { transform: scale(.99); }
-.generate-btn:disabled { opacity: .35; cursor: not-allowed; filter: grayscale(.5); }
+.generate-btn:hover:not(:disabled) {
+  box-shadow: 0 4px 20px rgba(255,68,68,0.3);
+  transform: translateY(-1px);
+}
+.generate-btn:active:not(:disabled) { transform: translateY(0); }
+.generate-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+  filter: grayscale(0.5);
+}
 
-/* ── Progress ── */
-.progress-section { display: none; margin-top: 20px; }
+/* ============================================================
+   Progress Section
+   ============================================================ */
+.progress-section { display: none; margin-top: 1.5rem; }
 .progress-section.visible { display: block; }
-.progress-bar-outer {
-    width: 100%;
-    height: 12px;
-    background: var(--border);
-    border-radius: 6px;
-    overflow: hidden;
-    margin-bottom: 16px;
+.progress-bar-track {
+  width: 100%;
+  height: 6px;
+  background: var(--border);
+  border-radius: 3px;
+  overflow: hidden;
+  margin-bottom: 1rem;
 }
-.progress-bar-inner {
-    height: 100%;
-    background: linear-gradient(90deg, var(--accent), var(--accent-orange));
-    width: 0%;
-    transition: width .3s;
-    border-radius: 6px;
+.progress-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent), var(--accent-orange));
+  width: 0%;
+  transition: width 0.3s;
+  border-radius: 3px;
 }
-.progress-steps { list-style: none; }
-.progress-steps li {
-    padding: 6px 0;
-    font-size: 0.9em;
-    color: var(--text-dimmer);
-    display: flex;
-    align-items: center;
-    gap: 8px;
+.progress-log {
+  font-size: 0.82rem;
+  color: var(--text-dim);
+  max-height: 150px;
+  overflow-y: auto;
+  font-family: 'Courier New', monospace;
+  line-height: 1.8;
+  padding: 0.5rem;
+  background: rgba(0,0,0,0.2);
+  border-radius: var(--radius-sm);
 }
-.progress-steps li .icon { font-size: 1em; width: 20px; text-align: center; }
-.progress-steps li.active { color: var(--accent); }
-.progress-steps li.done { color: var(--success); }
-.progress-steps li.error { color: var(--error); }
+.progress-log .step { display: flex; align-items: center; gap: 0.5rem; }
+.progress-log .step.active { color: var(--accent); }
+.progress-log .step.done { color: var(--success); }
+.progress-log .step.error { color: var(--error); }
 
-/* ── Download Section ── */
-.download-section { display: none; margin-top: 20px; }
+/* ============================================================
+   Download Section
+   ============================================================ */
+.download-section { display: none; margin-top: 1.5rem; }
 .download-section.visible { display: block; }
-.download-card {
-    background: linear-gradient(135deg, rgba(68,204,102,.08), rgba(255,136,0,.06));
-    border: 1px solid var(--success);
-    border-radius: var(--radius);
-    padding: 24px;
-    text-align: center;
-}
-.download-card h3 { font-size: 1.2em; color: var(--success); margin-bottom: 12px; }
-.download-card .dl-meta {
-    display: flex; flex-wrap: wrap; justify-content: center; gap: 20px;
-    margin-bottom: 16px; font-size: 0.9em; color: var(--text-dim);
-}
-.download-card .dl-meta span { display: flex; align-items: center; gap: 4px; }
 .download-btn {
-    display: inline-block;
-    padding: 12px 40px;
-    background: var(--success);
-    color: #000;
-    font-weight: 700;
-    font-size: 1.05em;
-    border: none;
-    border-radius: var(--radius);
-    cursor: pointer;
-    font-family: inherit;
-    transition: opacity .2s;
-    text-decoration: none;
+  display: block;
+  width: 100%;
+  padding: 0.9rem;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #000;
+  background: var(--success);
+  border: none;
+  border-radius: var(--radius);
+  cursor: pointer;
+  font-family: inherit;
+  transition: opacity 0.2s;
+  text-decoration: none;
+  text-align: center;
 }
-.download-btn:hover { opacity: .85; text-decoration: none; }
-.offline-badge {
-    display: inline-block;
-    margin-top: 12px;
-    padding: 4px 12px;
-    background: rgba(68,204,102,.12);
-    border: 1px solid rgba(68,204,102,.3);
-    border-radius: 20px;
-    font-size: 0.82em;
-    color: var(--success);
+.download-btn:hover { opacity: 0.85; text-decoration: none; }
+.download-info {
+  margin-top: 0.75rem;
+  font-size: 0.82rem;
+  color: var(--text-dim);
+  text-align: center;
 }
 
-/* ── Engines Tab ── */
-.engine-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-    gap: 10px;
-    margin-top: 12px;
-}
-.engine-item {
-    background: var(--bg-card);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-sm);
-    padding: 12px 14px;
-}
-.engine-item .ename { font-weight: 600; font-size: 0.95em; color: var(--text); }
-.engine-item .eplugin { font-size: 0.78em; color: var(--text-dim); font-family: 'Courier New', monospace; margin-top: 2px; }
-.engine-item .edata { font-size: 0.75em; color: var(--text-dimmer); margin-top: 4px; }
-.engine-group-title { font-size: 1.1em; margin: 20px 0 10px; color: var(--accent); }
-.engine-group-title:first-child { margin-top: 0; }
-
+/* ============================================================
+   Engine List (Engines Tab)
+   ============================================================ */
 .engine-search {
-    width: 100%;
-    padding: 10px 14px;
-    background: var(--bg);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-sm);
-    color: var(--text);
-    font-size: 0.95em;
-    font-family: inherit;
-    outline: none;
-    margin-bottom: 16px;
+  width: 100%;
+  padding: 0.65rem 0.85rem;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text);
+  font-size: 0.9rem;
+  font-family: inherit;
+  outline: none;
+  margin-bottom: 1rem;
 }
 .engine-search:focus { border-color: var(--accent); }
 
-/* ── About Tab ── */
-.about-section { margin-bottom: 20px; }
-.about-section h3 { font-size: 1.05em; margin-bottom: 8px; color: var(--accent); }
-.about-section p, .about-section li { font-size: 0.93em; color: var(--text-dim); line-height: 1.7; }
-.about-section ul { padding-left: 20px; }
-.about-section li { margin-bottom: 4px; }
+.engine-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 0.6rem;
+  margin-top: 0.75rem;
+}
+.engine-item {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 0.75rem 0.85rem;
+  transition: border-color 0.2s;
+}
+.engine-item:hover { border-color: var(--border-accent); }
+.engine-item .ename { font-weight: 600; font-size: 0.9rem; color: var(--text); }
+.engine-item .eplugin { font-size: 0.75rem; color: var(--text-dim); font-family: 'Courier New', monospace; margin-top: 2px; }
+.engine-item .edata { font-size: 0.72rem; color: var(--text-dimmer); margin-top: 3px; }
+.engine-group-title { font-size: 1rem; margin: 1.25rem 0 0.6rem; color: var(--accent); font-weight: 700; }
+.engine-group-title:first-child { margin-top: 0; }
 
-/* ── Scrollbar ── */
-::-webkit-scrollbar { width: 6px; }
-::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: var(--border-accent); border-radius: 3px; }
+/* ============================================================
+   About Tab
+   ============================================================ */
+.about-section { margin-bottom: 1.25rem; }
+.about-section:last-child { margin-bottom: 0; }
+.about-section h3 { font-size: 0.95rem; margin-bottom: 0.5rem; color: var(--accent); }
+.about-section p, .about-section li { font-size: 0.88rem; color: var(--text-dim); line-height: 1.7; }
+.about-section ul { padding-left: 1.25rem; }
+.about-section li { margin-bottom: 0.25rem; }
+.about-section code { background: rgba(255,255,255,0.05); padding: 0.15rem 0.4rem; border-radius: 3px; font-size: 0.85em; }
 
-/* ── Responsive ── */
+/* ============================================================
+   Error Banner
+   ============================================================ */
+.error-banner {
+  display: none;
+  margin-top: 1rem;
+  padding: 0.75rem 1rem;
+  background: rgba(255,68,102,0.08);
+  border: 1px solid rgba(255,68,102,0.2);
+  border-radius: var(--radius-sm);
+  color: var(--error);
+  font-size: 0.88rem;
+}
+.error-banner.visible { display: block; }
+
+/* ============================================================
+   Footer
+   ============================================================ */
+.footer {
+  text-align: center;
+  padding: 2rem 0;
+  color: var(--text-dimmer);
+  font-size: 0.78rem;
+}
+
+/* ============================================================
+   Responsive
+   ============================================================ */
 @media (max-width: 600px) {
-    .container { padding: 16px 12px 40px; }
-    .hero h1 { font-size: 1.5em; }
-    .top-nav { flex-wrap: wrap; }
-    .option-row { flex-direction: column; }
+  .container { padding: 1rem 0.75rem 2.5rem; }
+  .logo { font-size: 1.6rem; }
+  .tabs { flex-direction: column; }
+  .form-row { flex-direction: column; }
+  .engine-grid { grid-template-columns: 1fr; }
+  .top-nav { gap: 0.8rem; }
 }
 </style>
 </head>
 <body>
 
-<!-- ── Navigation Bar ── -->
-<!-- Top Navigation -->
-<div class="top-nav">
+
+<!-- ── Main Container ── -->
+<div class="container">
+
+  <div class="top-nav">
     <a href="pack_game_fr.html">🕹️ Retro Game Packer</a>
     <a href="pack_dos_game_fr.html">🖥️ DOS Packer</a>
     <a href="pack_scummvm_game_fr.html" class="active">🎮 ScummVM Packer</a>
@@ -354,14 +523,12 @@ a:hover { text-decoration: underline; }
       <a href="pack_scummvm_game_fr.html" class="active" title="Français">🇫🇷</a>
       <a href="pack_scummvm_game_en.html" title="English">🇬🇧</a>
     </div>
-</div>
+  </div>
 
-<!-- ── Main Container ── -->
-<div class="container">
-    <div class="hero">
-        <h1><span class="emoji">🎮</span> ScummVM Packer</h1>
-        <p>Empaquetez vos jeux d’aventure point-and-click classiques dans un fichier HTML autonome propulsé par ScummVM WASM.</p>
-    </div>
+  <div class="header">
+    <div class="logo">🎮 ScummVM Packer</div>
+    <div class="subtitle">Créez des jeux ScummVM autonomes jouables hors ligne</div>
+  </div>
 
     <!-- Tabs -->
     <div class="tabs">
@@ -375,31 +542,30 @@ a:hover { text-decoration: underline; }
 
         <!-- Step 1: Game Files -->
         <div class="card">
-            <h2><span class="step-num">1</span> Fichiers du jeu</h2>
+            <div class="card-title"><span class="icon">📂</span> Fichiers du jeu</div>
             <div class="dropzone" id="dropzone">
-                <div class="icon">📂</div>
-                <div class="label">Déposez un dossier de jeu ici ou cliquez pour parcourir</div>
-                <div class="sublabel">Sélectionnez le dossier contenant les fichiers de votre jeu ScummVM</div>
-                <input type="file" id="folder-input" webkitdirectory multiple>
-            </div>
+        <div class="dropzone-icon">📂</div>
+        <div class="dropzone-text">Glissez un dossier de jeu ici</div>
+        <div class="dropzone-hint">ou cliquez pour parcourir vos fichiers</div>
+        <button class="dropzone-btn" type="button">Choisir un dossier</button>
+        <input type="file" id="folder-input" webkitdirectory multiple>
+      </div>
             <div class="file-info" id="file-info">
-                <div class="meta">
-                    <div class="meta-item"><span class="lbl">Fichiers :</span> <span class="val" id="fi-count">0</span></div>
-                    <div class="meta-item"><span class="lbl">Taille :</span> <span class="val" id="fi-size">0 KB</span></div>
-                    <div class="meta-item"><span class="lbl">Moteur :</span> <span class="val" id="fi-engine">—</span></div>
-                </div>
-                <button class="file-list-toggle" id="file-list-toggle">Voir la liste des fichiers ▾</button>
+        <div class="file-info-row"><span class="label">Fichiers</span> <span class="value" id="fi-count">0</span></div>
+        <div class="file-info-row"><span class="label">Taille</span> <span class="value" id="fi-size">0 KB</span></div>
+        <div class="file-info-row"><span class="label">Moteur</span> <span class="value" id="fi-engine">—</span></div>
+        <button class="file-list-toggle" id="file-list-toggle">Voir la liste des fichiers ▾</button>
                 <div class="file-list" id="file-list"></div>
-            </div>
+      </div>
         </div>
 
         <!-- Step 2: Options -->
         <div class="card">
-            <h2><span class="step-num">2</span> Options</h2>
-            <div class="option-row">
-                <div class="option-group">
-                    <label for="engine-select">Moteur</label>
-                    <select id="engine-select">
+            <div class="card-title"><span class="icon">⚙️</span> Options</div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label" for="engine-select">Moteur</label>
+                    <select class="form-select" id="engine-select">
                         <option value="auto">🔍 Auto-détection</option>
                         <optgroup label="── Populaires / Classiques ──">
                             <option value="scumm">scumm – SCUMM (LucasArts)</option>
@@ -506,26 +672,26 @@ a:hover { text-decoration: underline; }
                     </select>
                 </div>
             </div>
-            <div class="option-row">
-                <div class="option-group">
-                    <label for="game-title">Titre du jeu</label>
-                    <input type="text" id="game-title" placeholder="ex. Day of the Tentacle">
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label" for="game-title">Titre du jeu</label>
+                    <input type="text" class="form-input" id="game-title" placeholder="ex. Day of the Tentacle">
                 </div>
-                <div class="option-group">
-                    <label for="output-filename">Nom du fichier</label>
-                    <input type="text" id="output-filename" placeholder="ex. day-of-the-tentacle.html">
+                <div class="form-group">
+                    <label class="form-label" for="output-filename">Nom du fichier</label>
+                    <input type="text" class="form-input" id="output-filename" placeholder="ex. day-of-the-tentacle.html">
                 </div>
             </div>
         </div>
 
         <!-- Step 3: Generate -->
         <div class="card">
-            <h2><span class="step-num">3</span> Générer</h2>
+            <div class="card-title"><span class="icon">🚀</span> Générer</div>
             <button class="generate-btn" id="generate-btn" disabled>🎮 Générer le fichier HTML</button>
 
             <div class="progress-section" id="progress-section">
-                <div class="progress-bar-outer"><div class="progress-bar-inner" id="progress-bar"></div></div>
-                <ul class="progress-steps" id="progress-steps">
+                <div class="progress-bar-track"><div class="progress-bar-fill" id="progress-fill"></div></div>
+                <ul class="progress-log" id="progress-steps">
                     <li id="ps-1"><span class="icon">⏳</span> Lecture des fichiers du jeu...</li>
                     <li id="ps-2"><span class="icon">⏳</span> Téléchargement du core ScummVM WASM (~37 Mo)...</li>
                     <li id="ps-3"><span class="icon">⏳</span> Téléchargement du moteur JS ScummVM (~9 Mo)...</li>
@@ -538,24 +704,16 @@ a:hover { text-decoration: underline; }
             </div>
 
             <div class="download-section" id="download-section">
-                <div class="download-card">
-                    <h3>✅ Jeu empaqueté avec succès !</h3>
-                    <div class="dl-meta">
-                        <span>🎮 <span id="dl-engine">—</span></span>
-                        <span>📝 <span id="dl-title">—</span></span>
-                        <span>📦 <span id="dl-size">—</span></span>
-                    </div>
-                    <a class="download-btn" id="download-btn" download>⬇️ Télécharger le fichier HTML</a>
-                    <div class="offline-badge">✈️ 100% hors-ligne — aucune connexion internet nécessaire</div>
-                </div>
-            </div>
+            <a class="download-btn" id="download-btn" download>💾 Télécharger le fichier HTML</a>
+            <div class="download-info" id="download-info"></div>
+          </div>
         </div>
     </div>
 
     <!-- ═══════ Tab: Engines ═══════ -->
     <div id="tab-engines" class="tab-content">
         <div class="card">
-            <h2>📋 Moteurs ScummVM</h2>
+            <div class="card-title"><span class="icon">🎮</span> Moteurs ScummVM</div>
             <p style="color:var(--text-dim);font-size:0.9em;margin-bottom:14px;">ScummVM prend en charge plus de 115 moteurs de jeu. Voici les plus courants. Chaque moteur possède un plugin (<code>lib&lt;engine&gt;.so</code>) chargé au démarrage.</p>
             <input type="text" class="engine-search" id="engine-search" placeholder="🔍 Rechercher un moteur...">
             <div id="engine-list"></div>
@@ -972,14 +1130,14 @@ function updateFileInfo() {
     const engineEl = document.getElementById('fi-engine');
     if (detectedEngine) {
         engineEl.textContent = detectedEngine;
-        engineEl.className = 'val detected';
+        engineEl.className = 'value detected';
         // Auto-select in dropdown if on auto
         if (document.getElementById('engine-select').value === 'auto') {
             // Keep auto selected, detection is used at generation time
         }
     } else {
         engineEl.textContent = 'Inconnu (s\u00e9lectionnez manuellement)';
-        engineEl.className = 'val unknown';
+        engineEl.className = 'value unknown';
     }
 
     // File list
@@ -1091,7 +1249,7 @@ async function fetchBinary(localPath, cdnPath) {
 //  Progress Helpers
 // ══════════════════════════════
 function setProgressBar(pct) {
-    document.getElementById('progress-bar').style.width = pct + '%';
+    document.getElementById('progress-fill').style.width = pct + '%';
 }
 function setStepActive(n) {
     for (let i = 1; i <= 8; i++) {
@@ -1145,7 +1303,7 @@ const HTML_TEMPLATE = `<!DOCTYPE html>
 <body>
     <div id="loading">
         <h1>🎮 {{GAME_TITLE}}</h1>
-        <div class="progress-bar"><div class="progress-fill" id="progress"></div></div>
+        <div class="progress-fill"><div class="progress-fill" id="progress"></div></div>
         <div class="status" id="status">Initialisation...</div>
         <div class="detail" id="detail"></div>
     </div>
@@ -1496,12 +1654,10 @@ async function generate() {
         const url = URL.createObjectURL(blob);
 
         // Show download
-        document.getElementById('dl-engine').textContent = engine;
-        document.getElementById('dl-title').textContent = gameTitle;
-        document.getElementById('dl-size').textContent = formatBytes(blob.size);
         const dlBtn = document.getElementById('download-btn');
         dlBtn.href = url;
         dlBtn.download = outputFilename;
+        document.getElementById('download-info').textContent = `🎮 ${engine} — 📝 ${gameTitle} — 📦 ${formatBytes(blob.size)} — ✈️ 100% offline`;
 
         setStepDone(8);
         setProgressBar(100);
