@@ -715,6 +715,99 @@ function readFileAsBase64(file) {
     });
 }
 
+// Extract game file from a ZIP archive
+async function extractGameFromZip(file) {
+    var buffer = await file.arrayBuffer();
+    var view = new DataView(buffer);
+    var gameExtensions = ['.rom', '.mx1', '.mx2', '.dsk', '.cas'];
+    
+    // Parse ZIP local file headers
+    var offset = 0;
+    while (offset < buffer.byteLength - 4) {
+        // Check for local file header signature (PK\x03\x04)
+        if (view.getUint32(offset, true) !== 0x04034b50) break;
+        
+        var compressionMethod = view.getUint16(offset + 8, true);
+        var compressedSize = view.getUint32(offset + 18, true);
+        var uncompressedSize = view.getUint32(offset + 22, true);
+        var fileNameLength = view.getUint16(offset + 26, true);
+        var extraFieldLength = view.getUint16(offset + 28, true);
+        
+        var fileName = '';
+        for (var i = 0; i < fileNameLength; i++) {
+            fileName += String.fromCharCode(view.getUint8(offset + 30 + i));
+        }
+        
+        var dataOffset = offset + 30 + fileNameLength + extraFieldLength;
+        var fileExt = fileName.toLowerCase().substring(fileName.lastIndexOf('.'));
+        
+        if (gameExtensions.indexOf(fileExt) !== -1) {
+            // Found a game file!
+            var compressedData = new Uint8Array(buffer, dataOffset, compressedSize);
+            var gameData;
+            
+            if (compressionMethod === 0) {
+                // Stored (no compression)
+                gameData = compressedData;
+            } else if (compressionMethod === 8) {
+                // Deflate - use DecompressionStream
+                try {
+                    var ds = new DecompressionStream('deflate-raw');
+                    var writer = ds.writable.getWriter();
+                    var reader = ds.readable.getReader();
+                    writer.write(compressedData);
+                    writer.close();
+                    
+                    var chunks = [];
+                    var totalLength = 0;
+                    while (true) {
+                        var result = await reader.read();
+                        if (result.done) break;
+                        chunks.push(result.value);
+                        totalLength += result.value.length;
+                    }
+                    
+                    gameData = new Uint8Array(totalLength);
+                    var pos = 0;
+                    for (var j = 0; j < chunks.length; j++) {
+                        gameData.set(chunks[j], pos);
+                        pos += chunks[j].length;
+                    }
+                } catch (e) {
+                    throw new Error('Failed to decompress ZIP entry: ' + e.message);
+                }
+            } else {
+                throw new Error('Unsupported ZIP compression method: ' + compressionMethod);
+            }
+            
+            // Convert to base64
+            var binary = '';
+            var bytes = gameData;
+            var chunkSize = 8192;
+            for (var k = 0; k < bytes.length; k += chunkSize) {
+                var chunk = bytes.subarray(k, Math.min(k + chunkSize, bytes.length));
+                binary += String.fromCharCode.apply(null, chunk);
+            }
+            var base64 = btoa(binary);
+            
+            // Get the correct media parameter for this file type
+            var typeInfo = FILE_TYPE_MAP[fileExt];
+            return {
+                base64: base64,
+                fileName: fileName,
+                extension: fileExt,
+                mediaParam: typeInfo ? typeInfo.param : 'AUTODETECT_URL',
+                defaultMachine: typeInfo ? typeInfo.defaultMachine : 'MSX2P'
+            };
+        }
+        
+        // Skip to next entry
+        offset = dataOffset + compressedSize;
+    }
+    
+    throw new Error('No game file found in ZIP (.rom, .mx1, .mx2, .dsk, .cas)');
+}
+
 // ============================================================
 //  FAQ Toggle
 // ============================================================
@@ -1184,7 +1277,21 @@ generateBtn.addEventListener('click', async function() {
             setProgress(10);
             await new Promise(function(r) { setTimeout(r, 100); });
 
-            var base64Data = await readFileAsBase64(selectedFile);
+            var base64Data;
+            var actualMediaParam = detectedType.param;
+            
+            // If ZIP file, extract the game file inside
+            if (getFileExtension(selectedFile.name) === '.zip') {
+                var zipResult = await extractGameFromZip(selectedFile);
+                base64Data = zipResult.base64;
+                actualMediaParam = zipResult.mediaParam;
+                // Update machine if user hasn't changed it
+                if (machineSelect.value === 'MSX2P') {
+                    machineSelect.value = zipResult.defaultMachine;
+                }
+            } else {
+                base64Data = await readFileAsBase64(selectedFile);
+            }
             setStep('read', 'done');
             setProgress(25);
 
@@ -1213,7 +1320,7 @@ generateBtn.addEventListener('click', async function() {
             var title = titleInput.value.trim() || cleanTitle(selectedFile.name);
             var machineType = machineSelect.value;
             var soundPreset = soundSelect.value;
-            var mediaParam = detectedType.param;
+            var mediaParam = actualMediaParam;
 
             var gameHtml = buildGameHtml(title, base64Data, mediaParam, machineType, soundPreset, wmsxJs);
 
