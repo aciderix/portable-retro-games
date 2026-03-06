@@ -90,6 +90,8 @@ Don't want to install Python? Use the **Web GUI** directly in your browser:
 
 - 🇬🇧 [**Web Packer (English)**](https://aciderix.github.io/portable-retro-games/pack_game_en.html)
 - 🇫🇷 [**Web Packer (Français)**](https://aciderix.github.io/portable-retro-games/pack_game_fr.html)
+- 🖥️ [**DOS Packer (English)**](https://aciderix.github.io/portable-retro-games/pack_dos_game_en.html)
+- 🖥️ [**DOS Packer (Français)**](https://aciderix.github.io/portable-retro-games/pack_dos_game_fr.html)
 - 🏴‍☠️ [**ScummVM Web Packer (English)**](https://aciderix.github.io/portable-retro-games/pack_scummvm_game_en.html)
 - 🏴‍☠️ [**ScummVM Web Packer (Français)**](https://aciderix.github.io/portable-retro-games/pack_scummvm_game_fr.html)
 - 🎮 [**MSX Packer (English)**](https://aciderix.github.io/portable-retro-games/pack_msx_game_en.html)
@@ -665,6 +667,8 @@ Pas envie d'utiliser Python ? Utilisez le **packer web** directement dans votre 
 
 - 🇫🇷 [**Packer Web (Français)**](https://aciderix.github.io/portable-retro-games/pack_game_fr.html)
 - 🇬🇧 [**Packer Web (English)**](https://aciderix.github.io/portable-retro-games/pack_game_en.html)
+- 🖥️ [**DOS Packer (Français)**](https://aciderix.github.io/portable-retro-games/pack_dos_game_fr.html)
+- 🖥️ [**DOS Packer (English)**](https://aciderix.github.io/portable-retro-games/pack_dos_game_en.html)
 - 🏴‍☠️ [**ScummVM Packer Web (Français)**](https://aciderix.github.io/portable-retro-games/pack_scummvm_game_fr.html)
 - 🏴‍☠️ [**ScummVM Packer Web (English)**](https://aciderix.github.io/portable-retro-games/pack_scummvm_game_en.html)
 - 🎮 [**MSX Packer (Français)**](https://aciderix.github.io/portable-retro-games/pack_msx_game_fr.html)
