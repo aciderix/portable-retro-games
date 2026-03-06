@@ -1,0 +1,1276 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🎮 MSX Game Packer — Créez des jeux MSX autonomes</title>
+<style>
+/* ============================================================
+   CSS Reset & Base
+   ============================================================ */
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  --bg: #0a0a0a;
+  --bg-card: #111118;
+  --bg-card-hover: #16161f;
+  --border: #1e1e2e;
+  --border-accent: #2a2a3e;
+  --text: #e0e0e0;
+  --text-dim: #888;
+  --text-dimmer: #555;
+  --accent: #33cc99;
+  --accent-orange: #22aa77;
+  --success: #44cc66;
+  --error: #ff4466;
+  --warning: #ffaa33;
+  --radius: 12px;
+  --radius-sm: 8px;
+}
+
+html { scroll-behavior: smooth; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', sans-serif;
+  min-height: 100vh;
+  line-height: 1.6;
+  overflow-x: hidden;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 8px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: #2a2a3e; border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: #3a3a4e; }
+
+/* ============================================================
+   Layout
+   ============================================================ */
+.container {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem 4rem;
+}
+
+/* Top Navigation */
+.top-nav {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+}
+.top-nav a {
+  color: var(--text-dim);
+  text-decoration: none;
+  font-size: 0.88rem;
+  font-weight: 600;
+  padding: 0.4rem 0.8rem;
+  border-radius: var(--radius-sm);
+  transition: all 0.2s;
+}
+.top-nav a:hover { color: var(--text); background: rgba(255,255,255,0.04); }
+.top-nav a.active {
+  color: var(--accent);
+  background: rgba(51,204,153,0.08);
+  border: 1px solid rgba(51,204,153,0.2);
+}
+.top-nav .lang-switch {
+  margin-left: auto;
+  display: flex;
+  gap: 0.3rem;
+}
+.top-nav .lang-switch a {
+  font-size: 1.1rem;
+  padding: 0.3rem 0.5rem;
+}
+
+/* Header */
+.header {
+  text-align: center;
+  margin-bottom: 2.5rem;
+  position: relative;
+}
+.header::after {
+  content: '';
+  display: block;
+  width: 80px;
+  height: 3px;
+  background: linear-gradient(90deg, var(--accent), var(--accent-orange));
+  margin: 1.2rem auto 0;
+  border-radius: 2px;
+}
+.logo {
+  font-size: 2.2rem;
+  font-weight: 800;
+  background: linear-gradient(135deg, var(--accent), var(--accent-orange));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  letter-spacing: -0.5px;
+}
+.subtitle {
+  color: var(--text-dim);
+  font-size: 0.95rem;
+  margin-top: 0.3rem;
+}
+
+/* ============================================================
+   Card / Section
+   ============================================================ */
+.card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1.5rem;
+  margin-bottom: 1.25rem;
+  transition: border-color 0.2s;
+}
+.card:hover { border-color: var(--border-accent); }
+.card-title {
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1.2px;
+  color: var(--text-dim);
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.card-title .icon { font-size: 1rem; }
+
+/* ============================================================
+   Drop Zone
+   ============================================================ */
+.dropzone {
+  border: 2px dashed #2a2a3e;
+  border-radius: var(--radius);
+  padding: 3rem 2rem;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+.dropzone::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at center, rgba(51,204,153,0.03) 0%, transparent 70%);
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+.dropzone:hover, .dropzone.dragover {
+  border-color: var(--accent);
+  background: rgba(51,204,153,0.03);
+}
+.dropzone:hover::before, .dropzone.dragover::before { opacity: 1; }
+.dropzone.has-file {
+  border-color: var(--success);
+  border-style: solid;
+  background: rgba(68,204,102,0.03);
+}
+.dropzone-icon {
+  font-size: 3rem;
+  margin-bottom: 0.8rem;
+  display: block;
+}
+.dropzone-text {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 0.3rem;
+}
+.dropzone-hint {
+  font-size: 0.82rem;
+  color: var(--text-dim);
+}
+.dropzone-btn {
+  display: inline-block;
+  margin-top: 1rem;
+  padding: 0.5rem 1.5rem;
+  border: 1px solid var(--border-accent);
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text);
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.dropzone-btn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+/* File Info */
+.file-info {
+  display: none;
+  margin-top: 1rem;
+  padding: 1rem;
+  background: rgba(255,255,255,0.02);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+}
+.file-info.visible { display: block; animation: fadeIn 0.3s ease; }
+.file-info-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.3rem 0;
+  font-size: 0.88rem;
+}
+.file-info-label { color: var(--text-dim); }
+.file-info-value { color: var(--text); font-weight: 500; }
+.badge {
+  display: inline-block;
+  padding: 0.15rem 0.6rem;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+.badge-success { background: rgba(68,204,102,0.15); color: var(--success); }
+.badge-warning { background: rgba(255,170,51,0.15); color: var(--warning); }
+.badge-error { background: rgba(255,68,102,0.15); color: var(--error); }
+
+/* ============================================================
+   Form Controls
+   ============================================================ */
+.form-group { margin-bottom: 1rem; }
+.form-group:last-child { margin-bottom: 0; }
+.form-label {
+  display: block;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text-dim);
+  margin-bottom: 0.4rem;
+}
+.form-hint {
+  font-size: 0.75rem;
+  color: var(--text-dimmer);
+  margin-top: 0.2rem;
+}
+.form-input, .form-select {
+  width: 100%;
+  padding: 0.65rem 0.9rem;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text);
+  font-size: 0.9rem;
+  font-family: inherit;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  outline: none;
+}
+.form-input:focus, .form-select:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(51,204,153,0.1);
+}
+.form-select { cursor: pointer; appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath d='M6 8L1 3h10z' fill='%23888'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.9rem center;
+  padding-right: 2.5rem;
+}
+.form-select option { background: #1a1a2e; color: var(--text); }
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+@media (max-width: 520px) { .form-row { grid-template-columns: 1fr; } }
+
+/* ============================================================
+   Generate Button
+   ============================================================ */
+.generate-btn {
+  width: 100%;
+  padding: 1rem;
+  border: none;
+  border-radius: var(--radius);
+  background: linear-gradient(135deg, var(--accent), var(--accent-orange));
+  color: #fff;
+  font-size: 1.05rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 20px rgba(51,204,153,0.25);
+  position: relative;
+  overflow: hidden;
+}
+.generate-btn::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(255,255,255,0.1), transparent);
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+.generate-btn:hover:not(:disabled)::before { opacity: 1; }
+.generate-btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 25px rgba(51,204,153,0.35);
+}
+.generate-btn:active:not(:disabled) { transform: translateY(0); }
+.generate-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+/* ============================================================
+   Progress Section
+   ============================================================ */
+.progress-section {
+  display: none;
+  margin-top: 1.25rem;
+}
+.progress-section.visible { display: block; animation: fadeIn 0.3s ease; }
+.progress-bar-track {
+  width: 100%;
+  height: 8px;
+  background: #1a1a2e;
+  border-radius: 4px;
+  overflow: hidden;
+  margin-bottom: 0.8rem;
+}
+.progress-bar-fill {
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, var(--accent), var(--accent-orange));
+  border-radius: 4px;
+  transition: width 0.4s ease;
+}
+.progress-steps { list-style: none; }
+.progress-step {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.4rem 0;
+  font-size: 0.85rem;
+  color: var(--text-dim);
+  transition: color 0.3s;
+}
+.progress-step.active { color: var(--text); }
+.progress-step.done { color: var(--success); }
+.progress-step.error { color: var(--error); }
+.step-icon { width: 1.2rem; text-align: center; font-size: 0.9rem; }
+
+/* ============================================================
+   Download Button
+   ============================================================ */
+.download-section {
+  display: none;
+  margin-top: 1.25rem;
+  text-align: center;
+}
+.download-section.visible { display: block; animation: fadeIn 0.4s ease; }
+.download-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 1rem 2.5rem;
+  border: none;
+  border-radius: var(--radius);
+  background: linear-gradient(135deg, var(--success), #33aa55);
+  color: #fff;
+  font-size: 1.1rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 20px rgba(68,204,102,0.25);
+}
+.download-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 25px rgba(68,204,102,0.35);
+}
+.download-info {
+  margin-top: 0.8rem;
+  font-size: 0.82rem;
+  color: var(--text-dim);
+}
+
+/* ============================================================
+   Error Banner
+   ============================================================ */
+.error-banner {
+  display: none;
+  margin-top: 1rem;
+  padding: 1rem;
+  background: rgba(255,68,102,0.08);
+  border: 1px solid rgba(255,68,102,0.2);
+  border-radius: var(--radius-sm);
+  color: var(--error);
+  font-size: 0.88rem;
+}
+.error-banner.visible { display: block; animation: fadeIn 0.3s ease; }
+
+/* ============================================================
+   FAQ / Accordion
+   ============================================================ */
+.faq-item {
+  border-bottom: 1px solid var(--border);
+}
+.faq-item:last-child { border-bottom: none; }
+.faq-question {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 0;
+  background: none;
+  border: none;
+  color: var(--text);
+  font-size: 0.92rem;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: left;
+  font-family: inherit;
+  transition: color 0.2s;
+}
+.faq-question:hover { color: var(--accent); }
+.faq-arrow {
+  font-size: 0.8rem;
+  transition: transform 0.3s;
+  color: var(--text-dim);
+}
+.faq-item.open .faq-arrow { transform: rotate(180deg); }
+.faq-answer {
+  display: none;
+  padding: 0 0 1rem;
+  font-size: 0.88rem;
+  line-height: 1.7;
+  color: var(--text-dim);
+}
+.faq-item.open .faq-answer { display: block; animation: fadeIn 0.3s ease; }
+
+/* ============================================================
+   Footer
+   ============================================================ */
+.footer {
+  text-align: center;
+  padding: 2rem 0 1rem;
+  font-size: 0.78rem;
+  color: var(--text-dimmer);
+}
+.footer a { color: var(--text-dim); text-decoration: none; }
+.footer a:hover { color: var(--accent); }
+
+@keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <!-- Top Navigation -->
+  <div class="top-nav">
+    <a href="pack_game_fr.html">🕹️ Retro Game Packer</a>
+    <a href="pack_dos_game_fr.html">🖥️ DOS Packer</a>
+    <a href="pack_scummvm_game_fr.html">🎭 ScummVM Packer</a>
+    <a href="pack_msx_game_fr.html" class="active">🎮 MSX Packer</a>
+    <div class="lang-switch">
+      <a href="pack_msx_game_fr.html" class="active" title="Français">🇫🇷</a>
+      <a href="pack_msx_game_en.html" title="English">🇬🇧</a>
+    </div>
+  </div>
+
+  <!-- Header -->
+  <div class="header">
+    <div class="logo">🎮 MSX Game Packer</div>
+    <div class="subtitle">Créez des jeux MSX autonomes et jouables hors-ligne</div>
+  </div>
+
+  <!-- ============================================================
+       Step 1: File Selection
+       ============================================================ -->
+  <div class="card">
+    <div class="card-title"><span class="icon">📦</span> Fichier du jeu MSX</div>
+    <div class="dropzone" id="dropzone">
+      <span class="dropzone-icon">📁</span>
+      <div class="dropzone-text">Glissez votre jeu MSX ici</div>
+      <div class="dropzone-hint">.rom, .mx1, .mx2, .dsk, .cas ou .zip — Plusieurs .dsk pour multi-disquettes</div>
+      <button class="dropzone-btn" type="button">Choisir un fichier</button>
+      <input type="file" id="file-input" accept=".rom,.mx1,.mx2,.dsk,.cas,.zip" multiple hidden>
+    </div>
+    <div class="file-info" id="file-info">
+      <div class="file-info-row">
+        <span class="file-info-label">Fichier</span>
+        <span class="file-info-value" id="info-name">—</span>
+      </div>
+      <div class="file-info-row">
+        <span class="file-info-label">Taille</span>
+        <span class="file-info-value" id="info-size">—</span>
+      </div>
+      <div class="file-info-row">
+        <span class="file-info-label">Type détecté</span>
+        <span class="file-info-value" id="info-type">—</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       Step 2: Configuration
+       ============================================================ -->
+  <div class="card" id="options-card" style="display:none;">
+    <div class="card-title"><span class="icon">⚙️</span> Configuration</div>
+
+    <div class="form-group">
+      <label class="form-label" for="title-input">Titre du jeu</label>
+      <input type="text" class="form-input" id="title-input" placeholder="Rempli automatiquement depuis le nom du fichier">
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label" for="machine-select">Type de machine</label>
+        <select class="form-select" id="machine-select">
+          <option value="MSX2P" selected>MSX2+ — la plus compatible</option>
+          <option value="MSX1">MSX1 — première génération</option>
+          <option value="MSX2">MSX2 — deuxième génération</option>
+          <option value="MSXTR">MSX turbo R — dernière génération</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="sound-select">Extension sonore</label>
+        <select class="form-select" id="sound-select">
+          <option value="" selected>Aucune — son standard</option>
+          <option value="SCCI">SCC-I — Konami SCC amélioré</option>
+          <option value="SCC">SCC — Konami Sound Custom Chip</option>
+          <option value="FMPAC">FM-PAC — synthèse FM (OPLL)</option>
+          <option value="MSXMUSIC">MSX-MUSIC — Yamaha YM2413</option>
+          <option value="MEGARAM">MegaRAM — extension mémoire</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label" for="output-input">Nom du fichier de sortie</label>
+      <input type="text" class="form-input" id="output-input" placeholder="jeu.html">
+    </div>
+  </div>
+
+  <!-- ============================================================
+       Step 3: Generate
+       ============================================================ -->
+  <button class="generate-btn" id="generate-btn" disabled>🎮 Générer le jeu MSX</button>
+
+  <!-- Progress -->
+  <div class="progress-section" id="progress-section">
+    <div class="progress-bar-track">
+      <div class="progress-bar-fill" id="progress-fill"></div>
+    </div>
+    <ul class="progress-steps" id="progress-steps">
+      <li class="progress-step" data-step="read"><span class="step-icon">⏳</span> Lecture du fichier...</li>
+      <li class="progress-step" data-step="encode"><span class="step-icon">⏳</span> Encodage des données du jeu...</li>
+      <li class="progress-step" data-step="engine"><span class="step-icon">⏳</span> Récupération du moteur WebMSX...</li>
+      <li class="progress-step" data-step="build"><span class="step-icon">⏳</span> Assemblage du HTML...</li>
+      <li class="progress-step" data-step="done"><span class="step-icon">⏳</span> Terminé !</li>
+    </ul>
+  </div>
+
+  <!-- ============================================================
+       Step 4: Download
+       ============================================================ -->
+  <div class="download-section" id="download-section">
+    <button class="download-btn" id="download-btn">💾 Télécharger</button>
+    <div class="download-info" id="download-info"></div>
+  </div>
+
+  <!-- Error -->
+  <div class="error-banner" id="error-banner"></div>
+
+  <!-- ============================================================
+       FAQ / About
+       ============================================================ -->
+  <div class="card" style="margin-top: 2rem;">
+    <div class="card-title"><span class="icon">ℹ️</span> Foire aux questions</div>
+
+    <div class="faq-item">
+      <button class="faq-question" onclick="this.parentElement.classList.toggle('open')">
+        Qu'est-ce que WebMSX ?
+        <span class="faq-arrow">▼</span>
+      </button>
+      <div class="faq-answer">
+        <strong>WebMSX</strong> est un émulateur MSX complet fonctionnant dans le navigateur, créé par Paulo Augusto Peccin.
+        Il émule les ordinateurs MSX1, MSX2, MSX2+ et MSX turbo R avec une grande fidélité, incluant le son,
+        les extensions matérielles et les différents types de médias (cartouches, disquettes, cassettes).
+        Le BIOS utilisé est <strong>C-BIOS</strong>, un BIOS open-source pour MSX.
+      </div>
+    </div>
+
+    <div class="faq-item">
+      <button class="faq-question" onclick="this.parentElement.classList.toggle('open')">
+        Quels types de fichiers sont supportés ?
+        <span class="faq-arrow">▼</span>
+      </button>
+      <div class="faq-answer">
+        Le packer supporte les formats suivants :<br>
+        • <strong>.rom, .mx1</strong> — Cartouches ROM MSX1/MSX2<br>
+        • <strong>.mx2</strong> — Cartouches ROM MSX2<br>
+        • <strong>.dsk</strong> — Images disquettes MSX<br>
+        • <strong>.cas</strong> — Images cassettes MSX<br>
+        • <strong>.zip</strong> — Archives contenant un des formats ci-dessus (détection automatique)
+      </div>
+    </div>
+
+    <div class="faq-item">
+      <button class="faq-question" onclick="this.parentElement.classList.toggle('open')">
+        Est-ce sûr et privé ?
+        <span class="faq-arrow">▼</span>
+      </button>
+      <div class="faq-answer">
+        Oui ! Toute la génération se fait <strong>localement dans votre navigateur</strong>. Aucun fichier n'est
+        envoyé à un serveur. La seule requête réseau sert à télécharger le moteur WebMSX (depuis le miroir local
+        ou le CDN GitHub). Le fichier HTML généré est 100% autonome et fonctionne hors-ligne.
+      </div>
+    </div>
+
+    <div class="faq-item">
+      <button class="faq-question" onclick="this.parentElement.classList.toggle('open')">
+        Crédits
+        <span class="faq-arrow">▼</span>
+      </button>
+      <div class="faq-answer">
+        • <strong>WebMSX</strong> — Émulateur MSX par Paulo Augusto Peccin (<a href="https://webmsx.org" target="_blank" style="color:var(--accent)">webmsx.org</a>)<br>
+        • <strong>C-BIOS</strong> — BIOS open-source MSX par l'équipe C-BIOS (<a href="http://cbios.sourceforge.net/" target="_blank" style="color:var(--accent)">cbios.sourceforge.net</a>)<br>
+        • <strong>Portable Retro Games</strong> — Projet open-source (<a href="https://github.com/aciderix/portable-retro-games" target="_blank" style="color:var(--accent)">GitHub</a>)
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <div class="footer">
+    Propulsé par <a href="https://webmsx.org" target="_blank">WebMSX</a>,
+    <a href="http://cbios.sourceforge.net/" target="_blank">C-BIOS</a> &amp;
+    <a href="https://github.com/aciderix/portable-retro-games" target="_blank">Portable Retro Games</a>
+  </div>
+</div>
+
+<script>
+// ============================================================
+//  Constants
+// ============================================================
+
+const WMSX_LOCAL_MIRROR = "data/msx/wmsx.js";
+const WMSX_CDN_URL = "https://raw.githubusercontent.com/ppeccin/WebMSX/master/release/stable/6.0/embedded/wmsx.js";
+
+// Engine cache
+let cachedEngineJS = null;
+
+// File type mappings: extension → { mediaParam, defaultMachine, label }
+const FILE_TYPES = {
+  '.rom': { mediaParam: 'CARTRIDGE1_URL', defaultMachine: 'MSX2P', label: 'Cartouche ROM' },
+  '.mx1': { mediaParam: 'CARTRIDGE1_URL', defaultMachine: 'MSX2P', label: 'Cartouche MX1' },
+  '.mx2': { mediaParam: 'CARTRIDGE1_URL', defaultMachine: 'MSX2',  label: 'Cartouche MX2' },
+  '.dsk': { mediaParam: 'DISKA_URL',      defaultMachine: 'MSX2P', label: 'Disquette DSK' },
+  '.cas': { mediaParam: 'TAPE_URL',       defaultMachine: 'MSX1',  label: 'Cassette CAS' },
+  '.zip': { mediaParam: 'AUTODETECT_URL', defaultMachine: 'MSX2P', label: 'Archive ZIP' },
+};
+
+// Sound extension presets mapping
+const SOUND_PRESETS = {
+  'SCCI':     'SCCI',
+  'SCC':      'SCC',
+  'FMPAC':    'FMPAC',
+  'MSXMUSIC': 'MSXMUSIC',
+  'MEGARAM':  'MEGARAM',
+};
+
+// ============================================================
+//  State
+// ============================================================
+let selectedFile = null;
+var selectedFiles = []; // For multi-disk mode
+var isMultiDisk = false;
+let detectedType = null;
+let generatedBlob = null;
+let generatedFileName = '';
+
+// ============================================================
+//  DOM Elements
+// ============================================================
+const dropzone = document.getElementById('dropzone');
+const fileInput = document.getElementById('file-input');
+const fileInfoDiv = document.getElementById('file-info');
+const infoName = document.getElementById('info-name');
+const infoSize = document.getElementById('info-size');
+const infoType = document.getElementById('info-type');
+const optionsCard = document.getElementById('options-card');
+const titleInput = document.getElementById('title-input');
+const machineSelect = document.getElementById('machine-select');
+const soundSelect = document.getElementById('sound-select');
+const outputInput = document.getElementById('output-input');
+const generateBtn = document.getElementById('generate-btn');
+const progressSection = document.getElementById('progress-section');
+const progressFill = document.getElementById('progress-fill');
+const downloadSection = document.getElementById('download-section');
+const downloadBtn = document.getElementById('download-btn');
+const downloadInfo = document.getElementById('download-info');
+const errorBanner = document.getElementById('error-banner');
+
+// ============================================================
+//  Utilities
+// ============================================================
+function formatSize(bytes) {
+    if (bytes < 1024) return bytes + ' o';
+    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' Ko';
+    return (bytes / (1024 * 1024)).toFixed(1) + ' Mo';
+}
+
+function cleanTitle(filename) {
+    var dotIdx = filename.lastIndexOf('.');
+    var name = dotIdx !== -1 ? filename.substring(0, dotIdx) : filename;
+    name = name.replace(/[_\-\.\(\)\[\]]/g, ' ').replace(/\s+/g, ' ').trim();
+    if (name === name.toLowerCase()) {
+        name = name.replace(/\b\w/g, function(c) { return c.toUpperCase(); });
+    }
+    return name;
+}
+
+function getExtension(filename) {
+    var dotIdx = filename.lastIndexOf('.');
+    return dotIdx !== -1 ? filename.substring(dotIdx).toLowerCase() : '';
+}
+
+function htmlEscape(text) {
+    return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+function readFileAsBase64(file) {
+    return new Promise(function(resolve, reject) {
+        var reader = new FileReader();
+        reader.onload = function() {
+            // result is "data:...;base64,XXXX", we need just the base64 part
+            var base64 = reader.result.split(',')[1];
+            resolve(base64);
+        };
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+    });
+}
+
+function showError(msg) {
+    errorBanner.textContent = msg;
+    errorBanner.classList.add('visible');
+}
+
+function hideError() {
+    errorBanner.classList.remove('visible');
+}
+
+// ============================================================
+//  Dropzone & File Selection
+// ============================================================
+dropzone.addEventListener('click', function(e) {
+    if (e.target === fileInput) return;
+    fileInput.click();
+});
+
+dropzone.addEventListener('dragover', function(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    dropzone.classList.add('dragover');
+});
+
+dropzone.addEventListener('dragleave', function(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    dropzone.classList.remove('dragover');
+});
+
+dropzone.addEventListener('drop', function(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    dropzone.classList.remove('dragover');
+    if (e.dataTransfer.files.length > 0) {
+        handleFiles(e.dataTransfer.files);
+    }
+});
+
+fileInput.addEventListener('change', function() {
+    if (this.files.length > 0) {
+        handleFiles(this.files);
+    }
+});
+
+function getCommonPrefix(names) {
+    if (names.length === 0) return '';
+    var sorted = names.slice().sort();
+    var first = sorted[0], last = sorted[sorted.length - 1];
+    var i = 0;
+    while (i < first.length && first[i] === last[i]) i++;
+    return first.substring(0, i);
+}
+
+function handleFiles(files) {
+    hideError();
+    downloadSection.classList.remove('visible');
+    progressSection.classList.remove('visible');
+
+    var fileArray = Array.prototype.slice.call(files);
+
+    // Multi-disk mode: multiple files provided
+    if (fileArray.length > 1) {
+        // Check ALL files are .dsk
+        var allDsk = true;
+        for (var i = 0; i < fileArray.length; i++) {
+            if (getExtension(fileArray[i].name) !== '.dsk') {
+                allDsk = false;
+                break;
+            }
+        }
+        if (!allDsk) {
+            showError('Mode multi-disquettes : tous les fichiers doivent être des .dsk');
+            return;
+        }
+
+        // Sort by name
+        fileArray.sort(function(a, b) { return a.name.localeCompare(b.name); });
+
+        isMultiDisk = true;
+        selectedFiles = fileArray;
+        selectedFile = fileArray[0];
+        detectedType = FILE_TYPES['.dsk'];
+
+        // Update dropzone appearance
+        dropzone.classList.add('has-file');
+
+        // Compute total size
+        var totalSize = 0;
+        var diskNames = [];
+        for (var j = 0; j < fileArray.length; j++) {
+            totalSize += fileArray[j].size;
+            diskNames.push(fileArray[j].name);
+        }
+
+        // Show file info for multi-disk
+        infoName.innerHTML = '💾 Multi-disquettes : ' + fileArray.length + ' disques détectés';
+        infoSize.textContent = formatSize(totalSize);
+        var diskListHtml = '';
+        for (var k = 0; k < diskNames.length; k++) {
+            diskListHtml += '<div style="font-size:0.82rem;color:var(--text-dim);padding:1px 0;">💿 ' + htmlEscape(diskNames[k]) + '</div>';
+        }
+        infoType.innerHTML = '<span class="badge badge-success">Disquette DSK</span>' + diskListHtml;
+        fileInfoDiv.classList.add('visible');
+
+        // Auto-fill title from common prefix
+        var prefix = getCommonPrefix(diskNames.map(function(n) {
+            var dotIdx = n.lastIndexOf('.');
+            return dotIdx !== -1 ? n.substring(0, dotIdx) : n;
+        }));
+        var title = cleanTitle(prefix || fileArray[0].name);
+        titleInput.value = title;
+
+        // Auto-set machine
+        machineSelect.value = detectedType.defaultMachine;
+
+        // Auto-fill output filename
+        outputInput.value = (title || 'multidisk').toLowerCase().replace(/\s+/g, '_') + '.html';
+
+        // Show options card
+        optionsCard.style.display = '';
+
+        // Enable generate button
+        generateBtn.disabled = false;
+        return;
+    }
+
+    // Single-file mode (original behavior)
+    var file = fileArray[0];
+    var ext = getExtension(file.name);
+    var typeInfo = FILE_TYPES[ext];
+
+    if (!typeInfo) {
+        showError('Type de fichier non supporté : ' + ext + '. Formats acceptés : .rom, .mx1, .mx2, .dsk, .cas, .zip');
+        return;
+    }
+
+    isMultiDisk = false;
+    selectedFiles = [];
+    selectedFile = file;
+    detectedType = typeInfo;
+
+    // Update dropzone appearance
+    dropzone.classList.add('has-file');
+
+    // Show file info
+    infoName.textContent = file.name;
+    infoSize.textContent = formatSize(file.size);
+    infoType.innerHTML = '<span class="badge badge-success">' + htmlEscape(typeInfo.label) + '</span>';
+    fileInfoDiv.classList.add('visible');
+
+    // Auto-fill title
+    var title = cleanTitle(file.name);
+    titleInput.value = title;
+
+    // Auto-set machine based on file type
+    machineSelect.value = typeInfo.defaultMachine;
+
+    // Auto-fill output filename
+    outputInput.value = cleanTitle(file.name).toLowerCase().replace(/\s+/g, '_') + '.html';
+
+    // Show options card
+    optionsCard.style.display = '';
+
+    // Enable generate button
+    generateBtn.disabled = false;
+}
+
+// ============================================================
+//  Progress helpers
+// ============================================================
+function resetProgress() {
+    var steps = document.querySelectorAll('.progress-step');
+    steps.forEach(function(step) {
+        step.className = 'progress-step';
+        step.querySelector('.step-icon').textContent = '⏳';
+    });
+    progressFill.style.width = '0%';
+}
+
+function setStepActive(stepName) {
+    var step = document.querySelector('.progress-step[data-step="' + stepName + '"]');
+    if (step) {
+        step.classList.add('active');
+        step.querySelector('.step-icon').textContent = '⚙️';
+    }
+}
+
+function setStepDone(stepName) {
+    var step = document.querySelector('.progress-step[data-step="' + stepName + '"]');
+    if (step) {
+        step.classList.remove('active');
+        step.classList.add('done');
+        step.querySelector('.step-icon').textContent = '✅';
+    }
+}
+
+function setStepError(stepName) {
+    var step = document.querySelector('.progress-step[data-step="' + stepName + '"]');
+    if (step) {
+        step.classList.remove('active');
+        step.classList.add('error');
+        step.querySelector('.step-icon').textContent = '❌';
+    }
+}
+
+// ============================================================
+//  Engine Fetching
+// ============================================================
+async function fetchEngine() {
+    if (cachedEngineJS) return cachedEngineJS;
+
+    // Try local mirror first
+    try {
+        var resp = await fetch(WMSX_LOCAL_MIRROR);
+        if (resp.ok) {
+            cachedEngineJS = await resp.text();
+            return cachedEngineJS;
+        }
+    } catch (e) {
+        // local mirror not available, try CDN
+    }
+
+    // Fallback to CDN
+    try {
+        var resp2 = await fetch(WMSX_CDN_URL);
+        if (resp2.ok) {
+            cachedEngineJS = await resp2.text();
+            return cachedEngineJS;
+        }
+        throw new Error('CDN returned status ' + resp2.status);
+    } catch (e) {
+        throw new Error('Impossible de récupérer le moteur WebMSX. Vérifiez votre connexion Internet.\n' + e.message);
+    }
+}
+
+// ============================================================
+//  HTML Generation
+// ============================================================
+function buildGameHTML(title, base64Data, mediaParam, machine, soundPreset, engineJS) {
+    var escapedTitle = htmlEscape(title);
+
+    var presetsLine = '';
+    if (soundPreset && SOUND_PRESETS[soundPreset]) {
+        presetsLine = '    PRESETS: "' + SOUND_PRESETS[soundPreset] + '",\n';
+    }
+
+    var html = '<!DOCTYPE html>\n' +
+'<html lang="fr">\n' +
+'<head>\n' +
+'<meta charset="UTF-8">\n' +
+'<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">\n' +
+'<title>' + escapedTitle + ' — MSX</title>\n' +
+'<style>\n' +
+'  * { margin: 0; padding: 0; box-sizing: border-box; }\n' +
+'  html, body { width: 100%; height: 100%; background: #000; overflow: hidden; }\n' +
+'  #wmsx { text-align: center; margin: 0 auto; width: 100%; height: 100%; }\n' +
+'  #wmsx-screen { box-shadow: 2px 2px 10px rgba(0,0,0,.7); }\n' +
+'</style>\n' +
+'</head>\n' +
+'<body>\n' +
+'<div id="wmsx"><div id="wmsx-screen"></div></div>\n' +
+'<script>\n' +
+engineJS + '\n' +
+'</' + 'script>\n' +
+'<script>\n' +
+'WMSX.' + mediaParam + ' = "data:application/octet-stream;base64,' + base64Data + '";\n' +
+'WMSX.MACHINE = "' + machine + '";\n' +
+(soundPreset && SOUND_PRESETS[soundPreset] ? 'WMSX.PRESETS = "' + SOUND_PRESETS[soundPreset] + '";\n' : '') +
+'WMSX.SCREEN_FULLSCREEN_MODE = -1;\n' +
+'WMSX.MEDIA_CHANGE_DISABLED = true;\n' +
+'WMSX.AUTO_START = true;\n' +
+'</' + 'script>\n' +
+'</body>\n' +
+'</html>';
+
+    return html;
+}
+
+function buildMultiDiskHTML(title, diskDataArray, machine, soundPreset, engineJS) {
+    var escapedTitle = htmlEscape(title);
+
+    var presetsLine = '';
+    if (soundPreset && SOUND_PRESETS[soundPreset]) {
+        presetsLine = '    PRESETS: "' + SOUND_PRESETS[soundPreset] + '",\n';
+    }
+
+    // Build DISK_IMAGES array
+    var diskImagesJS = '[\n';
+    for (var i = 0; i < diskDataArray.length; i++) {
+        diskImagesJS += '  {name: "Disque ' + (i + 1) + '", data: "' + diskDataArray[i].base64 + '"}';
+        if (i < diskDataArray.length - 1) diskImagesJS += ',';
+        diskImagesJS += '\n';
+    }
+    diskImagesJS += ']';
+
+    // Build disk bar buttons
+    var diskButtons = '';
+    for (var j = 0; j < diskDataArray.length; j++) {
+        var activeClass = j === 0 ? ' class="active"' : '';
+        diskButtons += '  <button' + activeClass + ' onclick="swapDisk(' + j + ')">Disque ' + (j + 1) + ' — ' + htmlEscape(diskDataArray[j].name) + '</button>\n';
+    }
+
+    var html = '<!DOCTYPE html>\n' +
+'<html lang="fr">\n' +
+'<head>\n' +
+'<meta charset="UTF-8">\n' +
+'<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">\n' +
+'<title>' + escapedTitle + ' — MSX</title>\n' +
+'<style>\n' +
+'  * { margin: 0; padding: 0; box-sizing: border-box; }\n' +
+'  html, body { width: 100%; height: 100%; background: #000; overflow: hidden; display: flex; flex-direction: column; }\n' +
+'  #disk-bar { background: #222; padding: 6px 12px; display: flex; align-items: center; gap: 8px; flex-shrink: 0;\n' +
+'               font: 13px/1.4 system-ui, sans-serif; color: #ccc; overflow-x: auto; }\n' +
+'  #disk-bar span { color: #33cc99; font-weight: bold; white-space: nowrap; }\n' +
+'  #disk-bar button { background: #444; color: #fff; border: 1px solid #666; border-radius: 4px;\n' +
+'                      padding: 4px 10px; cursor: pointer; font-size: 12px; white-space: nowrap; }\n' +
+'  #disk-bar button:hover { background: #555; }\n' +
+'  #disk-bar button.active { background: #33cc99; color: #000; border-color: #33cc99; font-weight: bold; }\n' +
+'  #wmsx { text-align: center; margin: 0 auto; width: 100%; flex: 1; min-height: 0; }\n' +
+'  #wmsx-screen { box-shadow: 2px 2px 10px rgba(0,0,0,.7); }\n' +
+'</style>\n' +
+'</head>\n' +
+'<body>\n' +
+'<div id="disk-bar">\n' +
+'  <span>\uD83D\uDCBE Lecteur A:</span>\n' +
+diskButtons +
+'</div>\n' +
+'<div id="wmsx"><div id="wmsx-screen"></div></div>\n' +
+'<script>\n' +
+'var DISK_IMAGES = ' + diskImagesJS + ';\n' +
+'var currentDisk = 0;\n' +
+'function swapDisk(index) {\n' +
+'  currentDisk = index;\n' +
+'  var btns = document.querySelectorAll(\'#disk-bar button\');\n' +
+'  btns.forEach(function(b,i){ b.className = i===index ? \'active\' : \'\'; });\n' +
+'  var b64 = DISK_IMAGES[index].data;\n' +
+'  var bin = atob(b64), arr = new Uint8Array(bin.length);\n' +
+'  for (var i=0; i<bin.length; i++) arr[i] = bin.charCodeAt(i);\n' +
+'  WMSX.room.machine.diskDriveSocket.autoPowerCycle = false;\n' +
+'  WMSX.room.machine.diskDriveSocket.insertDisk(arr, 0, true);\n' +
+'  WMSX.room.machine.diskDriveSocket.autoPowerCycle = true;\n' +
+'}\n' +
+'</' + 'script>\n' +
+'<script>\n' +
+engineJS + '\n' +
+'</' + 'script>\n' +
+'<script>\n' +
+'WMSX.MACHINE = "' + machine + '";\n' +
+'WMSX.ROM_PATH = "";\n' +
+'WMSX.DISKA_URL = "data:application/octet-stream;base64," + DISK_IMAGES[0].data;\n' +
+(soundPreset && SOUND_PRESETS[soundPreset] ? 'WMSX.PRESETS = "' + SOUND_PRESETS[soundPreset] + '";\n' : '') +
+'WMSX.SCREEN_ELEMENT_ID = "wmsx-screen";\n' +
+'WMSX.ALLOW_URL_PARAMETERS = false;\n' +
+'WMSX.PAGE_BACK_CSS = "#000";\n' +
+'WMSX.MEDIA_CHANGE_DISABLED = true;\n' +
+'WMSX.AUTO_START = true;\n' +
+'</' + 'script>\n' +
+'</body>\n' +
+'</html>';
+
+    return html;
+}
+
+// ============================================================
+//  Generate Action
+// ============================================================
+generateBtn.addEventListener('click', async function() {
+    if (!selectedFile || !detectedType) return;
+
+    hideError();
+    generateBtn.disabled = true;
+    downloadSection.classList.remove('visible');
+    resetProgress();
+    progressSection.classList.add('visible');
+
+    var currentStep = '';
+
+    try {
+        if (isMultiDisk) {
+            // ====== Multi-disk mode ======
+
+            // Step 1: Read all disk files
+            currentStep = 'read';
+            setStepActive('read');
+            progressFill.style.width = '10%';
+            await new Promise(function(r) { setTimeout(r, 100); });
+
+            var base64Promises = selectedFiles.map(function(f) { return readFileAsBase64(f); });
+            var base64Results = await Promise.all(base64Promises);
+            setStepDone('read');
+            progressFill.style.width = '25%';
+
+            // Step 2: Encode (visual step)
+            currentStep = 'encode';
+            setStepActive('encode');
+            await new Promise(function(r) { setTimeout(r, 200); });
+
+            var diskDataArray = [];
+            for (var i = 0; i < selectedFiles.length; i++) {
+                diskDataArray.push({ name: selectedFiles[i].name, base64: base64Results[i] });
+            }
+            setStepDone('encode');
+            progressFill.style.width = '40%';
+
+            // Step 3: Fetch engine
+            currentStep = 'engine';
+            setStepActive('engine');
+            var engineJS = await fetchEngine();
+            setStepDone('engine');
+            progressFill.style.width = '70%';
+
+            // Step 4: Assemble multi-disk HTML
+            currentStep = 'build';
+            setStepActive('build');
+            await new Promise(function(r) { setTimeout(r, 100); });
+
+            var title = titleInput.value.trim() || cleanTitle(selectedFiles[0].name);
+            var machine = machineSelect.value;
+            var soundPreset = soundSelect.value;
+
+            var gameHTML = buildMultiDiskHTML(title, diskDataArray, machine, soundPreset, engineJS);
+
+            generatedBlob = new Blob([gameHTML], { type: 'text/html;charset=utf-8' });
+            generatedFileName = outputInput.value.trim() || (title.toLowerCase().replace(/\s+/g, '_') + '.html');
+            if (!generatedFileName.endsWith('.html')) generatedFileName += '.html';
+
+            setStepDone('build');
+            progressFill.style.width = '100%';
+
+            // Step 5: Done
+            currentStep = 'done';
+            setStepActive('done');
+            await new Promise(function(r) { setTimeout(r, 200); });
+            setStepDone('done');
+
+            // Show download
+            downloadInfo.textContent = generatedFileName + ' — ' + formatSize(generatedBlob.size) + ' (multi-disquettes : ' + selectedFiles.length + ' disques)';
+            downloadSection.classList.add('visible');
+
+        } else {
+            // ====== Single-file mode (original behavior) ======
+
+            // Step 1: Read file
+            currentStep = 'read';
+            setStepActive('read');
+            progressFill.style.width = '10%';
+            await new Promise(function(r) { setTimeout(r, 100); });
+
+            var base64Data = await readFileAsBase64(selectedFile);
+            setStepDone('read');
+            progressFill.style.width = '25%';
+
+            // Step 2: Encode (already done via base64, just a visual step)
+            currentStep = 'encode';
+            setStepActive('encode');
+            await new Promise(function(r) { setTimeout(r, 200); });
+            setStepDone('encode');
+            progressFill.style.width = '40%';
+
+            // Step 3: Fetch engine
+            currentStep = 'engine';
+            setStepActive('engine');
+            var engineJS = await fetchEngine();
+            setStepDone('engine');
+            progressFill.style.width = '70%';
+
+            // Step 4: Assemble HTML
+            currentStep = 'build';
+            setStepActive('build');
+            await new Promise(function(r) { setTimeout(r, 100); });
+
+            var title = titleInput.value.trim() || cleanTitle(selectedFile.name);
+            var machine = machineSelect.value;
+            var soundPreset = soundSelect.value;
+            var mediaParam = detectedType.mediaParam;
+
+            var gameHTML = buildGameHTML(title, base64Data, mediaParam, machine, soundPreset, engineJS);
+
+            generatedBlob = new Blob([gameHTML], { type: 'text/html;charset=utf-8' });
+            generatedFileName = outputInput.value.trim() || (cleanTitle(selectedFile.name).toLowerCase().replace(/\s+/g, '_') + '.html');
+            if (!generatedFileName.endsWith('.html')) generatedFileName += '.html';
+
+            setStepDone('build');
+            progressFill.style.width = '100%';
+
+            // Step 5: Done
+            currentStep = 'done';
+            setStepActive('done');
+            await new Promise(function(r) { setTimeout(r, 200); });
+            setStepDone('done');
+
+            // Show download
+            downloadInfo.textContent = generatedFileName + ' — ' + formatSize(generatedBlob.size);
+            downloadSection.classList.add('visible');
+        }
+
+    } catch (err) {
+        if (currentStep) setStepError(currentStep);
+        showError('Erreur : ' + err.message);
+    } finally {
+        generateBtn.disabled = false;
+    }
+});
+
+// ============================================================
+//  Download
+// ============================================================
+downloadBtn.addEventListener('click', function() {
+    if (!generatedBlob) return;
+    var url = URL.createObjectURL(generatedBlob);
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = generatedFileName;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(function() { URL.revokeObjectURL(url); }, 5000);
+});
+</script>
+
+</body>
+</html>
